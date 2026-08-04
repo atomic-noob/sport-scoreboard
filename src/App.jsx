@@ -1,6 +1,11 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import Home from './pages/Home'
 import SyncStatusBadge from './components/SyncStatusBadge'
+import BasketballHome from './features/basketball/BasketballHome'
+import NewTournament from './features/basketball/NewTournament'
+import TournamentAdmin from './features/basketball/TournamentAdmin'
+import TeamRoster from './features/basketball/TeamRoster'
+import EditTournament from './features/basketball/EditTournament'
 
 export default function App() {
   return (
@@ -17,6 +22,11 @@ export default function App() {
 
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/basketball" element={<BasketballHome />} />
+          <Route path="/basketball/new" element={<NewTournament />} />
+          <Route path="/basketball/:tournamentId" element={<TournamentAdmin />} />
+          <Route path="/basketball/:tournamentId/edit" element={<EditTournament />} />
+          <Route path="/basketball/:tournamentId/team/:teamId" element={<TeamRoster />} />
         </Routes>
       </div>
     </BrowserRouter>
