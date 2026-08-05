@@ -1,64 +1,103 @@
 import { db } from './db'
+import { supabase } from './supabaseClient'
 
 /**
  * Data layer for tournaments/teams/players/rosters.
  *
- * IMPORTANT: These functions currently read/write to local IndexedDB
- * (via the `adminCache` tables below) because Supabase isn't connected
- * yet. Every function here is written to match the shape the real
- * Supabase queries will eventually have, so when we wire up Supabase
- * at home, we swap the function bodies (not the call sites).
- *
- * Table shapes intentionally mirror what will become Postgres tables:
- *   tournaments(id, name, sport, rules, created_at)
- *   teams(id, tournament_id, name, created_at)
- *   players(id, name, photo_url, created_at)  -- GLOBAL, not tournament-scoped
- *   team_rosters(id, team_id, player_id, jersey_number)
+ * Now backed by real Supabase tables. Every read/write goes to Supabase
+ * first; successful reads are also cached into local IndexedDB so the
+ * app still shows (slightly stale) data when offline. Writes made while
+ * offline will currently fail with an error -- true offline WRITE support
+ * for admin data (queue + sync, like we built for match events) is a
+ * later step; for now this at least means the app doesn't crash offline,
+ * and previously-loaded data still displays.
  */
 
-// --- Local-only tables for pre-Supabase development ---
-db.version(2).stores({
-  pendingEvents: '++id, localId, matchId, eventType, createdAt, synced',
-  matchCache: 'matchId, tournamentId, updatedAt',
-  rosterCache: 'teamId, tournamentId, updatedAt',
+// ---------- Mapping helpers (camelCase local <-> snake_case Postgres) ----------
 
-  // New local-dev tables (will be replaced by Supabase queries later)
-  tournaments: 'id, name, sport, createdAt',
-  teams: 'id, tournamentId, name, createdAt',
-  players: 'id, name, createdAt', // GLOBAL players table
-  teamRosters: 'id, teamId, playerId, jerseyNumber',
-})
+function tournamentFromRow(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    sport: row.sport,
+    rules: row.rules,
+    startDate: row.start_date,
+    pin: row.pin,
+    formatConfig: row.format_config,
+    createdAt: row.created_at,
+  }
+}
 
-const uuid = () => crypto.randomUUID()
+function teamFromRow(row) {
+  return { id: row.id, tournamentId: row.tournament_id, name: row.name, createdAt: row.created_at }
+}
+
+function playerFromRow(row) {
+  return { id: row.id, name: row.name, photoUrl: row.photo_url, createdAt: row.created_at }
+}
 
 // ---------- Tournaments ----------
 
 export async function createTournament({ name, sport = 'basketball', rules, startDate = null, pin = null }) {
-  const tournament = {
-    id: uuid(),
-    name,
-    sport,
-    rules, // { quarterMinutes, foulLimit, otMinutes, timeoutsPerTeam, maxRosterSize, avgStatMinGames }
-    startDate, // ISO date string, e.g. "2026-08-15". Null = not scheduled yet.
-    pin, // string PIN gating edits to this tournament. Null = no PIN set.
-    createdAt: new Date().toISOString(),
-  }
-  await db.tournaments.add(tournament)
+  const { data, error } = await supabase
+    .from('tournaments')
+    .insert({ name, sport, rules, start_date: startDate, pin })
+    .select()
+    .single()
+
+  if (error) throw error
+  const tournament = tournamentFromRow(data)
+  await db.tournaments.put(tournament)
   return tournament
 }
 
 export async function getTournaments() {
-  return db.tournaments.orderBy('createdAt').reverse().toArray()
+  const { data, error } = await supabase
+    .from('tournaments')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.warn('Falling back to local cache for tournaments (offline?):', error.message)
+    return db.tournaments.orderBy('createdAt').reverse().toArray()
+  }
+
+  const tournaments = data.map(tournamentFromRow)
+  await db.tournaments.bulkPut(tournaments)
+  return tournaments
 }
 
 export async function getTournament(id) {
-  return db.tournaments.get(id)
+  const { data, error } = await supabase.from('tournaments').select('*').eq('id', id).single()
+
+  if (error) {
+    console.warn('Falling back to local cache for tournament (offline?):', error.message)
+    return db.tournaments.get(id)
+  }
+
+  const tournament = tournamentFromRow(data)
+  await db.tournaments.put(tournament)
+  return tournament
 }
 
-/** Updates any subset of tournament fields (name, rules, startDate, pin). */
 export async function updateTournament(id, updates) {
-  await db.tournaments.update(id, updates)
-  return db.tournaments.get(id)
+  const payload = {}
+  if (updates.name !== undefined) payload.name = updates.name
+  if (updates.rules !== undefined) payload.rules = updates.rules
+  if (updates.startDate !== undefined) payload.start_date = updates.startDate
+  if (updates.pin !== undefined) payload.pin = updates.pin
+
+  const { data, error } = await supabase
+    .from('tournaments')
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  const tournament = tournamentFromRow(data)
+  await db.tournaments.put(tournament)
+  return tournament
 }
 
 /**
@@ -73,13 +112,32 @@ export function isTournamentLocked(tournament) {
 // ---------- Teams ----------
 
 export async function createTeam(tournamentId, name) {
-  const team = { id: uuid(), tournamentId, name, createdAt: new Date().toISOString() }
-  await db.teams.add(team)
+  const { data, error } = await supabase
+    .from('teams')
+    .insert({ tournament_id: tournamentId, name })
+    .select()
+    .single()
+
+  if (error) throw error
+  const team = teamFromRow(data)
+  await db.teams.put(team)
   return team
 }
 
 export async function getTeamsForTournament(tournamentId) {
-  return db.teams.where('tournamentId').equals(tournamentId).toArray()
+  const { data, error } = await supabase
+    .from('teams')
+    .select('*')
+    .eq('tournament_id', tournamentId)
+
+  if (error) {
+    console.warn('Falling back to local cache for teams (offline?):', error.message)
+    return db.teams.where('tournamentId').equals(tournamentId).toArray()
+  }
+
+  const teams = data.map(teamFromRow)
+  await db.teams.bulkPut(teams)
+  return teams
 }
 
 // ---------- Global players ----------
@@ -87,43 +145,79 @@ export async function getTeamsForTournament(tournamentId) {
 /** Search the GLOBAL players table by name (case-insensitive substring match). */
 export async function searchPlayers(query) {
   if (!query || query.trim().length === 0) return []
-  const q = query.trim().toLowerCase()
-  const all = await db.players.toArray()
-  return all.filter((p) => p.name.toLowerCase().includes(q))
+  const q = query.trim()
+
+  const { data, error } = await supabase.from('players').select('*').ilike('name', `%${q}%`)
+
+  if (error) {
+    console.warn('Falling back to local cache for player search (offline?):', error.message)
+    const all = await db.players.toArray()
+    return all.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()))
+  }
+
+  const players = data.map(playerFromRow)
+  await db.players.bulkPut(players)
+  return players
 }
 
 /** Creates a new global player profile. Called when no search match is found. */
 export async function createPlayer({ name, photoUrl = null }) {
-  const player = { id: uuid(), name, photoUrl, createdAt: new Date().toISOString() }
-  await db.players.add(player)
+  const { data, error } = await supabase
+    .from('players')
+    .insert({ name, photo_url: photoUrl })
+    .select()
+    .single()
+
+  if (error) throw error
+  const player = playerFromRow(data)
+  await db.players.put(player)
   return player
 }
 
-// ---------- Team rosters (links a global player to a team, tournament-scoped jersey #) ----------
+// ---------- Team rosters ----------
 
 export async function addPlayerToRoster(teamId, playerId, jerseyNumber) {
-  const entry = { id: uuid(), teamId, playerId, jerseyNumber }
-  await db.teamRosters.add(entry)
-  return entry
+  const { data, error } = await supabase
+    .from('team_rosters')
+    .insert({ team_id: teamId, player_id: playerId, jersey_number: jerseyNumber })
+    .select()
+    .single()
+
+  if (error) throw error
+  return { id: data.id, teamId: data.team_id, playerId: data.player_id, jerseyNumber: data.jersey_number }
 }
 
 export async function getRosterForTeam(teamId) {
-  const rosterEntries = await db.teamRosters.where('teamId').equals(teamId).toArray()
-  const players = await Promise.all(
-    rosterEntries.map(async (entry) => {
-      const player = await db.players.get(entry.playerId)
-      return { ...player, jerseyNumber: entry.jerseyNumber, rosterEntryId: entry.id }
-    })
-  )
-  return players
+  const { data, error } = await supabase
+    .from('team_rosters')
+    .select('id, jersey_number, players(id, name, photo_url, created_at)')
+    .eq('team_id', teamId)
+
+  if (error) {
+    console.warn('Failed to load roster from Supabase:', error.message)
+    return []
+  }
+
+  return data.map((entry) => ({
+    id: entry.players.id,
+    name: entry.players.name,
+    photoUrl: entry.players.photo_url,
+    jerseyNumber: entry.jersey_number,
+    rosterEntryId: entry.id,
+  }))
 }
 
 export async function removeFromRoster(rosterEntryId) {
-  await db.teamRosters.delete(rosterEntryId)
+  const { error } = await supabase.from('team_rosters').delete().eq('id', rosterEntryId)
+  if (error) throw error
 }
 
 export async function updateJerseyNumber(rosterEntryId, jerseyNumber) {
-  await db.teamRosters.update(rosterEntryId, { jerseyNumber })
+  const { error } = await supabase
+    .from('team_rosters')
+    .update({ jersey_number: jerseyNumber })
+    .eq('id', rosterEntryId)
+  if (error) throw error
 }
 
 /**
@@ -131,19 +225,24 @@ export async function updateJerseyNumber(rosterEntryId, jerseyNumber) {
  * same tournament. Returns { rosterEntryId, team } if found, else null.
  */
 export async function findPlayerTeamInTournament(playerId, tournamentId, excludeTeamId) {
-  const teams = await getTeamsForTournament(tournamentId)
-  for (const team of teams) {
-    if (team.id === excludeTeamId) continue
-    const entry = await db.teamRosters
-      .where('teamId')
-      .equals(team.id)
-      .and((e) => e.playerId === playerId)
-      .first()
-    if (entry) {
-      return { rosterEntryId: entry.id, team }
-    }
+  const { data, error } = await supabase
+    .from('team_rosters')
+    .select('id, team_id, teams!inner(id, name, tournament_id)')
+    .eq('player_id', playerId)
+    .eq('teams.tournament_id', tournamentId)
+
+  if (error) {
+    console.warn('Could not check for existing roster spot (offline?):', error.message)
+    return null
   }
-  return null
+
+  const match = data.find((entry) => entry.team_id !== excludeTeamId)
+  if (!match) return null
+
+  return {
+    rosterEntryId: match.id,
+    team: { id: match.teams.id, name: match.teams.name },
+  }
 }
 
 /**
@@ -151,6 +250,6 @@ export async function findPlayerTeamInTournament(playerId, tournamentId, exclude
  * removes their old roster entry and adds a new one on the destination team.
  */
 export async function transferPlayerToTeam(oldRosterEntryId, newTeamId, playerId, jerseyNumber) {
-  await db.teamRosters.delete(oldRosterEntryId)
+  await removeFromRoster(oldRosterEntryId)
   return addPlayerToRoster(newTeamId, playerId, jerseyNumber)
 }

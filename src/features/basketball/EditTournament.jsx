@@ -16,17 +16,23 @@ export default function EditTournament() {
   const [pin, setPin] = useState('')
   const [rules, setRules] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    getTournament(tournamentId).then((t) => {
-      setTournament(t)
-      setName(t.name)
-      setStartDate(t.startDate ?? '')
-      setPin(t.pin ?? '')
-      setRules(t.rules)
-      // No PIN set on the tournament yet -- nothing to gate, go straight in
-      if (!t.pin) setUnlocked(true)
-    })
+    getTournament(tournamentId)
+      .then((t) => {
+        setTournament(t)
+        setName(t.name)
+        setStartDate(t.startDate ?? '')
+        setPin(t.pin ?? '')
+        setRules(t.rules)
+        // No PIN set on the tournament yet -- nothing to gate, go straight in
+        if (!t.pin) setUnlocked(true)
+      })
+      .catch((err) => {
+        console.error('Failed to load tournament:', err)
+        setError('Could not load this tournament. Check your connection and try refreshing.')
+      })
   }, [tournamentId])
 
   function updateRule(key, value) {
@@ -47,18 +53,35 @@ export default function EditTournament() {
     e.preventDefault()
     if (!name.trim()) return
     setSaving(true)
-    await updateTournament(tournamentId, {
-      name: name.trim(),
-      startDate: startDate || null,
-      pin: pin.trim() || null,
-      rules,
-    })
-    setSaving(false)
-    navigate(`/basketball/${tournamentId}`)
+    setError('')
+    try {
+      await updateTournament(tournamentId, {
+        name: name.trim(),
+        startDate: startDate || null,
+        pin: pin.trim() || null,
+        rules,
+      })
+      navigate(`/basketball/${tournamentId}`)
+    } catch (err) {
+      console.error('Failed to save tournament:', err)
+      setError('Could not save changes. Check your connection and try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (!tournament) {
-    return <div className="max-w-lg mx-auto px-4 py-10 text-slate-500">Loading...</div>
+    return (
+      <div className="max-w-lg mx-auto px-4 py-10 text-slate-500">
+        {error ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </div>
+        ) : (
+          'Loading...'
+        )}
+      </div>
+    )
   }
 
   const locked = isTournamentLocked(tournament)
@@ -164,6 +187,12 @@ export default function EditTournament() {
             <RuleInput label="Timeouts per team" value={rules.timeoutsPerTeam} onChange={(v) => updateRule('timeoutsPerTeam', v)} />
             <RuleInput label="Max roster size" value={rules.maxRosterSize} onChange={(v) => updateRule('maxRosterSize', v)} />
             <RuleInput label="Min games for avg stats" value={rules.avgStatMinGames} onChange={(v) => updateRule('avgStatMinGames', v)} />
+          </div>
+        )}
+
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
           </div>
         )}
 

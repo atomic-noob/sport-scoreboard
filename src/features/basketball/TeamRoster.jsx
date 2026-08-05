@@ -21,13 +21,22 @@ export default function TeamRoster() {
   const [jerseyDraft, setJerseyDraft] = useState('')
   const [searching, setSearching] = useState(false)
   const [pendingTransfer, setPendingTransfer] = useState(null) // { player, rosterEntryId, fromTeamName }
+  const [error, setError] = useState('')
 
   async function refreshRoster() {
-    setRoster(await getRosterForTeam(teamId))
+    try {
+      setRoster(await getRosterForTeam(teamId))
+    } catch (err) {
+      console.error('Failed to load roster:', err)
+      setError('Could not load the roster. Check your connection and try refreshing.')
+    }
   }
 
   useEffect(() => {
-    getTournament(tournamentId).then(setTournament)
+    getTournament(tournamentId).then(setTournament).catch((err) => {
+      console.error('Failed to load tournament:', err)
+      setError('Could not load this tournament. Check your connection.')
+    })
     refreshRoster()
   }, [tournamentId, teamId])
 
@@ -39,50 +48,68 @@ export default function TeamRoster() {
     }
     setSearching(true)
     const timeout = setTimeout(async () => {
-      const results = await searchPlayers(query)
-      // Don't show players already on this team's roster
-      const rosterIds = new Set(roster.map((p) => p.id))
-      setMatches(results.filter((p) => !rosterIds.has(p.id)))
-      setSearching(false)
+      try {
+        const results = await searchPlayers(query)
+        setMatches(results)
+      } catch (err) {
+        console.error('Search failed:', err)
+        setError('Player search failed. Check your connection.')
+      } finally {
+        setSearching(false)
+      }
     }, 200) // small debounce so we're not searching on every keystroke
 
     return () => clearTimeout(timeout)
   }, [query, roster])
 
   const rosterFull = tournament && roster.length >= tournament.rules.maxRosterSize
+  const rosterIds = new Set(roster.map((p) => p.id))
 
   async function handleAddExisting(player) {
     if (rosterFull) return
+    if (rosterIds.has(player.id)) return // already on this team, nothing to do
 
-    // Check if this player is already on a different team in this tournament
-    const existing = await findPlayerTeamInTournament(player.id, tournamentId, teamId)
-    if (existing) {
-      setPendingTransfer({
-        player,
-        rosterEntryId: existing.rosterEntryId,
-        fromTeamName: existing.team.name,
-      })
-      return
+    setError('')
+    try {
+      // Check if this player is already on a different team in this tournament
+      const existing = await findPlayerTeamInTournament(player.id, tournamentId, teamId)
+      if (existing) {
+        setPendingTransfer({
+          player,
+          rosterEntryId: existing.rosterEntryId,
+          fromTeamName: existing.team.name,
+        })
+        return
+      }
+
+      await addPlayerToRoster(teamId, player.id, jerseyDraft || null)
+      setQuery('')
+      setJerseyDraft('')
+      await refreshRoster()
+    } catch (err) {
+      console.error('Failed to add player:', err)
+      setError('Could not add this player. Check your connection and try again.')
     }
-
-    await addPlayerToRoster(teamId, player.id, jerseyDraft || null)
-    setQuery('')
-    setJerseyDraft('')
-    refreshRoster()
   }
 
   async function confirmTransfer() {
     if (!pendingTransfer) return
-    await transferPlayerToTeam(
-      pendingTransfer.rosterEntryId,
-      teamId,
-      pendingTransfer.player.id,
-      jerseyDraft || null
-    )
-    setPendingTransfer(null)
-    setQuery('')
-    setJerseyDraft('')
-    refreshRoster()
+    setError('')
+    try {
+      await transferPlayerToTeam(
+        pendingTransfer.rosterEntryId,
+        teamId,
+        pendingTransfer.player.id,
+        jerseyDraft || null
+      )
+      setPendingTransfer(null)
+      setQuery('')
+      setJerseyDraft('')
+      await refreshRoster()
+    } catch (err) {
+      console.error('Failed to transfer player:', err)
+      setError('Could not transfer this player. Check your connection and try again.')
+    }
   }
 
   function cancelTransfer() {
@@ -91,21 +118,38 @@ export default function TeamRoster() {
 
   async function handleCreateNew() {
     if (rosterFull || !query.trim()) return
-    const player = await createPlayer({ name: query.trim() })
-    await addPlayerToRoster(teamId, player.id, jerseyDraft || null)
-    setQuery('')
-    setJerseyDraft('')
-    refreshRoster()
+    setError('')
+    try {
+      const player = await createPlayer({ name: query.trim() })
+      await addPlayerToRoster(teamId, player.id, jerseyDraft || null)
+      setQuery('')
+      setJerseyDraft('')
+      await refreshRoster()
+    } catch (err) {
+      console.error('Failed to create player:', err)
+      setError('Could not create this player. Check your connection and try again.')
+    }
   }
 
   async function handleRemove(rosterEntryId) {
-    await removeFromRoster(rosterEntryId)
-    refreshRoster()
+    setError('')
+    try {
+      await removeFromRoster(rosterEntryId)
+      await refreshRoster()
+    } catch (err) {
+      console.error('Failed to remove player:', err)
+      setError('Could not remove this player. Check your connection and try again.')
+    }
   }
 
   async function handleJerseyEdit(rosterEntryId, value) {
-    await updateJerseyNumber(rosterEntryId, value)
-    refreshRoster()
+    try {
+      await updateJerseyNumber(rosterEntryId, value)
+      await refreshRoster()
+    } catch (err) {
+      console.error('Failed to update jersey number:', err)
+      setError('Could not save the jersey number. Check your connection.')
+    }
   }
 
   return (
@@ -118,6 +162,12 @@ export default function TeamRoster() {
         <p className="text-slate-500 text-sm mb-6">
           {roster.length} / {tournament.rules.maxRosterSize} players
         </p>
+      )}
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </div>
       )}
 
       {/* Add player */}
@@ -184,16 +234,26 @@ export default function TeamRoster() {
               </button>
             )}
 
-            {matches.map((player) => (
-              <button
-                key={player.id}
-                onClick={() => handleAddExisting(player)}
-                className="w-full flex items-center justify-between text-left px-2 py-2 rounded-lg hover:bg-slate-50 text-sm"
-              >
-                <span className="text-slate-800">{player.name}</span>
-                <span className="text-xs text-slate-400">Existing player · tap to add</span>
-              </button>
-            ))}
+            {matches.map((player) => {
+              const alreadyOnThisTeam = rosterIds.has(player.id)
+              return (
+                <button
+                  key={player.id}
+                  onClick={() => handleAddExisting(player)}
+                  disabled={alreadyOnThisTeam}
+                  className={`w-full flex items-center justify-between text-left px-2 py-2 rounded-lg text-sm ${
+                    alreadyOnThisTeam
+                      ? 'text-slate-400 cursor-not-allowed bg-slate-50'
+                      : 'text-slate-800 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>{player.name}</span>
+                  <span className="text-xs text-slate-400">
+                    {alreadyOnThisTeam ? 'Already on this team' : 'Existing player · tap to add'}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         )}
       </div>

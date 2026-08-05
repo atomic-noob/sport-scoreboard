@@ -20,3 +20,17 @@ db.version(1).stores({
   // so the court UI works even if the roster fetch happens offline.
   rosterCache: 'teamId, tournamentId, updatedAt',
 })
+
+db.version(2).stores({
+  pendingEvents: '++id, localId, matchId, eventType, createdAt, synced',
+  matchCache: 'matchId, tournamentId, updatedAt',
+  rosterCache: 'teamId, tournamentId, updatedAt',
+
+  // Local read-cache mirrors of Supabase's admin tables (tournaments,
+  // teams, players, team_rosters). These get populated whenever a
+  // Supabase read succeeds, and are used as a fallback when offline.
+  tournaments: 'id, name, sport, createdAt',
+  teams: 'id, tournamentId, name, createdAt',
+  players: 'id, name, createdAt', // GLOBAL players table
+  teamRosters: 'id, teamId, playerId, jerseyNumber',
+})

@@ -16,6 +16,7 @@ export default function NewTournament() {
     avgStatMinGames: 3,
   })
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   function updateRule(key, value) {
     setRules((r) => ({ ...r, [key]: Number(value) }))
@@ -25,15 +26,24 @@ export default function NewTournament() {
     e.preventDefault()
     if (!name.trim()) return
     setSaving(true)
-    const tournament = await createTournament({
-      name: name.trim(),
-      sport: 'basketball',
-      rules,
-      startDate: startDate || null,
-      pin: pin.trim() || null,
-    })
-    setSaving(false)
-    navigate(`/basketball/${tournament.id}`)
+    setError('')
+    try {
+      const tournament = await createTournament({
+        name: name.trim(),
+        sport: 'basketball',
+        rules,
+        startDate: startDate || null,
+        pin: pin.trim() || null,
+      })
+      navigate(`/basketball/${tournament.id}`)
+    } catch (err) {
+      console.error('Failed to create tournament:', err)
+      setError(
+        'Could not save this tournament. Check your internet connection and Supabase setup, then try again.'
+      )
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -116,6 +126,12 @@ export default function NewTournament() {
             onChange={(v) => updateRule('avgStatMinGames', v)}
           />
         </div>
+
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </div>
+        )}
 
         <button
           type="submit"

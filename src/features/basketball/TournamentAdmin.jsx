@@ -9,14 +9,20 @@ export default function TournamentAdmin() {
   const [newTeamName, setNewTeamName] = useState('')
   const [adding, setAdding] = useState(false)
   const [duplicateWarning, setDuplicateWarning] = useState(null) // name that duplicates an existing team
+  const [error, setError] = useState('')
 
   async function refresh() {
-    const [t, teamList] = await Promise.all([
-      getTournament(tournamentId),
-      getTeamsForTournament(tournamentId),
-    ])
-    setTournament(t)
-    setTeams(teamList)
+    try {
+      const [t, teamList] = await Promise.all([
+        getTournament(tournamentId),
+        getTeamsForTournament(tournamentId),
+      ])
+      setTournament(t)
+      setTeams(teamList)
+    } catch (err) {
+      console.error('Failed to load tournament:', err)
+      setError('Could not load this tournament. Check your connection and try refreshing.')
+    }
   }
 
   useEffect(() => {
@@ -25,17 +31,27 @@ export default function TournamentAdmin() {
 
   async function doCreateTeam(name) {
     setAdding(true)
-    await createTeam(tournamentId, name)
-    setNewTeamName('')
-    setDuplicateWarning(null)
-    setAdding(false)
-    refresh()
+    setError('')
+    try {
+      await createTeam(tournamentId, name)
+      setNewTeamName('')
+      setDuplicateWarning(null)
+      await refresh()
+    } catch (err) {
+      console.error('Failed to create team:', err)
+      setError('Could not add this team. Check your connection and try again.')
+    } finally {
+      setAdding(false)
+    }
   }
 
   async function handleAddTeam(e) {
     e.preventDefault()
     const name = newTeamName.trim()
-    if (!name) return
+    if (!name) {
+      setError('Enter a team name first.')
+      return
+    }
 
     const duplicate = teams.some((t) => t.name.toLowerCase() === name.toLowerCase())
     if (duplicate) {
@@ -55,7 +71,17 @@ export default function TournamentAdmin() {
   }
 
   if (!tournament) {
-    return <div className="max-w-2xl mx-auto px-4 py-10 text-slate-500">Loading...</div>
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-10 text-slate-500">
+        {error ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </div>
+        ) : (
+          'Loading...'
+        )}
+      </div>
+    )
   }
 
   return (
@@ -72,11 +98,32 @@ export default function TournamentAdmin() {
           Edit tournament
         </Link>
       </div>
-      <p className="text-slate-500 text-sm mb-6">
+      <p className="text-slate-500 text-sm mb-4">
         {tournament.rules.quarterMinutes}min quarters · foul-out at {tournament.rules.foulLimit} ·{' '}
         {tournament.rules.timeoutsPerTeam} timeouts/team · max {tournament.rules.maxRosterSize}{' '}
         roster
       </p>
+
+      <div className="flex gap-3 mb-6">
+        <Link
+          to={`/basketball/${tournamentId}/format`}
+          className="text-sm font-medium text-orange-600 hover:text-orange-700"
+        >
+          Tournament Format →
+        </Link>
+        <Link
+          to={`/basketball/${tournamentId}/schedule`}
+          className="text-sm font-medium text-orange-600 hover:text-orange-700"
+        >
+          Schedule & Standings →
+        </Link>
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleAddTeam} className="flex gap-2 mb-2">
         <input
@@ -85,6 +132,7 @@ export default function TournamentAdmin() {
           onChange={(e) => {
             setNewTeamName(e.target.value)
             setDuplicateWarning(null)
+            setError('')
           }}
           placeholder="Team name (e.g. Thunder Hawks)"
           className="flex-1 rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
