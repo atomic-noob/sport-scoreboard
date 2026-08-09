@@ -12,7 +12,17 @@ const SPORTS = [
 export default function Home() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold text-slate-900 mb-1">All-Sport Scoreboard</h1>
+      <div className="flex items-start justify-between mb-1 gap-4">
+        <h1 className="text-3xl font-bold text-slate-900">All-Sport Scoreboard</h1>
+        <a
+          href="/watch"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-4 py-2 transition flex items-center gap-1.5"
+        >
+          📺 Watch Live
+        </a>
+      </div>
       <p className="text-slate-500 mb-8">Pick a sport to set up or score a game.</p>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">

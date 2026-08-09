@@ -1,13 +1,20 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { getTournament, getTeamsForTournament } from '../../lib/adminData'
-import { setFormatConfig, generateRoundRobinSchedule } from '../../lib/matchesData'
+import {
+  setFormatConfig,
+  generateRoundRobinSchedule,
+  generateLimitedRoundRobinSchedule,
+  getMatchesForTournament,
+} from '../../lib/matchesData'
 
 const DEFAULT_CONFIG = {
+  scheduleType: 'full', // 'full' | 'limited'
   roundRobinGamesPerMatchup: 1,
+  gamesPerTeam: 4,
   eliminationTeamsAdvancing: 4,
   seedingMethod: 'random', // 'random' | 'manual'
-  seedOrder: [], // array of team ids, best-to-worst seed
+  seedOrder: [], // array of team ids, best-to-worst
 }
 
 function shuffle(array) {
@@ -28,16 +35,22 @@ export default function TournamentFormat() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [hasCompletedGames, setHasCompletedGames] = useState(false)
+  const [confirmingRegenerate, setConfirmingRegenerate] = useState(false)
 
   useEffect(() => {
     async function load() {
       try {
-        const [t, teamList] = await Promise.all([
+        const [t, teamList, matches] = await Promise.all([
           getTournament(tournamentId),
           getTeamsForTournament(tournamentId),
+          getMatchesForTournament(tournamentId),
         ])
         setTournament(t)
         setTeams(teamList)
+        setHasCompletedGames(
+          matches.some((m) => m.phase === 'round_robin' && m.status === 'completed')
+        )
 
         const existingConfig = t.formatConfig ?? DEFAULT_CONFIG
         setConfig({ ...DEFAULT_CONFIG, ...existingConfig })
@@ -68,10 +81,11 @@ export default function TournamentFormat() {
     })
   }
 
-  async function handleSaveAndGenerate() {
+  async function runSaveAndGenerate() {
     setSaving(true)
     setError('')
     setSuccess('')
+    setConfirmingRegenerate(false)
     try {
       const finalOrder =
         config.seedingMethod === 'random' ? shuffle(seedOrder) : seedOrder
@@ -81,21 +95,37 @@ export default function TournamentFormat() {
       setConfig(newConfig)
       setSeedOrder(finalOrder)
 
-      await generateRoundRobinSchedule(
-        tournamentId,
-        finalOrder.map((t) => t.id),
-        config.roundRobinGamesPerMatchup
-      )
+      const teamIds = finalOrder.map((t) => t.id)
 
-      setSuccess(
-        `Round-robin schedule generated: ${teams.length} teams, ${config.roundRobinGamesPerMatchup} game(s) per matchup.`
-      )
+      if (config.scheduleType === 'limited') {
+        await generateLimitedRoundRobinSchedule(tournamentId, teamIds, config.gamesPerTeam)
+        setSuccess(
+          `Schedule generated: ${teams.length} teams, ${config.gamesPerTeam} game(s) per team.`
+        )
+      } else {
+        await generateRoundRobinSchedule(tournamentId, teamIds, config.roundRobinGamesPerMatchup)
+        setSuccess(
+          `Round-robin schedule generated: ${teams.length} teams, ${config.roundRobinGamesPerMatchup} game(s) per matchup.`
+        )
+      }
+      setHasCompletedGames(false)
     } catch (err) {
       console.error('Failed to save format / generate schedule:', err)
-      setError('Could not save the format or generate the schedule. Check your connection.')
+      setError(`Could not save the format or generate the schedule: ${err.message ?? 'unknown error'}`)
     } finally {
       setSaving(false)
     }
+  }
+
+  function handleSaveAndGenerate() {
+    // Regenerating the round-robin schedule DELETES all existing
+    // round-robin matches first -- if any games are already completed,
+    // that result data would be lost. Confirm before doing that.
+    if (hasCompletedGames) {
+      setConfirmingRegenerate(true)
+      return
+    }
+    runSaveAndGenerate()
   }
 
   if (!tournament) {
@@ -142,7 +172,40 @@ export default function TournamentFormat() {
       )}
 
       <div className="space-y-5">
-        <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">Schedule type</label>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setConfig((c) => ({ ...c, scheduleType: 'full' }))}
+              className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                config.scheduleType === 'full'
+                  ? 'border-orange-400 bg-orange-50 text-orange-700'
+                  : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Full round-robin
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfig((c) => ({ ...c, scheduleType: 'limited' }))}
+              className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                config.scheduleType === 'limited'
+                  ? 'border-orange-400 bg-orange-50 text-orange-700'
+                  : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Fixed games per team
+            </button>
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            {config.scheduleType === 'full'
+              ? 'Every team plays every other team.'
+              : 'Each team plays a set number of games, not the full field \u2014 common for leagues with limited time.'}
+          </p>
+        </div>
+
+        {config.scheduleType === 'full' ? (
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Games per round-robin matchup
@@ -157,21 +220,42 @@ export default function TournamentFormat() {
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
           </div>
+        ) : (
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Teams advancing to elimination
+              Games per team
             </label>
             <input
               type="number"
-              min="2"
-              max={teams.length || undefined}
-              value={config.eliminationTeamsAdvancing}
-              onChange={(e) =>
-                setConfig((c) => ({ ...c, eliminationTeamsAdvancing: Number(e.target.value) }))
-              }
+              min="1"
+              max={teams.length > 0 ? teams.length - 1 : undefined}
+              value={config.gamesPerTeam}
+              onChange={(e) => setConfig((c) => ({ ...c, gamesPerTeam: Number(e.target.value) }))}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
+            <p className="text-xs text-slate-400 mt-1">
+              Max {teams.length > 0 ? teams.length - 1 : '-'} (can't play more games than there
+              are other teams). With an odd number of teams, some teams may end up with one game
+              more or less than others -- that's a natural side effect of fair bye rotation, not
+              an error.
+            </p>
           </div>
+        )}
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Teams advancing to elimination
+          </label>
+          <input
+            type="number"
+            min="2"
+            max={teams.length || undefined}
+            value={config.eliminationTeamsAdvancing}
+            onChange={(e) =>
+              setConfig((c) => ({ ...c, eliminationTeamsAdvancing: Number(e.target.value) }))
+            }
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+          />
         </div>
 
         <div>
@@ -250,8 +334,36 @@ export default function TournamentFormat() {
           disabled={saving || notEnoughTeams}
           className="w-full rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 transition disabled:opacity-50"
         >
-          {saving ? 'Generating...' : 'Save Format & Generate Round-Robin Schedule'}
+          {saving
+            ? 'Generating...'
+            : hasCompletedGames
+              ? 'Regenerate Round-Robin Schedule'
+              : 'Save Format & Generate Round-Robin Schedule'}
         </button>
+
+        {confirmingRegenerate && (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
+            <p className="text-sm text-amber-800">
+              Some round-robin games are already completed. Regenerating will{' '}
+              <span className="font-medium">erase those results</span> and create a fresh
+              schedule. Continue?
+            </p>
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={runSaveAndGenerate}
+                className="text-xs font-medium bg-amber-500 hover:bg-amber-600 text-white rounded-md px-3 py-1.5 transition"
+              >
+                Yes, erase and regenerate
+              </button>
+              <button
+                onClick={() => setConfirmingRegenerate(false)}
+                className="text-xs font-medium text-slate-500 hover:text-slate-700 px-3 py-1.5"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         <Link
           to={`/basketball/${tournamentId}/schedule`}

@@ -32,6 +32,7 @@ function matchFromRow(row) {
     winnerTeamId: row.winner_team_id,
     status: row.status,
     forfeitTeamId: row.forfeit_team_id,
+    potgPlayerId: row.potg_player_id,
     scheduledAt: row.scheduled_at,
     createdAt: row.created_at,
   }
@@ -75,6 +76,73 @@ export async function clearRoundRobinMatches(tournamentId) {
     .eq('tournament_id', tournamentId)
     .eq('phase', 'round_robin')
   if (error) throw error
+}
+
+/**
+ * Classic "circle method" round-robin scheduling: arranges every team
+ * into fair rounds where each team plays exactly one game per round
+ * (or sits out once, if the team count is odd -- byes rotate evenly).
+ * Returns an array of rounds, each an array of [teamIdA, teamIdB] pairs.
+ *
+ * Taking just the first N rounds of this (instead of all of them) is
+ * how we generate a "fixed number of games per team" schedule fairly --
+ * every team has played a distinct opponent in each round so far, so
+ * nobody's stuck facing the same team twice while others get variety.
+ */
+function circleMethodRounds(teamIds) {
+  let arr = [...teamIds]
+  if (arr.length % 2 !== 0) arr.push(null) // null = bye slot
+  const n = arr.length
+  const totalRounds = n - 1
+  const rounds = []
+
+  for (let r = 0; r < totalRounds; r++) {
+    const roundMatches = []
+    for (let i = 0; i < n / 2; i++) {
+      const a = arr[i]
+      const b = arr[n - 1 - i]
+      if (a !== null && b !== null) roundMatches.push([a, b])
+    }
+    rounds.push(roundMatches)
+    // Rotate everyone except the first team stays fixed
+    arr = [arr[0], arr[n - 1], ...arr.slice(1, n - 1)]
+  }
+
+  return rounds
+}
+
+/**
+ * Generates a round-robin schedule where each team plays a FIXED number
+ * of games (not the full round-robin field) -- the format common in
+ * local/barangay leagues where time doesn't allow everyone-plays-everyone.
+ * Uses the circle method so games are spread fairly: taking the first
+ * `gamesPerTeam` rounds guarantees no accidental double-matchups and
+ * reasonably even scheduling. NOTE: if the team count is odd, a team's
+ * single bye round might land inside or outside the rounds taken, so
+ * final game counts can differ by at most 1 game between teams -- this
+ * is an inherent tradeoff of odd fields, not a bug.
+ */
+export async function generateLimitedRoundRobinSchedule(tournamentId, teamIds, gamesPerTeam) {
+  await clearRoundRobinMatches(tournamentId)
+
+  const allRounds = circleMethodRounds(teamIds)
+  const roundsToUse = allRounds.slice(0, Math.min(gamesPerTeam, allRounds.length))
+
+  const rows = []
+  for (const round of roundsToUse) {
+    for (const [teamA, teamB] of round) {
+      rows.push({
+        tournament_id: tournamentId,
+        phase: 'round_robin',
+        round: 0,
+        team_a_id: teamA,
+        team_b_id: teamB,
+        status: 'scheduled',
+      })
+    }
+  }
+
+  return insertMatches(rows)
 }
 
 /**
@@ -212,11 +280,18 @@ export async function generateEliminationBracket(tournamentId, orderedTeamIds, t
   const byeTeams = field.slice(0, byeCount)
   const playingTeams = field.slice(byeCount)
 
+  // bracket_position is assigned sequentially across ALL round-1 slots
+  // (byes, playing pairs, and the play-in-reserved slot) so round 2
+  // knows how to pair them up: position 2i and 2i+1 feed into round-2
+  // position i.
+  let pos = 0
+
   for (const teamId of byeTeams) {
     rows.push({
       tournament_id: tournamentId,
       phase: 'elimination',
       round: 1,
+      bracket_position: pos++,
       team_a_id: teamId,
       team_b_id: null,
       status: 'bye',
@@ -227,13 +302,12 @@ export async function generateEliminationBracket(tournamentId, orderedTeamIds, t
   // Standard bracket pairing: best remaining seed vs worst remaining seed.
   let lo = 0
   let hi = playingTeams.length - 1
-  let position = 0
   while (lo < hi) {
     rows.push({
       tournament_id: tournamentId,
       phase: 'elimination',
       round: 1,
-      bracket_position: position++,
+      bracket_position: pos++,
       team_a_id: playingTeams[lo],
       team_b_id: playingTeams[hi],
       status: 'scheduled',
@@ -243,21 +317,207 @@ export async function generateEliminationBracket(tournamentId, orderedTeamIds, t
   }
 
   // If there's a play-in winner still pending, reserve the last slot --
-  // team_b_id is null for now; once the play-in match completes, call
-  // fillPlayInWinnerSlot() to patch this match with the actual winner.
+  // team_a_id/team_b_id are null for now; fillPlayInWinnerSlot() patches
+  // this once the play-in match completes.
   if (playInMatch) {
     rows.push({
       tournament_id: tournamentId,
       phase: 'elimination',
       round: 1,
-      bracket_position: position++,
-      team_a_id: playingTeams.length > 0 ? null : field[0] ?? null,
+      bracket_position: pos++,
+      team_a_id: null,
       team_b_id: null,
       status: 'scheduled',
     })
   }
 
-  return insertMatches(rows)
+  const inserted = await insertMatches(rows)
+
+  // Bye "winners" are already decided -- push them straight into round 2
+  // now instead of waiting for a game that will never happen.
+  for (const match of inserted) {
+    if (match.status === 'bye') {
+      await advanceWinner(tournamentId, match, match.winnerTeamId)
+    }
+  }
+
+  return inserted
+}
+
+/**
+ * Threads a winner into the next elimination round. If the sibling slot
+ * (the other half of this bracket_position pairing) already has a
+ * completed/bye match waiting, this fills in the empty side of an
+ * existing next-round match; otherwise it creates that next-round match
+ * with this winner in the correct slot and the other slot still open.
+ * If this was the only match in its round, the winner is the champion --
+ * no further round is created.
+ */
+async function advanceWinner(tournamentId, fromMatch, winnerTeamId) {
+  const { count, error: countError } = await supabase
+    .from('matches')
+    .select('id', { count: 'exact', head: true })
+    .eq('tournament_id', tournamentId)
+    .eq('phase', 'elimination')
+    .eq('round', fromMatch.round)
+
+  if (countError) throw countError
+  if (count <= 1) return { champion: winnerTeamId } // last round -- tournament is decided
+
+  const nextRound = fromMatch.round + 1
+  const nextPosition = Math.floor(fromMatch.bracketPosition / 2)
+  const isTeamA = fromMatch.bracketPosition % 2 === 0
+
+  const { data: existing, error: findError } = await supabase
+    .from('matches')
+    .select('*')
+    .eq('tournament_id', tournamentId)
+    .eq('phase', 'elimination')
+    .eq('round', nextRound)
+    .eq('bracket_position', nextPosition)
+    .maybeSingle()
+
+  if (findError) throw findError
+
+  if (existing) {
+    const { error: updateError } = await supabase
+      .from('matches')
+      .update(isTeamA ? { team_a_id: winnerTeamId } : { team_b_id: winnerTeamId })
+      .eq('id', existing.id)
+    if (updateError) throw updateError
+    return null
+  }
+
+  const { error: insertError } = await supabase.from('matches').insert({
+    tournament_id: tournamentId,
+    phase: 'elimination',
+    round: nextRound,
+    bracket_position: nextPosition,
+    team_a_id: isTeamA ? winnerTeamId : null,
+    team_b_id: isTeamA ? null : winnerTeamId,
+    status: 'scheduled',
+  })
+  if (insertError) throw insertError
+  return null
+}
+
+/** Fetches a single match by id. */
+export async function getMatch(matchId) {
+  const { data, error } = await supabase.from('matches').select('*').eq('id', matchId).single()
+  if (error) throw error
+  return matchFromRow(data)
+}
+
+/**
+ * Marks a match as live -- called when a scorer actually starts playing
+ * it (from the lineup screen). This is what lets the public "Watch Live"
+ * pages show it as in-progress instead of just "scheduled" or, worse,
+ * invisible until it's already over.
+ */
+export async function markMatchLive(matchId) {
+  const { error } = await supabase
+    .from('matches')
+    .update({ status: 'live' })
+    .eq('id', matchId)
+    .eq('status', 'scheduled') // don't clobber completed/forfeit if called again
+  if (error) throw error
+}
+
+/**
+ * Records a final result for a match and advances the winner:
+ *  - round_robin: just marks it complete (standings recompute automatically)
+ *  - play_in: marks it complete, then fills the winner into the waiting
+ *    round-1 elimination slot
+ *  - elimination: marks it complete, then threads the winner into the
+ *    next round (or declares them champion if this was the final)
+ */
+/**
+ * Records a final result for a match and advances the winner. Also
+ * optionally saves the per-player box score and Player of the Game --
+ * pass `playerStats` (array of { playerId, teamId, points, fouls,
+ * turnovers }) and `potgPlayerId` when the caller has that data (the
+ * live scoreboard does; a quick manual score entry might not).
+ */
+export async function completeMatch(matchId, teamAScore, teamBScore, options = {}) {
+  const { playerStats = [], potgPlayerId = null } = options
+  const match = await getMatch(matchId)
+  const winnerTeamId = teamAScore > teamBScore ? match.teamAId : match.teamBId
+
+  const { error } = await supabase
+    .from('matches')
+    .update({
+      team_a_score: teamAScore,
+      team_b_score: teamBScore,
+      winner_team_id: winnerTeamId,
+      status: 'completed',
+      potg_player_id: potgPlayerId,
+    })
+    .eq('id', matchId)
+  if (error) throw error
+
+  if (playerStats.length > 0) {
+    const rows = playerStats.map((p) => ({
+      match_id: matchId,
+      player_id: p.playerId,
+      team_id: p.teamId,
+      points: p.points ?? 0,
+      fouls: p.fouls ?? 0,
+      turnovers: p.turnovers ?? 0,
+      assists: p.assists ?? 0,
+      rebounds: p.rebounds ?? 0,
+      steals: p.steals ?? 0,
+      blocks: p.blocks ?? 0,
+      technical_fouls: p.technicalFouls ?? 0,
+      fg_made: p.fgMade ?? 0,
+      fg_attempted: p.fgAttempted ?? 0,
+    }))
+    const { error: statsError } = await supabase.from('match_player_stats').insert(rows)
+    if (statsError) {
+      // Don't fail the whole match completion over stats -- the result
+      // itself (score, winner, bracket advancement) matters more.
+      console.warn('Could not save player stats for this match:', statsError.message)
+    }
+  }
+
+  const updated = { ...match, teamAScore, teamBScore, winnerTeamId, status: 'completed', potgPlayerId }
+
+  if (match.phase === 'play_in') {
+    await fillPlayInWinnerSlot(match.tournamentId, winnerTeamId)
+  } else if (match.phase === 'elimination') {
+    await advanceWinner(match.tournamentId, updated, winnerTeamId)
+  }
+
+  return updated
+}
+
+/**
+ * Marks a match as forfeited by one team. The other team is recorded as
+ * the winner and advances through the bracket exactly like a normally
+ * completed match -- forfeits shouldn't stall a tournament.
+ */
+export async function forfeitMatch(matchId, forfeitingTeamId) {
+  const match = await getMatch(matchId)
+  const winnerTeamId = forfeitingTeamId === match.teamAId ? match.teamBId : match.teamAId
+
+  const { error } = await supabase
+    .from('matches')
+    .update({
+      status: 'forfeit',
+      forfeit_team_id: forfeitingTeamId,
+      winner_team_id: winnerTeamId,
+    })
+    .eq('id', matchId)
+  if (error) throw error
+
+  const updated = { ...match, status: 'forfeit', forfeitTeamId: forfeitingTeamId, winnerTeamId }
+
+  if (match.phase === 'play_in') {
+    await fillPlayInWinnerSlot(match.tournamentId, winnerTeamId)
+  } else if (match.phase === 'elimination') {
+    await advanceWinner(match.tournamentId, updated, winnerTeamId)
+  }
+
+  return updated
 }
 
 /**
@@ -287,4 +547,59 @@ export async function fillPlayInWinnerSlot(tournamentId, playInWinnerTeamId) {
 
   if (updateError) throw updateError
   return matchFromRow(data)
+}
+
+/**
+ * Saves the full action log permanently. Called at match completion --
+ * the live version (in match_live_state) gets deleted once the game is
+ * done, so this is what actually keeps the audit trail around.
+ */
+export async function saveActionLog(matchId, actionLog) {
+  const { error } = await supabase
+    .from('match_action_log')
+    .upsert({ match_id: matchId, log: actionLog })
+  if (error) console.warn('Could not save permanent action log:', error.message)
+}
+
+/** Fetches the permanent action log for a completed match, if one was saved. */
+export async function getActionLog(matchId) {
+  const { data, error } = await supabase
+    .from('match_action_log')
+    .select('log')
+    .eq('match_id', matchId)
+    .maybeSingle()
+  if (error) {
+    console.warn('Could not fetch action log:', error.message)
+    return null
+  }
+  return data?.log ?? null
+}
+
+/**
+ * Fetches the final box score for a completed match -- one row per
+ * player with their full stat line, joined with player names.
+ */
+export async function getMatchBoxScore(matchId) {
+  const { data, error } = await supabase
+    .from('match_player_stats')
+    .select('*, players(name)')
+    .eq('match_id', matchId)
+
+  if (error) throw error
+
+  return (data ?? []).map((row) => ({
+    playerId: row.player_id,
+    teamId: row.team_id,
+    playerName: row.players?.name ?? 'Unknown player',
+    points: row.points,
+    fouls: row.fouls,
+    turnovers: row.turnovers,
+    assists: row.assists,
+    rebounds: row.rebounds,
+    steals: row.steals,
+    blocks: row.blocks,
+    technicalFouls: row.technical_fouls,
+    fgMade: row.fg_made,
+    fgAttempted: row.fg_attempted,
+  }))
 }
