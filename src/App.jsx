@@ -13,6 +13,7 @@ import LineupSetup from './features/basketball/LineupSetup'
 import WatchHome from './features/basketball/WatchHome'
 import WatchTournament from './features/basketball/WatchTournament'
 import WatchMatch from './features/basketball/WatchMatch'
+import TournamentLeaderboard from './features/basketball/TournamentLeaderboard'
 
 function AppHeader() {
   const location = useLocation()
@@ -43,10 +44,12 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/basketball" element={<BasketballHome />} />
           <Route path="/basketball/new" element={<NewTournament />} />
+          <Route path="/basketball/leaderboard" element={<TournamentLeaderboard />} />
           <Route path="/basketball/:tournamentId" element={<TournamentAdmin />} />
           <Route path="/basketball/:tournamentId/edit" element={<EditTournament />} />
           <Route path="/basketball/:tournamentId/format" element={<TournamentFormat />} />
           <Route path="/basketball/:tournamentId/schedule" element={<TournamentSchedule />} />
+          <Route path="/basketball/:tournamentId/leaderboard" element={<TournamentLeaderboard />} />
           <Route path="/basketball/:tournamentId/match/:matchId/lineup" element={<LineupSetup />} />
           <Route path="/basketball/:tournamentId/match/:matchId" element={<MatchSimulate />} />
           <Route path="/basketball/:tournamentId/team/:teamId" element={<TeamRoster />} />

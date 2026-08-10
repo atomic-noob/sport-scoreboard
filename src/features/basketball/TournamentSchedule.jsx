@@ -116,7 +116,15 @@ export default function TournamentSchedule() {
       <Link to={`/basketball/${tournamentId}`} className="text-sm text-slate-400 hover:text-slate-600">
         ← Back to teams
       </Link>
-      <h1 className="text-2xl font-bold text-slate-900 mt-1 mb-4">{tournament.name}</h1>
+      <div className="flex items-center justify-between mt-1 mb-4">
+        <h1 className="text-2xl font-bold text-slate-900">{tournament.name}</h1>
+        <Link
+          to={`/basketball/${tournamentId}/leaderboard`}
+          className="text-sm font-medium text-slate-400 hover:text-orange-500"
+        >
+          🏆 Leaderboard
+        </Link>
+      </div>
 
       {error && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

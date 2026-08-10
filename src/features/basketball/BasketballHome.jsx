@@ -13,12 +13,20 @@ export default function BasketballHome() {
     <div className="max-w-2xl mx-auto px-4 py-10">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-slate-900">🏀 Basketball</h1>
-        <Link
-          to="/basketball/new"
-          className="rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-4 py-2 transition"
-        >
-          + New Tournament
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/basketball/leaderboard"
+            className="text-sm font-medium text-slate-400 hover:text-orange-500"
+          >
+            🏆 Global Leaderboard
+          </Link>
+          <Link
+            to="/basketball/new"
+            className="rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-4 py-2 transition"
+          >
+            + New Tournament
+          </Link>
+        </div>
       </div>
 
       {tournaments.length === 0 ? (
