@@ -72,9 +72,9 @@ export default function TournamentAdmin() {
 
   if (!tournament) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-10 text-slate-500">
+      <div className="max-w-2xl mx-auto px-4 py-10 text-ink-dim">
         {error ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
             {error}
           </div>
         ) : (
@@ -86,19 +86,19 @@ export default function TournamentAdmin() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
-      <Link to="/basketball" className="text-sm text-slate-400 hover:text-slate-600">
+      <Link to="/basketball" className="text-sm text-ink-faint hover:text-ink-dim">
         ← Back to tournaments
       </Link>
       <div className="flex items-center justify-between mt-1 mb-1">
-        <h1 className="text-2xl font-bold text-slate-900">{tournament.name}</h1>
+        <h1 className="text-2xl font-display font-bold tracking-wide text-ink">{tournament.name}</h1>
         <Link
           to={`/basketball/${tournamentId}/edit`}
-          className="text-sm font-medium text-slate-400 hover:text-orange-500"
+          className="text-sm font-medium text-ink-faint hover:text-accent"
         >
           Edit tournament
         </Link>
       </div>
-      <p className="text-slate-500 text-sm mb-4">
+      <p className="text-ink-dim text-sm mb-4">
         {tournament.rules.quarterMinutes}min quarters · foul-out at {tournament.rules.foulLimit} ·{' '}
         {tournament.rules.timeoutsPerTeam} timeouts/team · max {tournament.rules.maxRosterSize}{' '}
         roster
@@ -107,20 +107,20 @@ export default function TournamentAdmin() {
       <div className="flex gap-3 mb-6">
         <Link
           to={`/basketball/${tournamentId}/format`}
-          className="text-sm font-medium text-orange-600 hover:text-orange-700"
+          className="text-sm font-medium text-accent hover:text-accent"
         >
           Tournament Format →
         </Link>
         <Link
           to={`/basketball/${tournamentId}/schedule`}
-          className="text-sm font-medium text-orange-600 hover:text-orange-700"
+          className="text-sm font-medium text-accent hover:text-accent"
         >
           Schedule & Standings →
         </Link>
       </div>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="mb-4 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
           {error}
         </div>
       )}
@@ -135,33 +135,33 @@ export default function TournamentAdmin() {
             setError('')
           }}
           placeholder="Team name (e.g. Thunder Hawks)"
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+          className="flex-1 rounded-lg border border-line-strong px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
         />
         <button
           type="submit"
           disabled={adding}
-          className="rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 transition disabled:opacity-50"
+          className="rounded-lg bg-accent-soft0 hover:bg-accent-strong text-white font-medium px-4 py-2 transition disabled:opacity-50"
         >
           Add Team
         </button>
       </form>
 
       {duplicateWarning && (
-        <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-3">
-          <p className="text-sm text-amber-800">
+        <div className="mb-6 rounded-lg border border-warn bg-warn-soft p-3">
+          <p className="text-sm text-warn">
             A team named <span className="font-medium">"{duplicateWarning}"</span> already exists
             in this tournament. Add it anyway?
           </p>
           <div className="flex gap-2 mt-2">
             <button
               onClick={confirmDuplicateTeam}
-              className="text-xs font-medium bg-amber-500 hover:bg-amber-600 text-white rounded-md px-3 py-1.5 transition"
+              className="text-xs font-medium bg-warn-soft0 hover:bg-warn text-white rounded-md px-3 py-1.5 transition"
             >
               Add anyway
             </button>
             <button
               onClick={cancelDuplicateTeam}
-              className="text-xs font-medium text-slate-500 hover:text-slate-700 px-3 py-1.5"
+              className="text-xs font-medium text-ink-dim hover:text-ink-dim px-3 py-1.5"
             >
               Cancel
             </button>
@@ -170,7 +170,7 @@ export default function TournamentAdmin() {
       )}
 
       {teams.length === 0 ? (
-        <div className="text-center text-slate-400 py-10 border border-dashed border-slate-200 rounded-xl">
+        <div className="text-center text-ink-faint py-10 border border-dashed border-line rounded-xl">
           No teams yet. Add your first team above.
         </div>
       ) : (
@@ -179,10 +179,10 @@ export default function TournamentAdmin() {
             <Link
               key={team.id}
               to={`/basketball/${tournamentId}/team/${team.id}`}
-              className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 hover:border-orange-400 hover:shadow-sm transition"
+              className="flex items-center justify-between rounded-lg border border-line bg-panel px-4 py-3 hover:border-accent hover:shadow-sm transition"
             >
-              <span className="font-medium text-slate-800">{team.name}</span>
-              <span className="text-sm text-slate-400">Manage roster →</span>
+              <span className="font-medium text-ink">{team.name}</span>
+              <span className="text-sm text-ink-faint">Manage roster →</span>
             </Link>
           ))}
         </div>

@@ -99,9 +99,9 @@ export default function TournamentSchedule() {
 
   if (!tournament) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-10 text-slate-500">
+      <div className="max-w-2xl mx-auto px-4 py-10 text-ink-dim">
         {error ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
             {error}
           </div>
         ) : (
@@ -113,34 +113,34 @@ export default function TournamentSchedule() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
-      <Link to={`/basketball/${tournamentId}`} className="text-sm text-slate-400 hover:text-slate-600">
+      <Link to={`/basketball/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
         ← Back to teams
       </Link>
       <div className="flex items-center justify-between mt-1 mb-4">
-        <h1 className="text-2xl font-bold text-slate-900">{tournament.name}</h1>
+        <h1 className="text-2xl font-display font-bold tracking-wide text-ink">{tournament.name}</h1>
         <Link
           to={`/basketball/${tournamentId}/leaderboard`}
-          className="text-sm font-medium text-slate-400 hover:text-orange-500"
+          className="text-sm font-medium text-ink-faint hover:text-accent"
         >
           🏆 Leaderboard
         </Link>
       </div>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="mb-4 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
           {error}
         </div>
       )}
 
-      <div className="flex gap-2 mb-6 border-b border-slate-200">
+      <div className="flex gap-2 mb-6 border-b border-line">
         {['standings', 'schedule', 'bracket'].map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition flex items-center gap-1 ${
               tab === t
-                ? 'border-orange-500 text-orange-600'
-                : 'border-transparent text-slate-400 hover:text-slate-600'
+                ? 'border-accent text-accent'
+                : 'border-transparent text-ink-faint hover:text-ink-dim'
             }`}
           >
             {t === 'standings' ? 'Standings' : t === 'schedule' ? 'Round-Robin' : 'Bracket'}
@@ -159,7 +159,7 @@ export default function TournamentSchedule() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-slate-400 border-b border-slate-200">
+                  <tr className="text-left text-ink-faint border-b border-line">
                     <th className="py-2 pr-2">#</th>
                     <th className="py-2 pr-2">Team</th>
                     <th className="py-2 pr-2 text-center">W</th>
@@ -171,9 +171,9 @@ export default function TournamentSchedule() {
                 </thead>
                 <tbody>
                   {standings.map((s, i) => (
-                    <tr key={s.team.id} className="border-b border-slate-100">
-                      <td className="py-2 pr-2 text-slate-400">{i + 1}</td>
-                      <td className="py-2 pr-2 font-medium text-slate-800">{s.team.name}</td>
+                    <tr key={s.team.id} className="border-b border-line">
+                      <td className="py-2 pr-2 text-ink-faint">{i + 1}</td>
+                      <td className="py-2 pr-2 font-medium text-ink">{s.team.name}</td>
                       <td className="py-2 pr-2 text-center">{s.wins}</td>
                       <td className="py-2 pr-2 text-center">{s.losses}</td>
                       <td className="py-2 pr-2 text-center">{s.pointsFor}</td>
@@ -189,10 +189,10 @@ export default function TournamentSchedule() {
           )}
 
           {roundRobinMatches.length > 0 && !roundRobinComplete && (
-            <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-center">
-              <p className="text-sm text-slate-500">
+            <div className="mt-6 rounded-lg border border-line bg-page px-3 py-2.5 text-center">
+              <p className="text-sm text-ink-dim">
                 🔒 Bracket locked until the round-robin finishes.{' '}
-                <span className="font-medium text-slate-700">
+                <span className="font-medium text-ink-dim">
                   {roundRobinMatches.filter((m) => !isResolved(m)).length} game(s) remaining
                 </span>
               </p>
@@ -203,7 +203,7 @@ export default function TournamentSchedule() {
             <button
               onClick={handleGenerateBracket}
               disabled={generating || roundRobinMatches.length === 0 || !roundRobinComplete}
-              className="w-full mt-6 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 transition disabled:opacity-50"
+              className="w-full mt-6 rounded-lg bg-accent-soft0 hover:bg-accent-strong text-white font-medium py-2.5 transition disabled:opacity-50"
             >
               {generating
                 ? 'Generating...'
@@ -213,27 +213,27 @@ export default function TournamentSchedule() {
             </button>
           )}
           {roundRobinMatches.length === 0 && (
-            <p className="text-xs text-slate-400 text-center mt-2">
+            <p className="text-xs text-ink-faint text-center mt-2">
               Set up the format and generate a round-robin schedule first.
             </p>
           )}
 
           {confirmingRegenerate && (
-            <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3">
-              <p className="text-sm text-amber-800">
+            <div className="mt-3 rounded-lg border border-warn bg-warn-soft p-3">
+              <p className="text-sm text-warn">
                 A bracket already exists. Regenerating will <span className="font-medium">erase
                 all existing play-in and elimination results</span> and start fresh. Continue?
               </p>
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={runGenerateBracket}
-                  className="text-xs font-medium bg-amber-500 hover:bg-amber-600 text-white rounded-md px-3 py-1.5 transition"
+                  className="text-xs font-medium bg-warn-soft0 hover:bg-warn text-white rounded-md px-3 py-1.5 transition"
                 >
                   Yes, erase and regenerate
                 </button>
                 <button
                   onClick={() => setConfirmingRegenerate(false)}
-                  className="text-xs font-medium text-slate-500 hover:text-slate-700 px-3 py-1.5"
+                  className="text-xs font-medium text-ink-dim hover:text-ink-dim px-3 py-1.5"
                 >
                   Cancel
                 </button>
@@ -258,7 +258,7 @@ export default function TournamentSchedule() {
       {tab === 'bracket' && (
         <div className="space-y-4">
           {!roundRobinComplete ? (
-            <div className="text-center text-slate-400 py-10 border border-dashed border-slate-200 rounded-xl">
+            <div className="text-center text-ink-faint py-10 border border-dashed border-line rounded-xl">
               🔒 The bracket unlocks once every round-robin game is finished.
               <div className="text-xs mt-1">
                 {roundRobinMatches.filter((m) => !isResolved(m)).length} game(s) remaining
@@ -268,7 +268,7 @@ export default function TournamentSchedule() {
             <>
               {playInMatches.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-400 uppercase mb-2">Play-in</h3>
+                  <h3 className="text-xs font-semibold text-ink-faint uppercase mb-2">Play-in</h3>
                   <div className="space-y-2">
                     {playInMatches.map((m) => (
                       <MatchRow key={m.id} match={m} teamName={teamName} tournamentId={tournamentId} onForfeit={handleForfeit} />
@@ -290,7 +290,7 @@ export default function TournamentSchedule() {
                   .sort(([a], [b]) => Number(a) - Number(b))
                   .map(([round, roundMatches]) => (
                     <div key={round}>
-                      <h3 className="text-xs font-semibold text-slate-400 uppercase mb-2">
+                      <h3 className="text-xs font-semibold text-ink-faint uppercase mb-2">
                         Round {round}
                       </h3>
                       <div className="space-y-2">
@@ -318,30 +318,30 @@ function MatchRow({ match, teamName, tournamentId, onForfeit }) {
   const isViewable = match.status === 'completed'
 
   const content = (
-    <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm">
+    <div className="flex items-center justify-between rounded-lg border border-line bg-panel px-4 py-3 text-sm">
       <div className="flex items-center gap-2">
-        <span className={match.winnerTeamId === match.teamAId ? 'font-semibold text-slate-900' : 'text-slate-700'}>
+        <span className={match.winnerTeamId === match.teamAId ? 'font-semibold text-ink' : 'text-ink-dim'}>
           {teamName(match.teamAId)}
         </span>
-        <span className="text-slate-300">vs</span>
-        <span className={match.winnerTeamId === match.teamBId ? 'font-semibold text-slate-900' : 'text-slate-700'}>
+        <span className="text-ink-faint">vs</span>
+        <span className={match.winnerTeamId === match.teamBId ? 'font-semibold text-ink' : 'text-ink-dim'}>
           {isBye ? 'BYE' : teamName(match.teamBId)}
         </span>
       </div>
       <div className="text-xs flex items-center gap-2">
         {match.status === 'completed' && (
-          <span className="text-slate-500">
+          <span className="text-ink-dim">
             {match.teamAScore} - {match.teamBScore}
           </span>
         )}
-        {match.status === 'scheduled' && <span className="text-slate-400">Scheduled</span>}
-        {match.status === 'live' && <span className="text-emerald-600 font-medium">● LIVE</span>}
-        {match.status === 'bye' && <span className="text-slate-400">Bye</span>}
+        {match.status === 'scheduled' && <span className="text-ink-faint">Scheduled</span>}
+        {match.status === 'live' && <span className="text-live font-medium">● LIVE</span>}
+        {match.status === 'bye' && <span className="text-ink-faint">Bye</span>}
         {match.status === 'forfeit' && (
-          <span className="text-red-500">Forfeit ({teamName(match.forfeitTeamId)})</span>
+          <span className="text-live">Forfeit ({teamName(match.forfeitTeamId)})</span>
         )}
-        {isPlayable && <span className="text-orange-500 font-medium">Play →</span>}
-        {isViewable && <span className="text-slate-400 font-medium">Box score →</span>}
+        {isPlayable && <span className="text-accent font-medium">Play →</span>}
+        {isViewable && <span className="text-ink-faint font-medium">Box score →</span>}
       </div>
     </div>
   )
@@ -349,11 +349,11 @@ function MatchRow({ match, teamName, tournamentId, onForfeit }) {
   return (
     <div>
       {isPlayable ? (
-        <Link to={`/basketball/${tournamentId}/match/${match.id}/lineup`} className="block hover:border-orange-400 rounded-lg transition">
+        <Link to={`/basketball/${tournamentId}/match/${match.id}/lineup`} className="block hover:border-accent rounded-lg transition">
           {content}
         </Link>
       ) : isViewable ? (
-        <Link to={`/watch/${tournamentId}/match/${match.id}`} className="block hover:border-orange-400 rounded-lg transition">
+        <Link to={`/watch/${tournamentId}/match/${match.id}`} className="block hover:border-accent rounded-lg transition">
           {content}
         </Link>
       ) : (
@@ -363,31 +363,31 @@ function MatchRow({ match, teamName, tournamentId, onForfeit }) {
       {canForfeit && !confirmingForfeit && (
         <button
           onClick={() => setConfirmingForfeit(true)}
-          className="text-[11px] text-slate-400 hover:text-red-500 mt-1 ml-1"
+          className="text-[11px] text-ink-faint hover:text-live mt-1 ml-1"
         >
           Mark a team as forfeiting
         </button>
       )}
 
       {confirmingForfeit && (
-        <div className="mt-1 rounded-lg border border-red-200 bg-red-50 p-2.5">
-          <p className="text-xs text-red-700 mb-2">Which team is forfeiting?</p>
+        <div className="mt-1 rounded-lg border border-live bg-live-soft p-2.5">
+          <p className="text-xs text-live mb-2">Which team is forfeiting?</p>
           <div className="flex gap-2">
             <button
               onClick={() => { onForfeit(match.id, match.teamAId); setConfirmingForfeit(false) }}
-              className="flex-1 text-xs rounded-md bg-white border border-red-300 text-red-700 px-2 py-1.5 hover:bg-red-100 transition"
+              className="flex-1 text-xs rounded-md bg-panel border border-live text-live px-2 py-1.5 hover:bg-live-soft transition"
             >
               {teamName(match.teamAId)}
             </button>
             <button
               onClick={() => { onForfeit(match.id, match.teamBId); setConfirmingForfeit(false) }}
-              className="flex-1 text-xs rounded-md bg-white border border-red-300 text-red-700 px-2 py-1.5 hover:bg-red-100 transition"
+              className="flex-1 text-xs rounded-md bg-panel border border-live text-live px-2 py-1.5 hover:bg-live-soft transition"
             >
               {teamName(match.teamBId)}
             </button>
             <button
               onClick={() => setConfirmingForfeit(false)}
-              className="text-xs text-slate-500 hover:text-slate-700 px-2"
+              className="text-xs text-ink-dim hover:text-ink-dim px-2"
             >
               Cancel
             </button>
@@ -400,7 +400,7 @@ function MatchRow({ match, teamName, tournamentId, onForfeit }) {
 
 function EmptyState({ text }) {
   return (
-    <div className="text-center text-slate-400 py-10 border border-dashed border-slate-200 rounded-xl">
+    <div className="text-center text-ink-faint py-10 border border-dashed border-line rounded-xl">
       {text}
     </div>
   )

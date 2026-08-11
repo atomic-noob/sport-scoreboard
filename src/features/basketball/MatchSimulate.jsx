@@ -519,9 +519,9 @@ export default function MatchSimulate() {
 
   if (!match || !tournament) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-10 text-slate-500">
+      <div className="max-w-3xl mx-auto px-4 py-10 text-ink-dim">
         {error ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
             {error}
           </div>
         ) : (
@@ -552,19 +552,19 @@ export default function MatchSimulate() {
   return (
     <div className="px-3 py-3">
       <div className="flex items-center justify-between mb-2">
-        <Link to={`/basketball/${tournamentId}/schedule`} className="text-sm text-slate-400 hover:text-slate-600">
+        <Link to={`/basketball/${tournamentId}/schedule`} className="text-sm text-ink-faint hover:text-ink-dim">
           ← Back to schedule
         </Link>
         {resumedFromSnapshot && (
-          <span className="text-xs font-medium text-emerald-600 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          <span className="text-xs font-medium text-accent flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
             Resumed from saved progress
           </span>
         )}
       </div>
 
       {error && (
-        <div className="mb-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="mb-2 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
           {error}
         </div>
       )}
@@ -609,23 +609,23 @@ export default function MatchSimulate() {
 function PotgOverlay({ teamA, teamB, scoreA, scoreB, candidates, playerStats, potgPlayerId, onSelect, onConfirm, onBack, saving, error }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl max-w-md w-full max-h-[85vh] flex flex-col overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100">
-          <h2 className="font-bold text-slate-900">Player of the Game</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+      <div className="bg-panel rounded-xl max-w-md w-full max-h-[85vh] flex flex-col overflow-hidden">
+        <div className="px-4 py-3 border-b border-line">
+          <h2 className="font-bold text-ink">Player of the Game</h2>
+          <p className="text-xs text-ink-dim mt-0.5">
             Final: {teamA?.name} {scoreA} &middot; {teamB?.name} {scoreB}
           </p>
         </div>
 
         {error && (
-          <div className="mx-3 mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          <div className="mx-3 mt-2 rounded-lg border border-live bg-live-soft px-3 py-2 text-xs text-live">
             {error}
           </div>
         )}
 
         <div className="flex-1 overflow-y-auto px-3 py-2">
           {candidates.length === 0 && (
-            <p className="text-sm text-slate-400 px-2 py-4">
+            <p className="text-sm text-ink-faint px-2 py-4">
               No player stats were recorded this game -- you can skip choosing a Player of the Game.
             </p>
           )}
@@ -638,16 +638,16 @@ function PotgOverlay({ teamA, teamB, scoreA, scoreB, candidates, playerStats, po
                 key={player.id}
                 onClick={() => onSelect(player.id)}
                 className={`w-full flex items-center justify-between rounded-lg border px-3 py-2 my-1 text-left transition ${
-                  isSuggested ? 'border-orange-400 bg-orange-50' : 'border-transparent hover:bg-slate-50'
+                  isSuggested ? 'border-accent bg-accent-soft' : 'border-transparent hover:bg-panel-alt'
                 }`}
               >
                 <span className="min-w-0">
-                  <span className="text-sm font-medium text-slate-800">
+                  <span className="text-sm font-medium text-ink">
                     #{player.jerseyNumber ?? '--'} {player.name}
                   </span>
-                  <span className="block text-[11px] text-slate-400 truncate">{teamName}</span>
+                  <span className="block text-[11px] text-ink-faint truncate">{teamName}</span>
                 </span>
-                <span className="text-xs text-slate-500 shrink-0 ml-2">
+                <span className="text-xs text-ink-dim shrink-0 ml-2">
                   {s.points}p &middot; {s.assists}a &middot; {s.fouls}f &middot; {s.turnovers}to
                 </span>
               </button>
@@ -655,17 +655,17 @@ function PotgOverlay({ teamA, teamB, scoreA, scoreB, candidates, playerStats, po
           })}
         </div>
 
-        <div className="px-3 py-3 border-t border-slate-100 flex gap-2">
+        <div className="px-3 py-3 border-t border-line flex gap-2">
           <button
             onClick={onBack}
-            className="flex-1 rounded-lg border border-slate-300 text-slate-600 font-medium py-2.5 hover:bg-slate-50 transition"
+            className="flex-1 rounded-lg border border-line-strong text-ink-dim font-medium py-2.5 hover:bg-panel-alt transition"
           >
             Back
           </button>
           <button
             onClick={onConfirm}
             disabled={saving}
-            className="flex-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 transition disabled:opacity-50"
+            className="flex-1 rounded-lg bg-accent-strong hover:bg-accent text-white font-medium py-2.5 transition disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Confirm & Complete Match'}
           </button>
@@ -685,20 +685,20 @@ function ActionLogOverlay({ actionLog, playerName, teamName, onClose }) {
   const reversed = [...actionLog].reverse()
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl max-w-md w-full max-h-[85vh] flex flex-col overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="font-bold text-slate-900">Game Log</h2>
-          <button onClick={onClose} className="text-xs text-slate-400 hover:text-slate-600">Close</button>
+      <div className="bg-panel rounded-xl max-w-md w-full max-h-[85vh] flex flex-col overflow-hidden">
+        <div className="px-4 py-3 border-b border-line flex items-center justify-between">
+          <h2 className="font-bold text-ink">Game Log</h2>
+          <button onClick={onClose} className="text-xs text-ink-faint hover:text-ink-dim">Close</button>
         </div>
         <div className="flex-1 overflow-y-auto px-3 py-2">
           {reversed.length === 0 && (
-            <p className="text-sm text-slate-400 px-2 py-4">Nothing logged yet.</p>
+            <p className="text-sm text-ink-faint px-2 py-4">Nothing logged yet.</p>
           )}
           {reversed.map((a) => (
             <div
               key={a.id}
               className={`text-xs px-2 py-1.5 my-0.5 rounded-md ${
-                a.type === 'CORRECTION' ? 'bg-amber-50 text-amber-800' : a.reversed ? 'text-slate-300 line-through' : 'text-slate-600'
+                a.type === 'CORRECTION' ? 'bg-warn-soft text-warn' : a.reversed ? 'text-ink-faint line-through' : 'text-ink-dim'
               }`}
             >
               Q{a.quarter} &middot; {teamName(a.teamId)} &middot; {playerName(a.playerId)} &middot;{' '}
@@ -753,24 +753,24 @@ function DesktopGrid(props) {
         {restSeconds !== null ? (
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[9px] text-amber-600 font-medium uppercase">Rest</p>
-              <span className="font-mono font-bold text-amber-700">{formatClock(restSeconds)}</span>
+              <p className="text-[9px] text-warn font-medium uppercase">Rest</p>
+              <span className="font-display font-bold text-warn">{formatClock(restSeconds)}</span>
             </div>
-            <button onClick={() => setRestSeconds(null)} className="text-[10px] rounded border border-slate-300 px-1.5 py-1 hover:bg-slate-50 transition">
+            <button onClick={() => setRestSeconds(null)} className="text-[10px] rounded border border-line-strong px-1.5 py-1 hover:bg-panel-alt transition">
               Skip
             </button>
           </div>
         ) : (
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[9px] text-slate-400 uppercase">{quarterLabel(quarter)}</p>
-              <span className="font-mono font-bold text-slate-900">{formatClock(quarterSeconds ?? 0)}</span>
+              <p className="text-[9px] text-ink-faint uppercase">{quarterLabel(quarter)}</p>
+              <span className="font-display font-bold text-ink">{formatClock(quarterSeconds ?? 0)}</span>
             </div>
             <div className="flex gap-1">
-              <button onClick={() => setRunning((r) => !r)} className="text-[10px] font-medium rounded bg-orange-500 hover:bg-orange-600 text-white px-1.5 py-1 transition">
+              <button onClick={() => setRunning((r) => !r)} className="text-[10px] font-medium rounded bg-accent-soft0 hover:bg-accent-strong text-white px-1.5 py-1 transition">
                 {running ? 'II' : '▶'}
               </button>
-              <button onClick={() => { setRunning(false); setQuarterSeconds((tournament.rules?.quarterMinutes ?? 10) * 60) }} className="text-[10px] font-medium rounded border border-slate-300 px-1.5 py-1 hover:bg-slate-50 transition">
+              <button onClick={() => { setRunning(false); setQuarterSeconds((tournament.rules?.quarterMinutes ?? 10) * 60) }} className="text-[10px] font-medium rounded border border-line-strong px-1.5 py-1 hover:bg-panel-alt transition">
                 ↺
               </button>
             </div>
@@ -780,19 +780,19 @@ function DesktopGrid(props) {
 
       <RailPanel style={{ gridColumn: '5 / 6', gridRow: '2 / 3' }}>
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-slate-500">Shot clock</span>
-          <span className={`font-mono font-bold ${shotClock <= 5 ? 'text-red-500' : 'text-slate-900'}`}>{shotClock}</span>
+          <span className="text-[10px] text-ink-dim">Shot clock</span>
+          <span className={`font-display font-bold ${shotClock <= 5 ? 'text-live' : 'text-ink'}`}>{shotClock}</span>
         </div>
         <div className="flex gap-1 mt-1">
-          <button onClick={() => setShotClock(24)} className="flex-1 text-[10px] rounded border border-slate-300 py-1 hover:bg-slate-50 transition">24</button>
-          <button onClick={() => setShotClock(14)} className="flex-1 text-[10px] rounded border border-slate-300 py-1 hover:bg-slate-50 transition">14</button>
+          <button onClick={() => setShotClock(24)} className="flex-1 text-[10px] rounded border border-line-strong py-1 hover:bg-panel-alt transition">24</button>
+          <button onClick={() => setShotClock(14)} className="flex-1 text-[10px] rounded border border-line-strong py-1 hover:bg-panel-alt transition">14</button>
         </div>
       </RailPanel>
 
       <RailPanel style={{ gridColumn: '5 / 6', gridRow: '3 / 4' }}>
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-slate-500">Possession</span>
-          <button onClick={() => setPossession((p) => (p === 'left' ? 'right' : 'left'))} className="text-base font-bold text-orange-600">
+          <span className="text-[10px] text-ink-dim">Possession</span>
+          <button onClick={() => setPossession((p) => (p === 'left' ? 'right' : 'left'))} className="text-base font-bold text-accent">
             {possession === 'left' ? '←' : '→'}
           </button>
         </div>
@@ -800,10 +800,10 @@ function DesktopGrid(props) {
 
       <RailPanel style={{ gridColumn: '5 / 6', gridRow: '4 / 5' }}>
         <div className="flex flex-col gap-1 text-[10px]">
-          <button onClick={() => useTimeout('A')} disabled={!timeoutsA} className="rounded border border-slate-300 px-1 py-1 hover:bg-slate-50 transition disabled:opacity-30">
+          <button onClick={() => useTimeout('A')} disabled={!timeoutsA} className="rounded border border-line-strong px-1 py-1 hover:bg-panel-alt transition disabled:opacity-30">
             TO {teamA?.name ?? 'A'} ({timeoutsA ?? 0})
           </button>
-          <button onClick={() => useTimeout('B')} disabled={!timeoutsB} className="rounded border border-slate-300 px-1 py-1 hover:bg-slate-50 transition disabled:opacity-30">
+          <button onClick={() => useTimeout('B')} disabled={!timeoutsB} className="rounded border border-line-strong px-1 py-1 hover:bg-panel-alt transition disabled:opacity-30">
             TO {teamB?.name ?? 'B'} ({timeoutsB ?? 0})
           </button>
         </div>
@@ -822,13 +822,13 @@ function DesktopGrid(props) {
           <button
             onClick={undoLastAction}
             disabled={!hasUndoable}
-            className="text-[10px] rounded border border-slate-300 px-1.5 py-1 hover:bg-slate-50 transition disabled:opacity-30"
+            className="text-[10px] rounded border border-line-strong px-1.5 py-1 hover:bg-panel-alt transition disabled:opacity-30"
           >
             Undo last
           </button>
           <button
             onClick={() => setShowLogModal(true)}
-            className="text-[10px] rounded border border-slate-300 px-1.5 py-1 hover:bg-slate-50 transition"
+            className="text-[10px] rounded border border-line-strong px-1.5 py-1 hover:bg-panel-alt transition"
           >
             View log
           </button>
@@ -839,7 +839,7 @@ function DesktopGrid(props) {
         <button
           onClick={handleComplete}
           disabled={saving}
-          className="w-full h-full rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs transition disabled:opacity-50"
+          className="w-full h-full rounded-xl bg-accent-strong hover:bg-accent text-white font-medium text-xs transition disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Complete Match'}
         </button>
@@ -852,7 +852,7 @@ function RailPanel({ style, children }) {
   return (
     <div
       style={{ ...style, minHeight: 0, overflow: 'hidden' }}
-      className="rounded-xl border border-slate-200 bg-white p-2"
+      className="rounded-xl border border-line bg-panel p-2"
     >
       {children}
     </div>
@@ -864,12 +864,12 @@ function RailPanel({ style, children }) {
 // literal at runtime (that silently produces unstyled buttons, which
 // bit us once already with the court circles).
 const STAT_BTN_COLORS = {
-  red: 'border-red-300 text-red-600 hover:bg-red-50',
-  slate: 'border-slate-300 text-slate-600 hover:bg-slate-100',
-  sky: 'border-sky-300 text-sky-600 hover:bg-sky-50',
-  violet: 'border-violet-300 text-violet-600 hover:bg-violet-50',
-  emerald: 'border-emerald-300 text-emerald-600 hover:bg-emerald-50',
-  amber: 'border-amber-300 text-amber-600 hover:bg-amber-50',
+  red: 'border-live text-live hover:bg-live-soft',
+  slate: 'border-line-strong text-ink-dim hover:bg-panel-alt',
+  sky: 'border-sky-600 text-sky-400 hover:bg-panel-alt',
+  violet: 'border-violet-600 text-violet-400 hover:bg-panel-alt',
+  emerald: 'border-accent text-accent hover:bg-accent-soft',
+  amber: 'border-warn text-warn hover:bg-warn-soft',
 }
 
 function SmallStatBtn({ label, color, onClick, disabled }) {
@@ -891,17 +891,17 @@ function TeamPanel({ team, score, teamFouls, lineup, stats, foulLimit, selected,
   const pid = selected?.player.id
 
   return (
-    <div className="h-full rounded-xl border border-slate-200 bg-white flex flex-col overflow-hidden">
-      <div className="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between shrink-0">
-        <span className="font-medium text-slate-800 truncate text-sm">{team?.name ?? 'TBD'}</span>
+    <div className="h-full rounded-xl border border-line bg-panel flex flex-col overflow-hidden">
+      <div className="px-3 py-1.5 border-b border-line flex items-center justify-between shrink-0">
+        <span className="font-medium text-ink truncate text-sm">{team?.name ?? 'TBD'}</span>
         <div className="text-right">
-          <span className="text-lg font-bold text-slate-900">{score}</span>
-          <span className="block text-[10px] text-slate-400 -mt-0.5">Team fouls: {teamFouls}</span>
+          <span className="text-lg font-display font-bold text-accent">{score}</span>
+          <span className="block text-[10px] text-ink-faint -mt-0.5">Team fouls: {teamFouls}</span>
         </div>
       </div>
 
-      <div className="px-2 py-1.5 border-b border-slate-100 bg-slate-50 shrink-0">
-        <p className="text-[10px] text-slate-500 mb-1 truncate">
+      <div className="px-2 py-1.5 border-b border-line bg-page shrink-0">
+        <p className="text-[10px] text-ink-dim mb-1 truncate">
           {selected ? `#${selected.player.jerseyNumber ?? '--'} ${selected.player.name}` : 'Tap a player'}
         </p>
         <div className="flex gap-1 mb-1">
@@ -910,7 +910,7 @@ function TeamPanel({ team, score, teamFouls, lineup, stats, foulLimit, selected,
               key={pts}
               onClick={() => canAct && actions.addPoints(pid, pts)}
               disabled={!canAct}
-              className="flex-1 rounded-md bg-orange-500 hover:bg-orange-600 text-white font-bold py-1.5 text-sm transition disabled:opacity-30"
+              className="flex-1 rounded-md bg-accent-soft0 hover:bg-accent-strong text-white font-bold py-1.5 text-sm transition disabled:opacity-30"
             >
               +{pts}
             </button>
@@ -918,7 +918,7 @@ function TeamPanel({ team, score, teamFouls, lineup, stats, foulLimit, selected,
           <button
             onClick={() => canAct && actions.addMiss(pid)}
             disabled={!canAct}
-            className="flex-1 rounded-md border border-slate-300 text-slate-500 hover:bg-slate-100 font-medium py-1.5 text-[11px] transition disabled:opacity-30"
+            className="flex-1 rounded-md border border-line-strong text-ink-dim hover:bg-panel-alt font-medium py-1.5 text-[11px] transition disabled:opacity-30"
           >
             Miss
           </button>
@@ -935,7 +935,7 @@ function TeamPanel({ team, score, teamFouls, lineup, stats, foulLimit, selected,
           <SmallStatBtn label="Tech" color="red" onClick={() => canAct && actions.addTechnicalFoul(pid)} disabled={!canAct} />
         </div>
         {selectedFouledOut && (
-          <p className="text-[10px] text-red-600 font-medium mt-1">Fouled out -- sub from bench below</p>
+          <p className="text-[10px] text-live font-medium mt-1">Fouled out -- sub from bench below</p>
         )}
       </div>
 
@@ -960,9 +960,9 @@ function TeamPanel({ team, score, teamFouls, lineup, stats, foulLimit, selected,
 
 function BenchPanel({ team, bench, stats, selected, onSelect }) {
   return (
-    <div className="h-full rounded-xl border border-slate-200 bg-white p-1.5 overflow-y-auto">
-      <p className="text-[10px] font-semibold text-slate-400 uppercase px-1 pt-0.5 truncate">{team?.name} bench</p>
-      {bench.length === 0 && <p className="text-[10px] text-slate-300 px-1 pt-1">Empty</p>}
+    <div className="h-full rounded-xl border border-line bg-panel p-1.5 overflow-y-auto">
+      <p className="text-[10px] font-semibold text-ink-faint uppercase px-1 pt-0.5 truncate">{team?.name} bench</p>
+      {bench.length === 0 && <p className="text-[10px] text-ink-faint px-1 pt-1">Empty</p>}
       <div className="grid grid-cols-2 gap-1">
         {bench.map((player) => (
           <PlayerRow
@@ -986,10 +986,10 @@ function PlayerRow({ player, fouls, turnovers = 0, assists = 0, foulLimit, selec
   const fouledOut = fouls >= foulLimit
   const warning = fouls === foulLimit - 1
 
-  let rowClasses = 'border-transparent hover:bg-slate-50'
-  if (selected) rowClasses = 'border-orange-400 bg-orange-50'
-  else if (fouledOut) rowClasses = 'border-transparent bg-red-50'
-  else if (warning) rowClasses = 'border-transparent bg-amber-50'
+  let rowClasses = 'border-transparent hover:bg-panel-alt'
+  if (selected) rowClasses = 'border-accent bg-accent-soft'
+  else if (fouledOut) rowClasses = 'border-transparent bg-live-soft'
+  else if (warning) rowClasses = 'border-transparent bg-warn-soft'
 
   return (
     <button
@@ -997,16 +997,16 @@ function PlayerRow({ player, fouls, turnovers = 0, assists = 0, foulLimit, selec
       className={`w-full flex items-center justify-between rounded-md border px-1.5 ${compact ? 'py-1' : 'py-1.5'} my-0.5 text-left transition ${rowClasses}`}
     >
       <span className="flex items-center gap-1.5 min-w-0">
-        <span className="text-xs font-bold text-slate-700 w-5 text-center shrink-0">{player.jerseyNumber ?? '--'}</span>
-        <span className="text-xs text-slate-800 truncate">{player.name}</span>
+        <span className="text-xs font-bold text-ink-dim w-5 text-center shrink-0">{player.jerseyNumber ?? '--'}</span>
+        <span className="text-xs text-ink truncate">{player.name}</span>
       </span>
       <span className="flex items-center gap-1 shrink-0">
-        {fouledOut && <span className="text-[9px] font-bold bg-red-500 text-white rounded px-1">OUT</span>}
+        {fouledOut && <span className="text-[9px] font-bold bg-live-soft0 text-white rounded px-1">OUT</span>}
         {!fouledOut && fouls > 0 && (
-          <span className={`text-[10px] ${warning ? 'text-amber-600 font-medium' : 'text-slate-400'}`}>{fouls}F</span>
+          <span className={`text-[10px] ${warning ? 'text-warn font-medium' : 'text-ink-faint'}`}>{fouls}F</span>
         )}
-        {turnovers > 0 && <span className="text-[10px] text-slate-400">{turnovers}TO</span>}
-        {assists > 0 && <span className="text-[10px] text-sky-500">{assists}A</span>}
+        {turnovers > 0 && <span className="text-[10px] text-ink-faint">{turnovers}TO</span>}
+        {assists > 0 && <span className="text-[10px] text-sky-400">{assists}A</span>}
       </span>
     </button>
   )
@@ -1028,54 +1028,54 @@ function MobileStack(props) {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="rounded-xl border border-slate-200 bg-white p-3 flex flex-col gap-2">
+      <div className="rounded-xl border border-line bg-panel p-3 flex flex-col gap-2">
         {restSeconds !== null ? (
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] text-amber-600 font-medium uppercase">Rest / Timeout</p>
-              <span className="text-lg font-mono font-bold text-amber-700">{formatClock(restSeconds)}</span>
+              <p className="text-[10px] text-warn font-medium uppercase">Rest / Timeout</p>
+              <span className="text-lg font-display font-bold text-warn">{formatClock(restSeconds)}</span>
             </div>
-            <button onClick={() => setRestSeconds(null)} className="text-xs font-medium rounded-md border border-slate-300 px-2.5 py-1 hover:bg-slate-50 transition">
+            <button onClick={() => setRestSeconds(null)} className="text-xs font-medium rounded-md border border-line-strong px-2.5 py-1 hover:bg-panel-alt transition">
               Skip Rest
             </button>
           </div>
         ) : (
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] text-slate-400 uppercase">{quarterLabel(quarter)}</p>
-              <span className="text-lg font-mono font-bold text-slate-900">{formatClock(quarterSeconds ?? 0)}</span>
+              <p className="text-[10px] text-ink-faint uppercase">{quarterLabel(quarter)}</p>
+              <span className="text-lg font-display font-bold text-ink">{formatClock(quarterSeconds ?? 0)}</span>
             </div>
             <div className="flex gap-1">
-              <button onClick={() => setRunning((r) => !r)} className="text-xs font-medium rounded-md bg-orange-500 hover:bg-orange-600 text-white px-2.5 py-1 transition">
+              <button onClick={() => setRunning((r) => !r)} className="text-xs font-medium rounded-md bg-accent-soft0 hover:bg-accent-strong text-white px-2.5 py-1 transition">
                 {running ? 'Pause' : 'Start'}
               </button>
-              <button onClick={() => { setRunning(false); setQuarterSeconds((tournament.rules?.quarterMinutes ?? 10) * 60) }} className="text-xs font-medium rounded-md border border-slate-300 text-slate-600 px-2.5 py-1 hover:bg-slate-50 transition">
+              <button onClick={() => { setRunning(false); setQuarterSeconds((tournament.rules?.quarterMinutes ?? 10) * 60) }} className="text-xs font-medium rounded-md border border-line-strong text-ink-dim px-2.5 py-1 hover:bg-panel-alt transition">
                 Reset
               </button>
             </div>
           </div>
         )}
-        <div className="flex items-center justify-between border-t border-slate-100 pt-2">
-          <span className="text-xs text-slate-500">Shot clock</span>
-          <span className={`font-mono font-bold ${shotClock <= 5 ? 'text-red-500' : 'text-slate-900'}`}>{shotClock}</span>
+        <div className="flex items-center justify-between border-t border-line pt-2">
+          <span className="text-xs text-ink-dim">Shot clock</span>
+          <span className={`font-display font-bold ${shotClock <= 5 ? 'text-live' : 'text-ink'}`}>{shotClock}</span>
           <div className="flex gap-1">
-            <button onClick={() => setShotClock(24)} className="text-[11px] rounded-md border border-slate-300 px-2 py-1 hover:bg-slate-50 transition">24</button>
-            <button onClick={() => setShotClock(14)} className="text-[11px] rounded-md border border-slate-300 px-2 py-1 hover:bg-slate-50 transition">14</button>
+            <button onClick={() => setShotClock(24)} className="text-[11px] rounded-md border border-line-strong px-2 py-1 hover:bg-panel-alt transition">24</button>
+            <button onClick={() => setShotClock(14)} className="text-[11px] rounded-md border border-line-strong px-2 py-1 hover:bg-panel-alt transition">14</button>
           </div>
         </div>
-        <div className="flex items-center justify-between border-t border-slate-100 pt-2">
-          <span className="text-xs text-slate-500">Possession</span>
-          <button onClick={() => setPossession((p) => (p === 'left' ? 'right' : 'left'))} className="text-lg font-bold text-orange-600">
+        <div className="flex items-center justify-between border-t border-line pt-2">
+          <span className="text-xs text-ink-dim">Possession</span>
+          <button onClick={() => setPossession((p) => (p === 'left' ? 'right' : 'left'))} className="text-lg font-bold text-accent">
             {possession === 'left' ? '←' : '→'}
           </button>
         </div>
-        <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
-          <button onClick={() => useTimeout('A')} disabled={!timeoutsA} className="rounded-md border border-slate-300 px-2 py-1 hover:bg-slate-50 transition disabled:opacity-30">TO A ({timeoutsA ?? 0})</button>
-          <button onClick={() => useTimeout('B')} disabled={!timeoutsB} className="rounded-md border border-slate-300 px-2 py-1 hover:bg-slate-50 transition disabled:opacity-30">TO B ({timeoutsB ?? 0})</button>
+        <div className="flex items-center justify-between border-t border-line pt-2 text-xs">
+          <button onClick={() => useTimeout('A')} disabled={!timeoutsA} className="rounded-md border border-line-strong px-2 py-1 hover:bg-panel-alt transition disabled:opacity-30">TO A ({timeoutsA ?? 0})</button>
+          <button onClick={() => useTimeout('B')} disabled={!timeoutsB} className="rounded-md border border-line-strong px-2 py-1 hover:bg-panel-alt transition disabled:opacity-30">TO B ({timeoutsB ?? 0})</button>
         </div>
-        <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
-          <button onClick={undoLastAction} disabled={!hasUndoable} className="rounded-md border border-slate-300 px-2 py-1 hover:bg-slate-50 transition disabled:opacity-30">Undo last</button>
-          <button onClick={() => setShowLogModal(true)} className="rounded-md border border-slate-300 px-2 py-1 hover:bg-slate-50 transition">View log</button>
+        <div className="flex items-center justify-between border-t border-line pt-2 text-xs">
+          <button onClick={undoLastAction} disabled={!hasUndoable} className="rounded-md border border-line-strong px-2 py-1 hover:bg-panel-alt transition disabled:opacity-30">Undo last</button>
+          <button onClick={() => setShowLogModal(true)} className="rounded-md border border-line-strong px-2 py-1 hover:bg-panel-alt transition">View log</button>
         </div>
       </div>
 
@@ -1083,16 +1083,16 @@ function MobileStack(props) {
         { team: teamA, score: scoreA, teamFouls: teamFoulsA, lineup: lineupA, bench: benchA, selected: selectedA, key: 'A' },
         { team: teamB, score: scoreB, teamFouls: teamFoulsB, lineup: lineupB, bench: benchB, selected: selectedB, key: 'B' },
       ].map(({ team, score, teamFouls, lineup, bench, selected, key }) => (
-        <div key={key} className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-          <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
-            <span className="font-medium text-slate-800 truncate">{team?.name ?? 'TBD'}</span>
+        <div key={key} className="rounded-xl border border-line bg-panel overflow-hidden">
+          <div className="px-3 py-2 border-b border-line flex items-center justify-between">
+            <span className="font-medium text-ink truncate">{team?.name ?? 'TBD'}</span>
             <div className="text-right">
-              <span className="text-xl font-bold text-slate-900">{score}</span>
-              <span className="block text-[10px] text-slate-400 -mt-0.5">Team fouls: {teamFouls}</span>
+              <span className="text-xl font-display font-bold text-accent">{score}</span>
+              <span className="block text-[10px] text-ink-faint -mt-0.5">Team fouls: {teamFouls}</span>
             </div>
           </div>
-          <div className="px-3 py-2 border-b border-slate-100 bg-slate-50">
-            <p className="text-xs text-slate-500 mb-1.5 truncate">
+          <div className="px-3 py-2 border-b border-line bg-page">
+            <p className="text-xs text-ink-dim mb-1.5 truncate">
               {selected ? `Scoring: #${selected.player.jerseyNumber ?? '--'} ${selected.player.name}` : 'Tap a player to select them'}
             </p>
             <div className="flex gap-1.5 mb-1.5">
@@ -1101,7 +1101,7 @@ function MobileStack(props) {
                   key={pts}
                   onClick={() => selected && !selected.isBench && addPoints(selected.player.id, pts)}
                   disabled={!selected || selected.isBench}
-                  className="flex-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 transition disabled:opacity-30"
+                  className="flex-1 rounded-lg bg-accent-soft0 hover:bg-accent-strong text-white font-bold py-2 transition disabled:opacity-30"
                 >
                   +{pts}
                 </button>
@@ -1109,7 +1109,7 @@ function MobileStack(props) {
               <button
                 onClick={() => selected && !selected.isBench && addMiss(selected.player.id)}
                 disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-slate-300 text-slate-500 hover:bg-slate-100 font-medium py-2 text-sm transition disabled:opacity-30"
+                className="flex-1 rounded-lg border border-line-strong text-ink-dim hover:bg-panel-alt font-medium py-2 text-sm transition disabled:opacity-30"
               >
                 Miss
               </button>
@@ -1118,21 +1118,21 @@ function MobileStack(props) {
               <button
                 onClick={() => selected && !selected.isBench && addPersonalFoul(selected.player.id)}
                 disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 font-medium py-2 text-sm transition disabled:opacity-30"
+                className="flex-1 rounded-lg border border-live text-live hover:bg-live-soft font-medium py-2 text-sm transition disabled:opacity-30"
               >
                 Foul
               </button>
               <button
                 onClick={() => selected && !selected.isBench && addTurnover(selected.player.id)}
                 disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 font-medium py-2 text-sm transition disabled:opacity-30"
+                className="flex-1 rounded-lg border border-line-strong text-ink-dim hover:bg-panel-alt font-medium py-2 text-sm transition disabled:opacity-30"
               >
                 TOV
               </button>
               <button
                 onClick={() => selected && !selected.isBench && addAssist(selected.player.id)}
                 disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-sky-300 text-sky-600 hover:bg-sky-50 font-medium py-2 text-sm transition disabled:opacity-30"
+                className="flex-1 rounded-lg border border-sky-600 text-sky-400 hover:bg-panel-alt font-medium py-2 text-sm transition disabled:opacity-30"
               >
                 AST
               </button>
@@ -1141,35 +1141,35 @@ function MobileStack(props) {
               <button
                 onClick={() => selected && !selected.isBench && addRebound(selected.player.id)}
                 disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-violet-300 text-violet-600 hover:bg-violet-50 font-medium py-2 text-sm transition disabled:opacity-30"
+                className="flex-1 rounded-lg border border-violet-600 text-violet-400 hover:bg-panel-alt font-medium py-2 text-sm transition disabled:opacity-30"
               >
                 REB
               </button>
               <button
                 onClick={() => selected && !selected.isBench && addSteal(selected.player.id)}
                 disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-emerald-300 text-emerald-600 hover:bg-emerald-50 font-medium py-2 text-sm transition disabled:opacity-30"
+                className="flex-1 rounded-lg border border-accent text-accent hover:bg-accent-soft font-medium py-2 text-sm transition disabled:opacity-30"
               >
                 STL
               </button>
               <button
                 onClick={() => selected && !selected.isBench && addBlock(selected.player.id)}
                 disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-amber-300 text-amber-600 hover:bg-amber-50 font-medium py-2 text-sm transition disabled:opacity-30"
+                className="flex-1 rounded-lg border border-warn text-warn hover:bg-warn-soft font-medium py-2 text-sm transition disabled:opacity-30"
               >
                 BLK
               </button>
               <button
                 onClick={() => selected && !selected.isBench && addTechnicalFoul(selected.player.id)}
                 disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 font-medium py-2 text-sm transition disabled:opacity-30"
+                className="flex-1 rounded-lg border border-live text-live hover:bg-live-soft font-medium py-2 text-sm transition disabled:opacity-30"
               >
                 Tech
               </button>
             </div>
           </div>
           <div className="px-2 py-1.5">
-            <p className="text-[10px] font-semibold text-slate-400 uppercase px-1 pt-1">On court</p>
+            <p className="text-[10px] font-semibold text-ink-faint uppercase px-1 pt-1">On court</p>
             {lineup.map((player) => (
               <PlayerRow
                 key={player.id}
@@ -1184,8 +1184,8 @@ function MobileStack(props) {
             ))}
           </div>
           {bench.length > 0 && (
-            <div className="px-2 py-1.5 border-t border-slate-100">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase px-1 pt-1">Bench</p>
+            <div className="px-2 py-1.5 border-t border-line">
+              <p className="text-[10px] font-semibold text-ink-faint uppercase px-1 pt-1">Bench</p>
               {bench.map((player) => (
                 <PlayerRow
                   key={player.id}
@@ -1206,7 +1206,7 @@ function MobileStack(props) {
       <button
         onClick={handleComplete}
         disabled={saving}
-        className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 transition disabled:opacity-50"
+        className="w-full rounded-lg bg-accent-strong hover:bg-accent text-white font-medium py-3 transition disabled:opacity-50"
       >
         {saving ? 'Saving result...' : 'Complete Match & Advance Winner'}
       </button>

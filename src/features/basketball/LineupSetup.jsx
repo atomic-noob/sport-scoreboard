@@ -98,9 +98,9 @@ export default function LineupSetup() {
 
   if (!tournament || !teamA || !teamB) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-10 text-slate-500">
+      <div className="max-w-4xl mx-auto px-4 py-10 text-ink-dim">
         {error ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
             {error}
           </div>
         ) : (
@@ -112,16 +112,16 @@ export default function LineupSetup() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 flex flex-col" style={{ minHeight: 'calc(100vh - 20px)' }}>
-      <Link to={`/basketball/${tournamentId}/schedule`} className="text-sm text-slate-400 hover:text-slate-600 shrink-0">
+      <Link to={`/basketball/${tournamentId}/schedule`} className="text-sm text-ink-faint hover:text-ink-dim shrink-0">
         ← Back to schedule
       </Link>
-      <h1 className="text-2xl font-bold text-slate-900 mt-1 mb-1 shrink-0">Starting Lineups</h1>
-      <p className="text-slate-500 text-sm mb-4 shrink-0">
+      <h1 className="text-2xl font-display font-bold tracking-wide text-ink mt-1 mb-1 shrink-0">Starting Lineups</h1>
+      <p className="text-ink-dim text-sm mb-4 shrink-0">
         Tap {requiredCount(rosterA)} players per team to set the starting lineup.
       </p>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 shrink-0">
+        <div className="mb-4 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live shrink-0">
           {error}
         </div>
       )}
@@ -146,7 +146,7 @@ export default function LineupSetup() {
       <button
         onClick={handleStart}
         disabled={!canStart}
-        className="w-full mt-4 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 transition disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+        className="w-full mt-4 rounded-lg bg-accent-soft0 hover:bg-accent-strong text-white font-medium py-3 transition disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
       >
         {canStart ? 'Start Game' : `Select ${requiredCount(rosterA)} starters for each team`}
       </button>
@@ -156,18 +156,18 @@ export default function LineupSetup() {
 
 function LineupColumn({ team, roster, selected, required, onToggle }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white flex flex-col overflow-hidden min-h-0">
-      <div className="px-3 py-2 border-b border-slate-100 flex items-center justify-between shrink-0">
-        <span className="font-medium text-slate-800 truncate">{team?.name ?? 'TBD'}</span>
+    <div className="rounded-xl border border-line bg-panel flex flex-col overflow-hidden min-h-0">
+      <div className="px-3 py-2 border-b border-line flex items-center justify-between shrink-0">
+        <span className="font-medium text-ink truncate">{team?.name ?? 'TBD'}</span>
         <span
-          className={`text-xs font-medium ${selected.length === required ? 'text-emerald-600' : 'text-slate-400'}`}
+          className={`text-xs font-medium ${selected.length === required ? 'text-accent' : 'text-ink-faint'}`}
         >
           {selected.length} / {required}
         </span>
       </div>
 
       {roster.length === 0 && (
-        <p className="text-xs text-slate-400 px-3 py-4">No players on this team's roster yet.</p>
+        <p className="text-xs text-ink-faint px-3 py-4">No players on this team's roster yet.</p>
       )}
 
       {/* This grid is what scrolls -- not the whole page. Court-like:
@@ -182,18 +182,18 @@ function LineupColumn({ team, roster, selected, required, onToggle }) {
                 onClick={() => onToggle(player.id)}
                 className={`aspect-square rounded-xl border-2 flex flex-col items-center justify-center gap-1 p-2 transition ${
                   isSelected
-                    ? 'border-orange-400 bg-orange-50'
-                    : 'border-slate-200 hover:bg-slate-50'
+                    ? 'border-accent bg-accent-soft'
+                    : 'border-line hover:bg-panel-alt'
                 }`}
               >
-                <span className="text-2xl font-bold text-slate-800">
+                <span className="text-2xl font-display font-bold tracking-wide text-ink">
                   {player.jerseyNumber ?? '--'}
                 </span>
-                <span className="text-xs text-slate-600 text-center truncate max-w-full px-1">
+                <span className="text-xs text-ink-dim text-center truncate max-w-full px-1">
                   {player.name}
                 </span>
                 {isSelected && (
-                  <span className="text-[10px] font-medium text-orange-600">Starting</span>
+                  <span className="text-[10px] font-medium text-accent">Starting</span>
                 )}
               </button>
             )

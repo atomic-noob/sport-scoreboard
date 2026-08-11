@@ -49,28 +49,28 @@ export default function WatchTournament() {
 
   if (!tournament) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-page flex items-center justify-center px-4">
         {error ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
             {error}
           </div>
         ) : (
-          <p className="text-slate-400">Loading...</p>
+          <p className="text-ink-faint">Loading...</p>
         )}
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="min-h-screen bg-page">
+      <header className="border-b border-line bg-panel">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link to="/watch" className="text-sm text-slate-400 hover:text-slate-600">
+          <Link to="/watch" className="text-sm text-ink-faint hover:text-ink-dim">
             ← All tournaments
           </Link>
           {liveCount > 0 && (
-            <span className="text-xs font-medium text-emerald-600 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs font-medium text-live flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-live animate-pulse" />
               {liveCount} live now
             </span>
           )}
@@ -78,23 +78,23 @@ export default function WatchTournament() {
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-slate-900 mb-4">{tournament.name}</h1>
+        <h1 className="text-2xl font-display font-bold tracking-wide text-ink mb-4">{tournament.name}</h1>
 
         {error && (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="mb-4 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
             {error}
           </div>
         )}
 
-        <div className="flex gap-2 mb-6 border-b border-slate-200">
+        <div className="flex gap-2 mb-6 border-b border-line">
           {['standings', 'schedule', 'bracket'].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition ${
                 tab === t
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-slate-400 hover:text-slate-600'
+                  ? 'border-accent text-accent'
+                  : 'border-transparent text-ink-faint hover:text-ink-dim'
               }`}
             >
               {t === 'standings' ? 'Standings' : t === 'schedule' ? 'Round-Robin' : 'Bracket'}
@@ -109,7 +109,7 @@ export default function WatchTournament() {
             ) : (
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-slate-400 border-b border-slate-200">
+                  <tr className="text-left text-ink-faint border-b border-line">
                     <th className="py-2 pr-2">#</th>
                     <th className="py-2 pr-2">Team</th>
                     <th className="py-2 pr-2 text-center">W</th>
@@ -121,9 +121,9 @@ export default function WatchTournament() {
                 </thead>
                 <tbody>
                   {standings.map((s, i) => (
-                    <tr key={s.team.id} className="border-b border-slate-100">
-                      <td className="py-2 pr-2 text-slate-400">{i + 1}</td>
-                      <td className="py-2 pr-2 font-medium text-slate-800">{s.team.name}</td>
+                    <tr key={s.team.id} className="border-b border-line">
+                      <td className="py-2 pr-2 text-ink-faint">{i + 1}</td>
+                      <td className="py-2 pr-2 font-medium text-ink">{s.team.name}</td>
                       <td className="py-2 pr-2 text-center">{s.wins}</td>
                       <td className="py-2 pr-2 text-center">{s.losses}</td>
                       <td className="py-2 pr-2 text-center">{s.pointsFor}</td>
@@ -157,7 +157,7 @@ export default function WatchTournament() {
               <>
                 {playInMatches.length > 0 && (
                   <div>
-                    <h3 className="text-xs font-semibold text-slate-400 uppercase mb-2">Play-in</h3>
+                    <h3 className="text-xs font-semibold text-ink-faint uppercase mb-2">Play-in</h3>
                     <div className="space-y-2">
                       {playInMatches.map((m) => (
                         <WatchMatchRow key={m.id} match={m} teamName={teamName} tournamentId={tournamentId} />
@@ -178,7 +178,7 @@ export default function WatchTournament() {
                     .sort(([a], [b]) => Number(a) - Number(b))
                     .map(([round, roundMatches]) => (
                       <div key={round}>
-                        <h3 className="text-xs font-semibold text-slate-400 uppercase mb-2">Round {round}</h3>
+                        <h3 className="text-xs font-semibold text-ink-faint uppercase mb-2">Round {round}</h3>
                         <div className="space-y-2">
                           {roundMatches.map((m) => (
                             <WatchMatchRow key={m.id} match={m} teamName={teamName} tournamentId={tournamentId} />
@@ -201,31 +201,31 @@ function WatchMatchRow({ match, teamName, tournamentId }) {
   const isWatchable = match.status === 'live' || match.status === 'completed'
 
   const content = (
-    <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm">
+    <div className="flex items-center justify-between rounded-lg border border-line bg-panel px-4 py-3 text-sm">
       <div className="flex items-center gap-2">
-        <span className={match.winnerTeamId === match.teamAId ? 'font-semibold text-slate-900' : 'text-slate-700'}>
+        <span className={match.winnerTeamId === match.teamAId ? 'font-semibold text-ink' : 'text-ink-dim'}>
           {teamName(match.teamAId)}
         </span>
-        <span className="text-slate-300">vs</span>
-        <span className={match.winnerTeamId === match.teamBId ? 'font-semibold text-slate-900' : 'text-slate-700'}>
+        <span className="text-ink-faint">vs</span>
+        <span className={match.winnerTeamId === match.teamBId ? 'font-semibold text-ink' : 'text-ink-dim'}>
           {isBye ? 'BYE' : teamName(match.teamBId)}
         </span>
       </div>
       <div className="text-xs flex items-center gap-2">
         {match.status === 'completed' && (
-          <span className="text-slate-500">{match.teamAScore} - {match.teamBScore}</span>
+          <span className="text-ink-dim">{match.teamAScore} - {match.teamBScore}</span>
         )}
-        {match.status === 'scheduled' && <span className="text-slate-400">Scheduled</span>}
-        {match.status === 'live' && <span className="text-emerald-600 font-medium">● LIVE</span>}
-        {match.status === 'bye' && <span className="text-slate-400">Bye</span>}
-        {match.status === 'forfeit' && <span className="text-red-500">Forfeit ({teamName(match.forfeitTeamId)})</span>}
-        {isWatchable && <span className="text-orange-500 font-medium">View →</span>}
+        {match.status === 'scheduled' && <span className="text-ink-faint">Scheduled</span>}
+        {match.status === 'live' && <span className="text-live font-medium">● LIVE</span>}
+        {match.status === 'bye' && <span className="text-ink-faint">Bye</span>}
+        {match.status === 'forfeit' && <span className="text-live">Forfeit ({teamName(match.forfeitTeamId)})</span>}
+        {isWatchable && <span className="text-accent font-medium">View →</span>}
       </div>
     </div>
   )
 
   return isWatchable ? (
-    <Link to={`/watch/${tournamentId}/match/${match.id}`} className="block hover:border-orange-400 rounded-lg transition">
+    <Link to={`/watch/${tournamentId}/match/${match.id}`} className="block hover:border-accent rounded-lg transition">
       {content}
     </Link>
   ) : (
@@ -235,7 +235,7 @@ function WatchMatchRow({ match, teamName, tournamentId }) {
 
 function EmptyState({ text }) {
   return (
-    <div className="text-center text-slate-400 py-10 border border-dashed border-slate-200 rounded-xl">
+    <div className="text-center text-ink-faint py-10 border border-dashed border-line rounded-xl">
       {text}
     </div>
   )

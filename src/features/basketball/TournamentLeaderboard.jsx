@@ -38,9 +38,9 @@ export default function TournamentLeaderboard() {
 
   if (tournamentId && !tournament) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-10 text-slate-500">
+      <div className="max-w-2xl mx-auto px-4 py-10 text-ink-dim">
         {error ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+          <div className="rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">{error}</div>
         ) : (
           'Loading...'
         )}
@@ -52,26 +52,26 @@ export default function TournamentLeaderboard() {
     <div className="max-w-2xl mx-auto px-4 py-10">
       <Link
         to={tournamentId ? `/basketball/${tournamentId}/schedule` : '/basketball'}
-        className="text-sm text-slate-400 hover:text-slate-600"
+        className="text-sm text-ink-faint hover:text-ink-dim"
       >
         ← {tournamentId ? 'Back to schedule' : 'Back to tournaments'}
       </Link>
-      <h1 className="text-2xl font-bold text-slate-900 mt-1 mb-1">
+      <h1 className="text-2xl font-display font-bold tracking-wide text-ink mt-1 mb-1">
         {isGlobal ? 'Global Leaderboard' : `${tournament.name} Leaderboard`}
       </h1>
-      <p className="text-slate-500 text-sm mb-6">
+      <p className="text-ink-dim text-sm mb-6">
         {isGlobal
           ? 'Career stats across every tournament a player has ever played.'
           : 'Stats for this tournament only.'}
       </p>
 
       {!isGlobal && (
-        <Link to="/basketball/leaderboard" className="text-xs text-orange-500 hover:text-orange-600 font-medium">
+        <Link to="/basketball/leaderboard" className="text-xs text-accent hover:text-accent font-medium">
           View global/career leaderboard instead →
         </Link>
       )}
 
-      <div className="flex gap-2 my-6 border-b border-slate-200">
+      <div className="flex gap-2 my-6 border-b border-line">
         {['players', 'teams'].map((s) => (
           <button
             key={s}
@@ -79,8 +79,8 @@ export default function TournamentLeaderboard() {
             disabled={s === 'teams' && isGlobal}
             className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition capitalize disabled:opacity-30 disabled:cursor-not-allowed ${
               section === s
-                ? 'border-orange-500 text-orange-600'
-                : 'border-transparent text-slate-400 hover:text-slate-600'
+                ? 'border-accent text-accent'
+                : 'border-transparent text-ink-faint hover:text-ink-dim'
             }`}
           >
             {s}
@@ -88,7 +88,7 @@ export default function TournamentLeaderboard() {
         ))}
       </div>
       {section === 'teams' && isGlobal && (
-        <p className="text-xs text-slate-400 -mt-4 mb-4">
+        <p className="text-xs text-ink-faint -mt-4 mb-4">
           Team boards aren't available globally, since teams belong to a single tournament.
         </p>
       )}
@@ -135,8 +135,8 @@ function PlayerLeaderboards({ tournamentId, tournament }) {
             onClick={() => { setStat(s.key); setExpanded(false) }}
             className={`text-xs font-medium rounded-full px-3 py-1.5 transition ${
               stat === s.key
-                ? 'bg-orange-500 text-white'
-                : 'bg-white border border-slate-200 text-slate-600 hover:border-orange-300'
+                ? 'bg-accent-soft0 text-white'
+                : 'bg-panel border border-line text-ink-dim hover:border-accent'
             }`}
           >
             {s.label}
@@ -145,45 +145,45 @@ function PlayerLeaderboards({ tournamentId, tournament }) {
       </div>
 
       <div className="flex items-center justify-between mb-3">
-        <div className="flex rounded-lg border border-slate-200 overflow-hidden text-xs">
+        <div className="flex rounded-lg border border-line overflow-hidden text-xs">
           <button
             onClick={() => setMode('total')}
-            className={`px-3 py-1.5 font-medium transition ${mode === 'total' ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+            className={`px-3 py-1.5 font-medium transition ${mode === 'total' ? 'bg-accent text-on-accent' : 'bg-panel text-ink-dim hover:bg-panel-alt'}`}
           >
             Total
           </button>
           <button
             onClick={() => setMode('average')}
-            className={`px-3 py-1.5 font-medium transition ${mode === 'average' ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+            className={`px-3 py-1.5 font-medium transition ${mode === 'average' ? 'bg-accent text-on-accent' : 'bg-panel text-ink-dim hover:bg-panel-alt'}`}
           >
             Average
           </button>
         </div>
         {mode === 'average' && (
-          <span className="text-[11px] text-slate-400">Min. {minGames} game{minGames === 1 ? '' : 's'}</span>
+          <span className="text-[11px] text-ink-faint">Min. {minGames} game{minGames === 1 ? '' : 's'}</span>
         )}
       </div>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+        <div className="mb-4 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">{error}</div>
       )}
 
       {loading ? (
-        <p className="text-slate-400 text-sm py-6 text-center">Loading...</p>
+        <p className="text-ink-faint text-sm py-6 text-center">Loading...</p>
       ) : visible.length === 0 ? (
-        <div className="text-center text-slate-400 py-10 border border-dashed border-slate-200 rounded-xl">
+        <div className="text-center text-ink-faint py-10 border border-dashed border-line rounded-xl">
           No stats recorded yet.
         </div>
       ) : (
         <div className="space-y-1">
           {visible.map((p, i) => (
-            <div key={p.playerId} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm">
+            <div key={p.playerId} className="flex items-center justify-between rounded-lg border border-line bg-panel px-4 py-2.5 text-sm">
               <div className="flex items-center gap-3">
-                <span className="text-slate-400 w-5 text-right">{i + 1}</span>
-                <span className="font-medium text-slate-800">{p.playerName}</span>
-                <span className="text-[11px] text-slate-400">{p.games} game{p.games === 1 ? '' : 's'}</span>
+                <span className="text-ink-faint w-5 text-right">{i + 1}</span>
+                <span className="font-medium text-ink">{p.playerName}</span>
+                <span className="text-[11px] text-ink-faint">{p.games} game{p.games === 1 ? '' : 's'}</span>
               </div>
-              <span className="font-bold text-slate-900">
+              <span className="font-bold text-ink">
                 {mode === 'average' ? p.average.toFixed(1) : p.total}
               </span>
             </div>
@@ -194,7 +194,7 @@ function PlayerLeaderboards({ tournamentId, tournament }) {
       {!expanded && list.length > 10 && (
         <button
           onClick={() => setExpanded(true)}
-          className="w-full mt-3 text-xs font-medium text-orange-500 hover:text-orange-600 py-2"
+          className="w-full mt-3 text-xs font-medium text-accent hover:text-accent py-2"
         >
           Show all {list.length} →
         </button>
@@ -240,8 +240,8 @@ function TeamLeaderboards({ tournamentId }) {
             onClick={() => { setStat(s.key); setExpanded(false) }}
             className={`text-xs font-medium rounded-full px-3 py-1.5 transition ${
               stat === s.key
-                ? 'bg-orange-500 text-white'
-                : 'bg-white border border-slate-200 text-slate-600 hover:border-orange-300'
+                ? 'bg-accent-soft0 text-white'
+                : 'bg-panel border border-line text-ink-dim hover:border-accent'
             }`}
           >
             {s.label}
@@ -250,25 +250,25 @@ function TeamLeaderboards({ tournamentId }) {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+        <div className="mb-4 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">{error}</div>
       )}
 
       {loading ? (
-        <p className="text-slate-400 text-sm py-6 text-center">Loading...</p>
+        <p className="text-ink-faint text-sm py-6 text-center">Loading...</p>
       ) : visible.length === 0 ? (
-        <div className="text-center text-slate-400 py-10 border border-dashed border-slate-200 rounded-xl">
+        <div className="text-center text-ink-faint py-10 border border-dashed border-line rounded-xl">
           No completed games yet.
         </div>
       ) : (
         <div className="space-y-1">
           {visible.map((r, i) => (
-            <div key={r.team.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm">
+            <div key={r.team.id} className="flex items-center justify-between rounded-lg border border-line bg-panel px-4 py-2.5 text-sm">
               <div className="flex items-center gap-3">
-                <span className="text-slate-400 w-5 text-right">{i + 1}</span>
-                <span className="font-medium text-slate-800">{r.team.name}</span>
-                <span className="text-[11px] text-slate-400">{r.wins}-{r.losses}</span>
+                <span className="text-ink-faint w-5 text-right">{i + 1}</span>
+                <span className="font-medium text-ink">{r.team.name}</span>
+                <span className="text-[11px] text-ink-faint">{r.wins}-{r.losses}</span>
               </div>
-              <span className="font-bold text-slate-900">{formatValue(r)}</span>
+              <span className="font-bold text-ink">{formatValue(r)}</span>
             </div>
           ))}
         </div>
@@ -277,7 +277,7 @@ function TeamLeaderboards({ tournamentId }) {
       {!expanded && sorted.length > 10 && (
         <button
           onClick={() => setExpanded(true)}
-          className="w-full mt-3 text-xs font-medium text-orange-500 hover:text-orange-600 py-2"
+          className="w-full mt-3 text-xs font-medium text-accent hover:text-accent py-2"
         >
           Show all {sorted.length} →
         </button>

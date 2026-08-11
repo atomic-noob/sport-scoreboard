@@ -72,9 +72,9 @@ export default function EditTournament() {
 
   if (!tournament) {
     return (
-      <div className="max-w-lg mx-auto px-4 py-10 text-slate-500">
+      <div className="max-w-lg mx-auto px-4 py-10 text-ink-dim">
         {error ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
             {error}
           </div>
         ) : (
@@ -89,12 +89,12 @@ export default function EditTournament() {
   if (locked) {
     return (
       <div className="max-w-lg mx-auto px-4 py-10">
-        <Link to={`/basketball/${tournamentId}`} className="text-sm text-slate-400 hover:text-slate-600">
+        <Link to={`/basketball/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
           ← Back
         </Link>
-        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-6 text-center">
-          <p className="text-slate-700 font-medium mb-1">This tournament has started</p>
-          <p className="text-slate-500 text-sm">
+        <div className="mt-4 rounded-xl border border-line bg-panel p-6 text-center">
+          <p className="text-ink-dim font-medium mb-1">This tournament has started</p>
+          <p className="text-ink-dim text-sm">
             Details are locked once the start date arrives, so results stay consistent once
             games are underway.
           </p>
@@ -106,10 +106,10 @@ export default function EditTournament() {
   if (!unlocked) {
     return (
       <div className="max-w-sm mx-auto px-4 py-10">
-        <Link to={`/basketball/${tournamentId}`} className="text-sm text-slate-400 hover:text-slate-600">
+        <Link to={`/basketball/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
           ← Back
         </Link>
-        <h1 className="text-xl font-bold text-slate-900 mt-1 mb-4">Enter PIN to edit</h1>
+        <h1 className="text-xl font-display font-bold tracking-wide text-ink mt-1 mb-4">Enter PIN to edit</h1>
         <form onSubmit={handlePinSubmit} className="space-y-3">
           <input
             type="text"
@@ -121,12 +121,12 @@ export default function EditTournament() {
               setPinError('')
             }}
             placeholder="Enter PIN"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="w-full rounded-lg border border-line-strong px-3 py-2 text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-accent"
           />
-          {pinError && <p className="text-xs text-red-500">{pinError}</p>}
+          {pinError && <p className="text-xs text-live">{pinError}</p>}
           <button
             type="submit"
-            className="w-full rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 transition"
+            className="w-full rounded-lg bg-accent-soft0 hover:bg-accent-strong text-white font-medium py-2.5 transition"
           >
             Unlock
           </button>
@@ -137,36 +137,36 @@ export default function EditTournament() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-10">
-      <Link to={`/basketball/${tournamentId}`} className="text-sm text-slate-400 hover:text-slate-600">
+      <Link to={`/basketball/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
         ← Back
       </Link>
-      <h1 className="text-2xl font-bold text-slate-900 mt-1 mb-6">Edit Tournament</h1>
+      <h1 className="text-2xl font-display font-bold tracking-wide text-ink mt-1 mb-6">Edit Tournament</h1>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Tournament name</label>
+          <label className="block text-sm font-medium text-ink-dim mb-1">Tournament name</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="w-full rounded-lg border border-line-strong px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
             required
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Start date</label>
+            <label className="block text-sm font-medium text-ink-dim mb-1">Start date</label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-lg border border-line-strong px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Edit PIN <span className="text-slate-400 font-normal">(optional)</span>
+            <label className="block text-sm font-medium text-ink-dim mb-1">
+              Edit PIN <span className="text-ink-faint font-normal">(optional)</span>
             </label>
             <input
               type="text"
@@ -174,7 +174,7 @@ export default function EditTournament() {
               value={pin}
               onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="Leave blank for none"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-lg border border-line-strong px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
         </div>
@@ -191,7 +191,7 @@ export default function EditTournament() {
         )}
 
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
             {error}
           </div>
         )}
@@ -199,7 +199,7 @@ export default function EditTournament() {
         <button
           type="submit"
           disabled={saving}
-          className="w-full rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 transition disabled:opacity-50"
+          className="w-full rounded-lg bg-accent-soft0 hover:bg-accent-strong text-white font-medium py-2.5 transition disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
@@ -211,13 +211,13 @@ export default function EditTournament() {
 function RuleInput({ label, value, onChange }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-slate-600 mb-1">{label}</label>
+      <label className="block text-xs font-medium text-ink-dim mb-1">{label}</label>
       <input
         type="number"
         min="0"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+        className="w-full rounded-lg border border-line-strong px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
       />
     </div>
   )

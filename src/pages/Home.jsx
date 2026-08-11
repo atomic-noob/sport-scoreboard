@@ -13,17 +13,17 @@ export default function Home() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       <div className="flex items-start justify-between mb-1 gap-4">
-        <h1 className="text-3xl font-bold text-slate-900">All-Sport Scoreboard</h1>
+        <h1 className="text-3xl font-display font-bold tracking-wide text-ink">All-Sport Scoreboard</h1>
         <a
           href="/watch"
           target="_blank"
           rel="noopener noreferrer"
-          className="shrink-0 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-4 py-2 transition flex items-center gap-1.5"
+          className="shrink-0 rounded-lg bg-accent hover:bg-accent-strong text-on-accent text-sm font-medium px-4 py-2 transition flex items-center gap-1.5"
         >
           📺 Watch Live
         </a>
       </div>
-      <p className="text-slate-500 mb-8">Pick a sport to set up or score a game.</p>
+      <p className="text-ink-dim mb-8">Pick a sport to set up or score a game.</p>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {SPORTS.map((sport) =>
@@ -31,14 +31,14 @@ export default function Home() {
             <Link
               key={sport.id}
               to={`/${sport.id}`}
-              className="rounded-xl border border-slate-200 bg-white p-5 text-center font-medium transition hover:border-orange-400 hover:shadow-md cursor-pointer text-slate-800"
+              className="rounded-xl border border-line bg-panel p-5 text-center font-medium transition hover:border-accent hover:shadow-md cursor-pointer text-ink"
             >
               {sport.name}
             </Link>
           ) : (
             <div
               key={sport.id}
-              className="rounded-xl border border-slate-100 bg-slate-50 p-5 text-center font-medium text-slate-400 cursor-not-allowed"
+              className="rounded-xl border border-line bg-page p-5 text-center font-medium text-ink-faint cursor-not-allowed"
             >
               {sport.name}
               <div className="text-xs mt-1 font-normal">Coming soon</div>

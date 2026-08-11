@@ -2,8 +2,49 @@
 
 @theme {
   --font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Oswald", system-ui, sans-serif;
+
+  /* Surfaces -- dark court/broadcast theme */
+  --color-page: #0F1115;
+  --color-panel: #181B21;
+  --color-panel-alt: #1F232B;
+  --color-panel-raised: #242832;
+
+  /* Lines */
+  --color-line: #2A2F38;
+  --color-line-strong: #3A4049;
+
+  /* Text */
+  --color-ink: #E8EAED;
+  --color-ink-dim: #9AA1AC;
+  --color-ink-faint: #6B7280;
+
+  /* Accent -- emerald, the app's signature color */
+  --color-accent: #3DDC8A;
+  --color-accent-strong: #2FC578;
+  --color-accent-soft: #10261C;
+  --color-on-accent: #04241A;
+
+  /* Live / alert / danger -- reserved for LIVE badges, fouls, errors */
+  --color-live: #E5484D;
+  --color-live-soft: #2E1417;
+  --color-on-live: #2E0A0C;
+
+  /* Warning -- foul-limit warnings, cautions */
+  --color-warn: #F0A83D;
+  --color-warn-soft: #2E230F;
+  --color-on-warn: #2E1D06;
 }
 
 body {
   margin: 0;
+  background: var(--color-page);
+  color: var(--color-ink);
+}
+
+/* Tabular numbers for every score/timer digit -- prevents digits from
+   jittering in width as they change, which matters a lot for a live
+   scoreboard. */
+.font-display {
+  font-variant-numeric: tabular-nums;
 }

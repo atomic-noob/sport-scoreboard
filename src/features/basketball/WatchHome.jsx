@@ -23,16 +23,16 @@ export default function WatchHome() {
   )
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="min-h-screen bg-page">
+      <header className="border-b border-line bg-panel">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center">
-          <span className="font-bold text-slate-900">📺 Watch Live</span>
+          <span className="font-bold text-ink">📺 Watch Live</span>
         </div>
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-slate-900 mb-1">Find a tournament</h1>
-        <p className="text-slate-500 text-sm mb-6">
+        <h1 className="text-2xl font-display font-bold tracking-wide text-ink mb-1">Find a tournament</h1>
+        <p className="text-ink-dim text-sm mb-6">
           Browse live scores, schedules, and standings -- no account needed.
         </p>
 
@@ -41,19 +41,19 @@ export default function WatchHome() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search tournament name..."
-          className="w-full rounded-lg border border-slate-300 px-4 py-2.5 mb-6 focus:outline-none focus:ring-2 focus:ring-orange-400"
+          className="w-full rounded-lg border border-line-strong px-4 py-2.5 mb-6 focus:outline-none focus:ring-2 focus:ring-accent"
         />
 
         {error && (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="mb-4 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
             {error}
           </div>
         )}
 
         {loading ? (
-          <p className="text-slate-400 text-center py-10">Loading...</p>
+          <p className="text-ink-faint text-center py-10">Loading...</p>
         ) : filtered.length === 0 ? (
-          <div className="text-center text-slate-400 py-16 border border-dashed border-slate-200 rounded-xl">
+          <div className="text-center text-ink-faint py-16 border border-dashed border-line rounded-xl">
             {tournaments.length === 0 ? 'No tournaments yet.' : 'No tournaments match your search.'}
           </div>
         ) : (
@@ -62,10 +62,10 @@ export default function WatchHome() {
               <Link
                 key={t.id}
                 to={`/watch/${t.id}`}
-                className="block rounded-lg border border-slate-200 bg-white px-4 py-3 hover:border-orange-400 hover:shadow-sm transition"
+                className="block rounded-lg border border-line bg-panel px-4 py-3 hover:border-accent hover:shadow-sm transition"
               >
-                <div className="font-medium text-slate-800">{t.name}</div>
-                <div className="text-xs text-slate-400 mt-0.5">
+                <div className="font-medium text-ink">{t.name}</div>
+                <div className="text-xs text-ink-faint mt-0.5">
                   {t.sport === 'basketball' ? '🏀' : ''} {t.sport}
                   {t.startDate && <> · starts {t.startDate}</>}
                 </div>
