@@ -25,8 +25,11 @@ export default function WatchHome() {
   return (
     <div className="min-h-screen bg-page">
       <header className="border-b border-line bg-panel">
-        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center">
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <span className="font-bold text-ink">📺 Watch Live</span>
+          <Link to="/" className="text-xs text-ink-dim hover:text-ink">
+            🏆 Scoreboard home →
+          </Link>
         </div>
       </header>
 

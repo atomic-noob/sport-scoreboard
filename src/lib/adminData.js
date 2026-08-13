@@ -39,9 +39,13 @@ function playerFromRow(row) {
 // ---------- Tournaments ----------
 
 export async function createTournament({ name, sport = 'basketball', rules, startDate = null, pin = null }) {
+  const { data: userData } = await supabase.auth.getUser()
+  const userId = userData?.user?.id
+  if (!userId) throw new Error('You must be signed in to create a tournament.')
+
   const { data, error } = await supabase
     .from('tournaments')
-    .insert({ name, sport, rules, start_date: startDate, pin })
+    .insert({ name, sport, rules, start_date: startDate, pin, created_by: userId })
     .select()
     .single()
 

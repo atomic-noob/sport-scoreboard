@@ -1,6 +1,10 @@
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom'
 import Home from './pages/Home'
+import Login from './pages/Login'
 import SyncStatusBadge from './components/SyncStatusBadge'
+import ProtectedRoute from './components/ProtectedRoute'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import { signOut } from './lib/auth'
 import BasketballHome from './features/basketball/BasketballHome'
 import NewTournament from './features/basketball/NewTournament'
 import TournamentAdmin from './features/basketball/TournamentAdmin'
@@ -17,10 +21,18 @@ import TournamentLeaderboard from './features/basketball/TournamentLeaderboard'
 
 function AppHeader() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+
   // /watch pages are the public spectator experience and have their own
   // self-contained header (tournament name, live badge) -- skip the
   // organizer-facing app header there so it doesn't double up.
   if (location.pathname.startsWith('/watch')) return null
+
+  async function handleSignOut() {
+    await signOut()
+    navigate('/')
+  }
 
   return (
     <header className="border-b border-line bg-panel">
@@ -28,7 +40,21 @@ function AppHeader() {
         <Link to="/" className="font-bold text-ink">
           🏆 Scoreboard
         </Link>
-        <SyncStatusBadge />
+        <div className="flex items-center gap-4">
+          <SyncStatusBadge />
+          {user ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-ink-faint hidden sm:inline">{user.email}</span>
+              <button onClick={handleSignOut} className="text-xs font-medium text-ink-dim hover:text-ink">
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <Link to="/login" className="text-xs font-medium text-accent hover:text-accent-strong">
+              Sign in
+            </Link>
+          )}
+        </div>
       </div>
     </header>
   )
@@ -37,29 +63,34 @@ function AppHeader() {
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-page">
-        <AppHeader />
+      <AuthProvider>
+        <div className="min-h-screen bg-page">
+          <AppHeader />
 
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/basketball" element={<BasketballHome />} />
-          <Route path="/basketball/new" element={<NewTournament />} />
-          <Route path="/basketball/leaderboard" element={<TournamentLeaderboard />} />
-          <Route path="/basketball/:tournamentId" element={<TournamentAdmin />} />
-          <Route path="/basketball/:tournamentId/edit" element={<EditTournament />} />
-          <Route path="/basketball/:tournamentId/format" element={<TournamentFormat />} />
-          <Route path="/basketball/:tournamentId/schedule" element={<TournamentSchedule />} />
-          <Route path="/basketball/:tournamentId/leaderboard" element={<TournamentLeaderboard />} />
-          <Route path="/basketball/:tournamentId/match/:matchId/lineup" element={<LineupSetup />} />
-          <Route path="/basketball/:tournamentId/match/:matchId" element={<MatchSimulate />} />
-          <Route path="/basketball/:tournamentId/team/:teamId" element={<TeamRoster />} />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
 
-          {/* Public spectator routes -- no login, opened in a new tab */}
-          <Route path="/watch" element={<WatchHome />} />
-          <Route path="/watch/:tournamentId" element={<WatchTournament />} />
-          <Route path="/watch/:tournamentId/match/:matchId" element={<WatchMatch />} />
-        </Routes>
-      </div>
+            {/* Organizer/scorer routes -- require an account */}
+            <Route path="/basketball" element={<ProtectedRoute><BasketballHome /></ProtectedRoute>} />
+            <Route path="/basketball/new" element={<ProtectedRoute><NewTournament /></ProtectedRoute>} />
+            <Route path="/basketball/leaderboard" element={<ProtectedRoute><TournamentLeaderboard /></ProtectedRoute>} />
+            <Route path="/basketball/:tournamentId" element={<ProtectedRoute><TournamentAdmin /></ProtectedRoute>} />
+            <Route path="/basketball/:tournamentId/edit" element={<ProtectedRoute><EditTournament /></ProtectedRoute>} />
+            <Route path="/basketball/:tournamentId/format" element={<ProtectedRoute><TournamentFormat /></ProtectedRoute>} />
+            <Route path="/basketball/:tournamentId/schedule" element={<ProtectedRoute><TournamentSchedule /></ProtectedRoute>} />
+            <Route path="/basketball/:tournamentId/leaderboard" element={<ProtectedRoute><TournamentLeaderboard /></ProtectedRoute>} />
+            <Route path="/basketball/:tournamentId/match/:matchId/lineup" element={<ProtectedRoute><LineupSetup /></ProtectedRoute>} />
+            <Route path="/basketball/:tournamentId/match/:matchId" element={<ProtectedRoute><MatchSimulate /></ProtectedRoute>} />
+            <Route path="/basketball/:tournamentId/team/:teamId" element={<ProtectedRoute><TeamRoster /></ProtectedRoute>} />
+
+            {/* Public spectator routes -- no login, opened in a new tab */}
+            <Route path="/watch" element={<WatchHome />} />
+            <Route path="/watch/:tournamentId" element={<WatchTournament />} />
+            <Route path="/watch/:tournamentId/match/:matchId" element={<WatchMatch />} />
+          </Routes>
+        </div>
+      </AuthProvider>
     </BrowserRouter>
   )
 }
