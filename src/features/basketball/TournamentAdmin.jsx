@@ -140,7 +140,7 @@ export default function TournamentAdmin() {
         <button
           type="submit"
           disabled={adding}
-          className="rounded-lg bg-accent-soft0 hover:bg-accent-strong text-white font-medium px-4 py-2 transition disabled:opacity-50"
+          className="rounded-lg bg-accent hover:bg-accent-strong text-on-accent font-medium px-4 py-2 transition disabled:opacity-50"
         >
           Add Team
         </button>
@@ -155,7 +155,7 @@ export default function TournamentAdmin() {
           <div className="flex gap-2 mt-2">
             <button
               onClick={confirmDuplicateTeam}
-              className="text-xs font-medium bg-warn-soft0 hover:bg-warn text-white rounded-md px-3 py-1.5 transition"
+              className="text-xs font-medium bg-warn hover:bg-warn text-on-warn rounded-md px-3 py-1.5 transition"
             >
               Add anyway
             </button>

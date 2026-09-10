@@ -146,7 +146,7 @@ export default function LineupSetup() {
       <button
         onClick={handleStart}
         disabled={!canStart}
-        className="w-full mt-4 rounded-lg bg-accent-soft0 hover:bg-accent-strong text-white font-medium py-3 transition disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+        className="w-full mt-4 rounded-lg bg-accent hover:bg-accent-strong text-on-accent font-medium py-3 transition disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
       >
         {canStart ? 'Start Game' : `Select ${requiredCount(rosterA)} starters for each team`}
       </button>

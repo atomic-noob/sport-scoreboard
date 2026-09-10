@@ -665,7 +665,7 @@ function PotgOverlay({ teamA, teamB, scoreA, scoreB, candidates, playerStats, po
           <button
             onClick={onConfirm}
             disabled={saving}
-            className="flex-1 rounded-lg bg-accent-strong hover:bg-accent text-white font-medium py-2.5 transition disabled:opacity-50"
+            className="flex-1 rounded-lg bg-accent-strong hover:bg-accent text-on-accent font-medium py-2.5 transition disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Confirm & Complete Match'}
           </button>
@@ -767,7 +767,7 @@ function DesktopGrid(props) {
               <span className="font-display font-bold text-ink">{formatClock(quarterSeconds ?? 0)}</span>
             </div>
             <div className="flex gap-1">
-              <button onClick={() => setRunning((r) => !r)} className="text-[10px] font-medium rounded bg-accent-soft0 hover:bg-accent-strong text-white px-1.5 py-1 transition">
+              <button onClick={() => setRunning((r) => !r)} className="text-[10px] font-medium rounded bg-accent hover:bg-accent-strong text-on-accent px-1.5 py-1 transition">
                 {running ? 'II' : '▶'}
               </button>
               <button onClick={() => { setRunning(false); setQuarterSeconds((tournament.rules?.quarterMinutes ?? 10) * 60) }} className="text-[10px] font-medium rounded border border-line-strong px-1.5 py-1 hover:bg-panel-alt transition">
@@ -839,7 +839,7 @@ function DesktopGrid(props) {
         <button
           onClick={handleComplete}
           disabled={saving}
-          className="w-full h-full rounded-xl bg-accent-strong hover:bg-accent text-white font-medium text-xs transition disabled:opacity-50"
+          className="w-full h-full rounded-xl bg-accent-strong hover:bg-accent text-on-accent font-medium text-xs transition disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Complete Match'}
         </button>
@@ -910,7 +910,7 @@ function TeamPanel({ team, score, teamFouls, lineup, stats, foulLimit, selected,
               key={pts}
               onClick={() => canAct && actions.addPoints(pid, pts)}
               disabled={!canAct}
-              className="flex-1 rounded-md bg-accent-soft0 hover:bg-accent-strong text-white font-bold py-1.5 text-sm transition disabled:opacity-30"
+              className="flex-1 rounded-md bg-accent hover:bg-accent-strong text-on-accent font-bold py-1.5 text-sm transition disabled:opacity-30"
             >
               +{pts}
             </button>
@@ -1001,7 +1001,7 @@ function PlayerRow({ player, fouls, turnovers = 0, assists = 0, foulLimit, selec
         <span className="text-xs text-ink truncate">{player.name}</span>
       </span>
       <span className="flex items-center gap-1 shrink-0">
-        {fouledOut && <span className="text-[9px] font-bold bg-live-soft0 text-white rounded px-1">OUT</span>}
+        {fouledOut && <span className="text-[9px] font-bold bg-live text-white rounded px-1">OUT</span>}
         {!fouledOut && fouls > 0 && (
           <span className={`text-[10px] ${warning ? 'text-warn font-medium' : 'text-ink-faint'}`}>{fouls}F</span>
         )}
@@ -1046,7 +1046,7 @@ function MobileStack(props) {
               <span className="text-lg font-display font-bold text-ink">{formatClock(quarterSeconds ?? 0)}</span>
             </div>
             <div className="flex gap-1">
-              <button onClick={() => setRunning((r) => !r)} className="text-xs font-medium rounded-md bg-accent-soft0 hover:bg-accent-strong text-white px-2.5 py-1 transition">
+              <button onClick={() => setRunning((r) => !r)} className="text-xs font-medium rounded-md bg-accent hover:bg-accent-strong text-on-accent px-2.5 py-1 transition">
                 {running ? 'Pause' : 'Start'}
               </button>
               <button onClick={() => { setRunning(false); setQuarterSeconds((tournament.rules?.quarterMinutes ?? 10) * 60) }} className="text-xs font-medium rounded-md border border-line-strong text-ink-dim px-2.5 py-1 hover:bg-panel-alt transition">
@@ -1101,7 +1101,7 @@ function MobileStack(props) {
                   key={pts}
                   onClick={() => selected && !selected.isBench && addPoints(selected.player.id, pts)}
                   disabled={!selected || selected.isBench}
-                  className="flex-1 rounded-lg bg-accent-soft0 hover:bg-accent-strong text-white font-bold py-2 transition disabled:opacity-30"
+                  className="flex-1 rounded-lg bg-accent hover:bg-accent-strong text-on-accent font-bold py-2 transition disabled:opacity-30"
                 >
                   +{pts}
                 </button>
@@ -1206,7 +1206,7 @@ function MobileStack(props) {
       <button
         onClick={handleComplete}
         disabled={saving}
-        className="w-full rounded-lg bg-accent-strong hover:bg-accent text-white font-medium py-3 transition disabled:opacity-50"
+        className="w-full rounded-lg bg-accent-strong hover:bg-accent text-on-accent font-medium py-3 transition disabled:opacity-50"
       >
         {saving ? 'Saving result...' : 'Complete Match & Advance Winner'}
       </button>

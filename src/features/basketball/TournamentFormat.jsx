@@ -332,7 +332,7 @@ export default function TournamentFormat() {
         <button
           onClick={handleSaveAndGenerate}
           disabled={saving || notEnoughTeams}
-          className="w-full rounded-lg bg-accent-soft0 hover:bg-accent-strong text-white font-medium py-2.5 transition disabled:opacity-50"
+          className="w-full rounded-lg bg-accent hover:bg-accent-strong text-on-accent font-medium py-2.5 transition disabled:opacity-50"
         >
           {saving
             ? 'Generating...'
@@ -351,7 +351,7 @@ export default function TournamentFormat() {
             <div className="flex gap-2 mt-2">
               <button
                 onClick={runSaveAndGenerate}
-                className="text-xs font-medium bg-warn-soft0 hover:bg-warn text-white rounded-md px-3 py-1.5 transition"
+                className="text-xs font-medium bg-warn hover:bg-warn text-on-warn rounded-md px-3 py-1.5 transition"
               >
                 Yes, erase and regenerate
               </button>

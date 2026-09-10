@@ -70,7 +70,11 @@ export default function WatchHome() {
                 <div className="font-medium text-ink">{t.name}</div>
                 <div className="text-xs text-ink-faint mt-0.5">
                   {t.sport === 'basketball' ? '🏀' : ''} {t.sport}
+                  {t.level && <> · {t.level}</>}
                   {t.startDate && <> · starts {t.startDate}</>}
+                  {t.verificationStatus && t.verificationStatus !== 'unverified' && (
+                    <span className="text-accent"> · ✓ {t.verificationStatus}</span>
+                  )}
                 </div>
               </Link>
             ))}

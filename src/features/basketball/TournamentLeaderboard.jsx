@@ -135,7 +135,7 @@ function PlayerLeaderboards({ tournamentId, tournament }) {
             onClick={() => { setStat(s.key); setExpanded(false) }}
             className={`text-xs font-medium rounded-full px-3 py-1.5 transition ${
               stat === s.key
-                ? 'bg-accent-soft0 text-white'
+                ? 'bg-accent text-white'
                 : 'bg-panel border border-line text-ink-dim hover:border-accent'
             }`}
           >
@@ -240,7 +240,7 @@ function TeamLeaderboards({ tournamentId }) {
             onClick={() => { setStat(s.key); setExpanded(false) }}
             className={`text-xs font-medium rounded-full px-3 py-1.5 transition ${
               stat === s.key
-                ? 'bg-accent-soft0 text-white'
+                ? 'bg-accent text-white'
                 : 'bg-panel border border-line text-ink-dim hover:border-accent'
             }`}
           >

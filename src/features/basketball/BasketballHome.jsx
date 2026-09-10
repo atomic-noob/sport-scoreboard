@@ -22,7 +22,7 @@ export default function BasketballHome() {
           </Link>
           <Link
             to="/basketball/new"
-            className="rounded-lg bg-accent-soft0 hover:bg-accent-strong text-white text-sm font-medium px-4 py-2 transition"
+            className="rounded-lg bg-accent hover:bg-accent-strong text-on-accent text-sm font-medium px-4 py-2 transition"
           >
             + New Tournament
           </Link>
@@ -44,8 +44,12 @@ export default function BasketballHome() {
                 <div className="font-medium text-ink">{t.name}</div>
                 <div className="text-xs text-ink-faint mt-0.5">
                   {t.rules.quarterMinutes}min quarters · foul-out at {t.rules.foulLimit}
+                  {t.level && <> · {t.level}</>}
                   {t.startDate && <> · starts {t.startDate}</>}
                   {t.pin && <> · 🔒 PIN protected</>}
+                  {t.verificationStatus && t.verificationStatus !== 'unverified' && (
+                    <span className="text-accent"> · {t.verificationStatus}</span>
+                  )}
                 </div>
               </Link>
               <Link

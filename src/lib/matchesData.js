@@ -32,6 +32,7 @@ function matchFromRow(row) {
     winnerTeamId: row.winner_team_id,
     status: row.status,
     forfeitTeamId: row.forfeit_team_id,
+    shareCode: row.share_code,
     potgPlayerId: row.potg_player_id,
     scheduledAt: row.scheduled_at,
     createdAt: row.created_at,
@@ -331,17 +332,96 @@ export async function generateEliminationBracket(tournamentId, orderedTeamIds, t
     })
   }
 
-  const inserted = await insertMatches(rows)
+  const inserted = await insertRoundOneRows(rows)
+  return inserted
+}
 
-  // Bye "winners" are already decided -- push them straight into round 2
-  // now instead of waiting for a game that will never happen.
+/**
+ * Shared by both auto-generated and manually-built brackets: inserts the
+ * round-1 rows, then immediately advances any bye "winners" into round 2
+ * since there's no actual game to wait for.
+ */
+async function insertRoundOneRows(rows) {
+  const inserted = await insertMatches(rows)
+  const tournamentId = rows[0]?.tournament_id
   for (const match of inserted) {
     if (match.status === 'bye') {
       await advanceWinner(tournamentId, match, match.winnerTeamId)
     }
   }
-
   return inserted
+}
+
+/**
+ * Builds round 1 of the elimination bracket from an organizer's manual
+ * placement, instead of the standings/seed-based best-vs-worst pairing.
+ *
+ * @param byeTeamIds - team ids the organizer assigned a bye
+ * @param pairs - array of [teamAId, teamBId] for each round-1 matchup
+ * @param playInPair - optional [teamAId, teamBId] for a play-in game,
+ *   whose winner takes the final reserved bracket slot (same as the
+ *   automatic version)
+ */
+export async function generateManualEliminationBracket(tournamentId, { byeTeamIds = [], pairs = [], playInPair = null }) {
+  const { error: clearError } = await supabase
+    .from('matches')
+    .delete()
+    .eq('tournament_id', tournamentId)
+    .in('phase', ['play_in', 'elimination'])
+  if (clearError) throw clearError
+
+  const rows = []
+  let pos = 0
+
+  if (playInPair) {
+    rows.push({
+      tournament_id: tournamentId,
+      phase: 'play_in',
+      round: 0,
+      team_a_id: playInPair[0],
+      team_b_id: playInPair[1],
+      status: 'scheduled',
+    })
+  }
+
+  for (const teamId of byeTeamIds) {
+    rows.push({
+      tournament_id: tournamentId,
+      phase: 'elimination',
+      round: 1,
+      bracket_position: pos++,
+      team_a_id: teamId,
+      team_b_id: null,
+      status: 'bye',
+      winner_team_id: teamId,
+    })
+  }
+
+  for (const [a, b] of pairs) {
+    rows.push({
+      tournament_id: tournamentId,
+      phase: 'elimination',
+      round: 1,
+      bracket_position: pos++,
+      team_a_id: a,
+      team_b_id: b,
+      status: 'scheduled',
+    })
+  }
+
+  if (playInPair) {
+    rows.push({
+      tournament_id: tournamentId,
+      phase: 'elimination',
+      round: 1,
+      bracket_position: pos++,
+      team_a_id: null,
+      team_b_id: null,
+      status: 'scheduled',
+    })
+  }
+
+  return insertRoundOneRows(rows)
 }
 
 /**
@@ -414,13 +494,48 @@ export async function getMatch(matchId) {
  * pages show it as in-progress instead of just "scheduled" or, worse,
  * invisible until it's already over.
  */
+function generateShareCode() {
+  const chars = 'abcdefghjkmnpqrstuvwxyz23456789' // no 0/o/1/l/i, easy to read/type
+  let code = ''
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)]
+  return code
+}
+
 export async function markMatchLive(matchId) {
-  const { error } = await supabase
-    .from('matches')
-    .update({ status: 'live' })
-    .eq('id', matchId)
-    .eq('status', 'scheduled') // don't clobber completed/forfeit if called again
+  // Only generate a share code if this match doesn't already have one --
+  // codes are lazy (created when a game actually goes live, not for
+  // every scheduled match), and calling this again shouldn't churn it.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const shareCode = generateShareCode()
+    const { error } = await supabase
+      .from('matches')
+      .update({ status: 'live', share_code: shareCode })
+      .eq('id', matchId)
+      .eq('status', 'scheduled')
+      .is('share_code', null)
+
+    if (!error) return
+    if (!error.message?.includes('duplicate') && !error.message?.includes('unique')) {
+      // Not a code collision -- maybe it's already live/has a code, which is fine.
+      const { error: fallbackError } = await supabase
+        .from('matches')
+        .update({ status: 'live' })
+        .eq('id', matchId)
+        .eq('status', 'scheduled')
+      if (fallbackError) throw fallbackError
+      return
+    }
+  }
+  // Couldn't get a unique share code after retries -- still mark it live,
+  // just without a shareable short link this time.
+  await supabase.from('matches').update({ status: 'live' }).eq('id', matchId).eq('status', 'scheduled')
+}
+
+/** Looks up a match by its short share code (e.g. from /live/abc123). */
+export async function getMatchByShareCode(code) {
+  const { data, error } = await supabase.from('matches').select('*').eq('share_code', code).maybeSingle()
   if (error) throw error
+  return data ? matchFromRow(data) : null
 }
 
 /**

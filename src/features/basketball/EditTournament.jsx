@@ -2,6 +2,16 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getTournament, updateTournament, isTournamentLocked } from '../../lib/adminData'
 
+const LEVELS = ['Casual / Community', 'Barangay', 'Municipal / City', 'Provincial', 'Regional', 'National', 'International', 'Official / Organization']
+const ORGANIZER_TYPES = ['Individual', 'Barangay', 'School', 'Club', 'League', 'LGU', 'Sports Organization', 'Other']
+
+const VERIFICATION_LABELS = {
+  unverified: { text: 'Unverified', color: 'text-ink-faint' },
+  pending: { text: 'Pending Verification', color: 'text-warn' },
+  verified: { text: 'Verified', color: 'text-accent' },
+  official: { text: 'Official', color: 'text-accent' },
+}
+
 export default function EditTournament() {
   const { tournamentId } = useParams()
   const navigate = useNavigate()
@@ -14,6 +24,8 @@ export default function EditTournament() {
   const [name, setName] = useState('')
   const [startDate, setStartDate] = useState('')
   const [pin, setPin] = useState('')
+  const [level, setLevel] = useState('')
+  const [organizerType, setOrganizerType] = useState('')
   const [rules, setRules] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -25,6 +37,8 @@ export default function EditTournament() {
         setName(t.name)
         setStartDate(t.startDate ?? '')
         setPin(t.pin ?? '')
+        setLevel(t.level ?? '')
+        setOrganizerType(t.organizerType ?? '')
         setRules(t.rules)
         // No PIN set on the tournament yet -- nothing to gate, go straight in
         if (!t.pin) setUnlocked(true)
@@ -59,6 +73,8 @@ export default function EditTournament() {
         name: name.trim(),
         startDate: startDate || null,
         pin: pin.trim() || null,
+        level: level || null,
+        organizerType: organizerType || null,
         rules,
       })
       navigate(`/basketball/${tournamentId}`)
@@ -126,7 +142,7 @@ export default function EditTournament() {
           {pinError && <p className="text-xs text-live">{pinError}</p>}
           <button
             type="submit"
-            className="w-full rounded-lg bg-accent-soft0 hover:bg-accent-strong text-white font-medium py-2.5 transition"
+            className="w-full rounded-lg bg-accent hover:bg-accent-strong text-on-accent font-medium py-2.5 transition"
           >
             Unlock
           </button>
@@ -140,7 +156,10 @@ export default function EditTournament() {
       <Link to={`/basketball/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
         ← Back
       </Link>
-      <h1 className="text-2xl font-display font-bold tracking-wide text-ink mt-1 mb-6">Edit Tournament</h1>
+      <h1 className="text-2xl font-display font-bold tracking-wide text-ink mt-1 mb-1">Edit Tournament</h1>
+      <p className={`text-xs font-medium mb-5 ${VERIFICATION_LABELS[tournament.verificationStatus]?.color ?? 'text-ink-faint'}`}>
+        {VERIFICATION_LABELS[tournament.verificationStatus]?.text ?? 'Unverified'}
+      </p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
@@ -149,9 +168,34 @@ export default function EditTournament() {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-line-strong px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
+            className="w-full rounded-lg border border-line-strong bg-panel-alt px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent"
             required
           />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-ink-dim mb-1">Level</label>
+            <select
+              value={level}
+              onChange={(e) => setLevel(e.target.value)}
+              className="w-full rounded-lg border border-line-strong bg-panel-alt px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+            >
+              <option value="">Not specified</option>
+              {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-ink-dim mb-1">Organizer type</label>
+            <select
+              value={organizerType}
+              onChange={(e) => setOrganizerType(e.target.value)}
+              className="w-full rounded-lg border border-line-strong bg-panel-alt px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+            >
+              <option value="">Not specified</option>
+              {ORGANIZER_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -161,7 +205,7 @@ export default function EditTournament() {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full rounded-lg border border-line-strong px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full rounded-lg border border-line-strong bg-panel-alt px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
           <div>
@@ -174,7 +218,7 @@ export default function EditTournament() {
               value={pin}
               onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="Leave blank for none"
-              className="w-full rounded-lg border border-line-strong px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full rounded-lg border border-line-strong bg-panel-alt px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
         </div>
@@ -199,7 +243,7 @@ export default function EditTournament() {
         <button
           type="submit"
           disabled={saving}
-          className="w-full rounded-lg bg-accent-soft0 hover:bg-accent-strong text-white font-medium py-2.5 transition disabled:opacity-50"
+          className="w-full rounded-lg bg-accent hover:bg-accent-strong text-on-accent font-medium py-2.5 transition disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Changes'}
         </button>

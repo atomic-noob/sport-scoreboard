@@ -144,8 +144,8 @@ export default function TournamentSchedule() {
             }`}
           >
             {t === 'standings' ? 'Standings' : t === 'schedule' ? 'Round-Robin' : 'Bracket'}
-            {t === 'bracket' && !roundRobinComplete && (
-              <span className="text-[10px]" title="Locked until the round-robin is complete">🔒</span>
+            {t === 'bracket' && !roundRobinComplete && eliminationMatches.length === 0 && playInMatches.length === 0 && (
+              <span className="text-[10px]" title="Auto-generate locked until round-robin is complete -- manual building still works">🔒</span>
             )}
           </button>
         ))}
@@ -191,7 +191,7 @@ export default function TournamentSchedule() {
           {roundRobinMatches.length > 0 && !roundRobinComplete && (
             <div className="mt-6 rounded-lg border border-line bg-page px-3 py-2.5 text-center">
               <p className="text-sm text-ink-dim">
-                🔒 Bracket locked until the round-robin finishes.{' '}
+                🔒 Auto-generate locked until round-robin finishes.{' '}
                 <span className="font-medium text-ink-dim">
                   {roundRobinMatches.filter((m) => !isResolved(m)).length} game(s) remaining
                 </span>
@@ -199,11 +199,11 @@ export default function TournamentSchedule() {
             </div>
           )}
 
-          {(roundRobinMatches.length === 0 || roundRobinComplete) && (
+          <div className="mt-6 flex gap-2">
             <button
               onClick={handleGenerateBracket}
               disabled={generating || roundRobinMatches.length === 0 || !roundRobinComplete}
-              className="w-full mt-6 rounded-lg bg-accent-soft0 hover:bg-accent-strong text-white font-medium py-2.5 transition disabled:opacity-50"
+              className="flex-1 rounded-lg bg-accent hover:bg-accent-strong text-on-accent font-medium py-2.5 transition disabled:opacity-50"
             >
               {generating
                 ? 'Generating...'
@@ -211,10 +211,21 @@ export default function TournamentSchedule() {
                   ? 'Regenerate Elimination Bracket'
                   : 'Generate Elimination Bracket'}
             </button>
+            <Link
+              to={`/basketball/${tournamentId}/bracket-builder`}
+              className="flex items-center justify-center rounded-lg border border-line-strong text-ink-dim hover:bg-panel-alt text-sm font-medium px-4 py-2.5 transition text-center"
+            >
+              Build manually
+            </Link>
+          </div>
+          {roundRobinMatches.length > 0 && !roundRobinComplete && (
+            <p className="text-xs text-ink-faint text-center mt-2">
+              🔒 Auto-generate is locked until round-robin finishes — building manually is still available anytime.
+            </p>
           )}
           {roundRobinMatches.length === 0 && (
             <p className="text-xs text-ink-faint text-center mt-2">
-              Set up the format and generate a round-robin schedule first.
+              Set up the format for auto-generation, or build the bracket manually if you're skipping round-robin.
             </p>
           )}
 
@@ -227,7 +238,7 @@ export default function TournamentSchedule() {
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={runGenerateBracket}
-                  className="text-xs font-medium bg-warn-soft0 hover:bg-warn text-white rounded-md px-3 py-1.5 transition"
+                  className="text-xs font-medium bg-warn hover:bg-warn text-on-warn rounded-md px-3 py-1.5 transition"
                 >
                   Yes, erase and regenerate
                 </button>
@@ -257,11 +268,14 @@ export default function TournamentSchedule() {
 
       {tab === 'bracket' && (
         <div className="space-y-4">
-          {!roundRobinComplete ? (
+          {!roundRobinComplete && eliminationMatches.length === 0 && playInMatches.length === 0 ? (
             <div className="text-center text-ink-faint py-10 border border-dashed border-line rounded-xl">
-              🔒 The bracket unlocks once every round-robin game is finished.
+              🔒 Auto-generate unlocks once round-robin finishes.
               <div className="text-xs mt-1">
-                {roundRobinMatches.filter((m) => !isResolved(m)).length} game(s) remaining
+                {roundRobinMatches.filter((m) => !isResolved(m)).length} game(s) remaining — or{' '}
+                <Link to={`/basketball/${tournamentId}/bracket-builder`} className="text-accent hover:text-accent-strong">
+                  build manually
+                </Link>
               </div>
             </div>
           ) : (

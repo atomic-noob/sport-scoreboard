@@ -9,7 +9,7 @@ export default function WatchTournament() {
   const [teams, setTeams] = useState([])
   const [matches, setMatches] = useState([])
   const [error, setError] = useState('')
-  const [tab, setTab] = useState('standings')
+  const [tab, setTab] = useState('games')
 
   async function refresh() {
     try {
@@ -87,7 +87,7 @@ export default function WatchTournament() {
         )}
 
         <div className="flex gap-2 mb-6 border-b border-line">
-          {['standings', 'schedule', 'bracket'].map((t) => (
+          {['games', 'standings', 'schedule', 'bracket'].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -97,10 +97,51 @@ export default function WatchTournament() {
                   : 'border-transparent text-ink-faint hover:text-ink-dim'
               }`}
             >
-              {t === 'standings' ? 'Standings' : t === 'schedule' ? 'Round-Robin' : 'Bracket'}
+              {t === 'games' ? 'Games' : t === 'standings' ? 'Standings' : t === 'schedule' ? 'Round-Robin' : 'Bracket'}
             </button>
           ))}
         </div>
+
+        {tab === 'games' && (
+          <div className="space-y-5">
+            {(() => {
+              const live = matches.filter((m) => m.status === 'live')
+              const upcoming = matches.filter((m) => m.status === 'scheduled')
+              const finished = matches.filter((m) => ['completed', 'forfeit', 'bye'].includes(m.status))
+              if (matches.length === 0) return <EmptyState text="No games yet." />
+              return (
+                <>
+                  {live.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-semibold text-live uppercase mb-2 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-live animate-pulse" /> Live now
+                      </h3>
+                      <div className="space-y-2">
+                        {live.map((m) => <WatchMatchRow key={m.id} match={m} teamName={teamName} tournamentId={tournamentId} />)}
+                      </div>
+                    </div>
+                  )}
+                  {upcoming.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-semibold text-ink-faint uppercase mb-2">Upcoming</h3>
+                      <div className="space-y-2">
+                        {upcoming.map((m) => <WatchMatchRow key={m.id} match={m} teamName={teamName} tournamentId={tournamentId} />)}
+                      </div>
+                    </div>
+                  )}
+                  {finished.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-semibold text-ink-faint uppercase mb-2">Final</h3>
+                      <div className="space-y-2">
+                        {finished.map((m) => <WatchMatchRow key={m.id} match={m} teamName={teamName} tournamentId={tournamentId} />)}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )
+            })()}
+          </div>
+        )}
 
         {tab === 'standings' && (
           <div className="overflow-x-auto">

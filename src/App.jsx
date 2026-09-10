@@ -17,6 +17,8 @@ import LineupSetup from './features/basketball/LineupSetup'
 import WatchHome from './features/basketball/WatchHome'
 import WatchTournament from './features/basketball/WatchTournament'
 import WatchMatch from './features/basketball/WatchMatch'
+import ShareRedirect from './features/basketball/ShareRedirect'
+import ManualBracketBuilder from './features/basketball/ManualBracketBuilder'
 import TournamentLeaderboard from './features/basketball/TournamentLeaderboard'
 
 function AppHeader() {
@@ -27,7 +29,7 @@ function AppHeader() {
   // /watch pages are the public spectator experience and have their own
   // self-contained header (tournament name, live badge) -- skip the
   // organizer-facing app header there so it doesn't double up.
-  if (location.pathname.startsWith('/watch')) return null
+  if (location.pathname.startsWith('/watch') || location.pathname.startsWith('/live')) return null
 
   async function handleSignOut() {
     await signOut()
@@ -79,6 +81,7 @@ export default function App() {
             <Route path="/basketball/:tournamentId/edit" element={<ProtectedRoute><EditTournament /></ProtectedRoute>} />
             <Route path="/basketball/:tournamentId/format" element={<ProtectedRoute><TournamentFormat /></ProtectedRoute>} />
             <Route path="/basketball/:tournamentId/schedule" element={<ProtectedRoute><TournamentSchedule /></ProtectedRoute>} />
+            <Route path="/basketball/:tournamentId/bracket-builder" element={<ProtectedRoute><ManualBracketBuilder /></ProtectedRoute>} />
             <Route path="/basketball/:tournamentId/leaderboard" element={<ProtectedRoute><TournamentLeaderboard /></ProtectedRoute>} />
             <Route path="/basketball/:tournamentId/match/:matchId/lineup" element={<ProtectedRoute><LineupSetup /></ProtectedRoute>} />
             <Route path="/basketball/:tournamentId/match/:matchId" element={<ProtectedRoute><MatchSimulate /></ProtectedRoute>} />
@@ -88,6 +91,7 @@ export default function App() {
             <Route path="/watch" element={<WatchHome />} />
             <Route path="/watch/:tournamentId" element={<WatchTournament />} />
             <Route path="/watch/:tournamentId/match/:matchId" element={<WatchMatch />} />
+            <Route path="/live/:code" element={<ShareRedirect />} />
           </Routes>
         </div>
       </AuthProvider>

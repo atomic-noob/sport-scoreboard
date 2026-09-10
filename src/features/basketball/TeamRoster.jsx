@@ -178,7 +178,7 @@ export default function TeamRoster() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search player name..."
+            placeholder="Search by name or SYLVE ID (SYL-...)..."
             disabled={rosterFull}
             className="flex-1 rounded-lg border border-line-strong px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent disabled:bg-page"
           />
@@ -206,7 +206,7 @@ export default function TeamRoster() {
             <div className="flex gap-2 mt-2">
               <button
                 onClick={confirmTransfer}
-                className="text-xs font-medium bg-warn-soft0 hover:bg-warn text-white rounded-md px-3 py-1.5 transition"
+                className="text-xs font-medium bg-warn hover:bg-warn text-on-warn rounded-md px-3 py-1.5 transition"
               >
                 Transfer to this team
               </button>
@@ -247,7 +247,12 @@ export default function TeamRoster() {
                       : 'text-ink hover:bg-panel-alt'
                   }`}
                 >
-                  <span>{player.name}</span>
+                  <span>
+                    {player.name}
+                    {player.playerCode && (
+                      <span className="text-ink-faint font-normal"> · {player.playerCode}</span>
+                    )}
+                  </span>
                   <span className="text-xs text-ink-faint">
                     {alreadyOnThisTeam ? 'Already on this team' : 'Existing player · tap to add'}
                   </span>
@@ -278,7 +283,12 @@ export default function TeamRoster() {
                   placeholder="#"
                   className="w-10 rounded-md border border-line-strong px-1 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-accent"
                 />
-                <span className="font-medium text-ink">{player.name}</span>
+                <span className="font-medium text-ink">
+                  {player.name}
+                  {player.playerCode && (
+                    <span className="text-ink-faint font-normal text-xs"> · {player.playerCode}</span>
+                  )}
+                </span>
               </div>
               <button
                 onClick={() => handleRemove(player.rosterEntryId)}

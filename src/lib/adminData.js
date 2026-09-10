@@ -24,6 +24,9 @@ function tournamentFromRow(row) {
     startDate: row.start_date,
     pin: row.pin,
     formatConfig: row.format_config,
+    level: row.level,
+    organizerType: row.organizer_type,
+    verificationStatus: row.verification_status,
     createdAt: row.created_at,
   }
 }
@@ -33,26 +36,57 @@ function teamFromRow(row) {
 }
 
 function playerFromRow(row) {
-  return { id: row.id, name: row.name, photoUrl: row.photo_url, createdAt: row.created_at }
+  return { id: row.id, name: row.name, photoUrl: row.photo_url, playerCode: row.player_code, createdAt: row.created_at }
+}
+
+/** Generates a short, human-shareable player code like SYL-8F42K. */
+function generatePlayerCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0/O/1/I, easy to read aloud
+  let code = ''
+  for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)]
+  return `SYL-${code}`
 }
 
 // ---------- Tournaments ----------
 
-export async function createTournament({ name, sport = 'basketball', rules, startDate = null, pin = null }) {
+export async function createTournament({ name, sport = 'basketball', rules, startDate = null, pin = null, level = null, organizerType = null }) {
   const { data: userData } = await supabase.auth.getUser()
   const userId = userData?.user?.id
   if (!userId) throw new Error('You must be signed in to create a tournament.')
 
   const { data, error } = await supabase
     .from('tournaments')
-    .insert({ name, sport, rules, start_date: startDate, pin, created_by: userId })
+    .insert({
+      name, sport, rules, start_date: startDate, pin, created_by: userId,
+      level, organizer_type: organizerType,
+    })
     .select()
     .single()
 
   if (error) throw error
   const tournament = tournamentFromRow(data)
   await db.tournaments.put(tournament)
+
+  // Remember this as the default Organizer Type for next time.
+  if (organizerType) {
+    await supabase.from('profiles').upsert({ user_id: userId, organizer_type: organizerType, updated_at: new Date().toISOString() })
+  }
+
   return tournament
+}
+
+/** The organizer's saved default Organizer Type, if they've set one before. */
+export async function getOrganizerProfile() {
+  const { data: userData } = await supabase.auth.getUser()
+  const userId = userData?.user?.id
+  if (!userId) return null
+
+  const { data, error } = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle()
+  if (error) {
+    console.warn('Could not load organizer profile:', error.message)
+    return null
+  }
+  return data ? { organizerType: data.organizer_type } : null
 }
 
 export async function getTournaments() {
@@ -90,6 +124,8 @@ export async function updateTournament(id, updates) {
   if (updates.rules !== undefined) payload.rules = updates.rules
   if (updates.startDate !== undefined) payload.start_date = updates.startDate
   if (updates.pin !== undefined) payload.pin = updates.pin
+  if (updates.level !== undefined) payload.level = updates.level
+  if (updates.organizerType !== undefined) payload.organizer_type = updates.organizerType
 
   const { data, error } = await supabase
     .from('tournaments')
@@ -146,17 +182,23 @@ export async function getTeamsForTournament(tournamentId) {
 
 // ---------- Global players ----------
 
-/** Search the GLOBAL players table by name (case-insensitive substring match). */
+/** Search the GLOBAL players table by name OR by their SYLVE player code (e.g. SYL-8F42K). */
 export async function searchPlayers(query) {
   if (!query || query.trim().length === 0) return []
   const q = query.trim()
 
-  const { data, error } = await supabase.from('players').select('*').ilike('name', `%${q}%`)
+  const { data, error } = await supabase
+    .from('players')
+    .select('*')
+    .or(`name.ilike.%${q}%,player_code.ilike.%${q}%`)
 
   if (error) {
     console.warn('Falling back to local cache for player search (offline?):', error.message)
     const all = await db.players.toArray()
-    return all.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()))
+    const lower = q.toLowerCase()
+    return all.filter(
+      (p) => p.name.toLowerCase().includes(lower) || p.playerCode?.toLowerCase().includes(lower)
+    )
   }
 
   const players = data.map(playerFromRow)
@@ -166,16 +208,27 @@ export async function searchPlayers(query) {
 
 /** Creates a new global player profile. Called when no search match is found. */
 export async function createPlayer({ name, photoUrl = null }) {
-  const { data, error } = await supabase
-    .from('players')
-    .insert({ name, photo_url: photoUrl })
-    .select()
-    .single()
+  // Extremely unlikely to collide (32^5 possibilities), but retry a
+  // couple of times just in case rather than fail outright.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const playerCode = generatePlayerCode()
+    const { data, error } = await supabase
+      .from('players')
+      .insert({ name, photo_url: photoUrl, player_code: playerCode })
+      .select()
+      .single()
 
-  if (error) throw error
-  const player = playerFromRow(data)
-  await db.players.put(player)
-  return player
+    if (!error) {
+      const player = playerFromRow(data)
+      await db.players.put(player)
+      return player
+    }
+
+    if (!error.message?.includes('duplicate') && !error.message?.includes('unique')) {
+      throw error // a real error, not a code collision -- don't retry
+    }
+  }
+  throw new Error('Could not generate a unique player ID. Please try again.')
 }
 
 // ---------- Team rosters ----------
@@ -194,7 +247,7 @@ export async function addPlayerToRoster(teamId, playerId, jerseyNumber) {
 export async function getRosterForTeam(teamId) {
   const { data, error } = await supabase
     .from('team_rosters')
-    .select('id, jersey_number, players(id, name, photo_url, created_at)')
+    .select('id, jersey_number, players(id, name, photo_url, player_code, created_at)')
     .eq('team_id', teamId)
 
   if (error) {
@@ -206,6 +259,7 @@ export async function getRosterForTeam(teamId) {
     id: entry.players.id,
     name: entry.players.name,
     photoUrl: entry.players.photo_url,
+    playerCode: entry.players.player_code,
     jerseyNumber: entry.jersey_number,
     rosterEntryId: entry.id,
   }))
