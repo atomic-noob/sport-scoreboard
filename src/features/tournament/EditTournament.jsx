@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getTournament, updateTournament, isTournamentLocked } from '../../lib/adminData'
+import { getSportConfig } from '../../lib/sportConfig'
 
 const LEVELS = ['Casual / Community', 'Barangay', 'Municipal / City', 'Provincial', 'Regional', 'National', 'International', 'Official / Organization']
 const ORGANIZER_TYPES = ['Individual', 'Barangay', 'School', 'Club', 'League', 'LGU', 'Sports Organization', 'Other']
@@ -13,7 +14,7 @@ const VERIFICATION_LABELS = {
 }
 
 export default function EditTournament() {
-  const { tournamentId } = useParams()
+  const { tournamentId, sport: sportParam } = useParams()
   const navigate = useNavigate()
 
   const [tournament, setTournament] = useState(null)
@@ -39,7 +40,8 @@ export default function EditTournament() {
         setPin(t.pin ?? '')
         setLevel(t.level ?? '')
         setOrganizerType(t.organizerType ?? '')
-        setRules(t.rules)
+        // Merge over the sport's defaults so older tournaments missing a rule key still render
+        setRules({ ...getSportConfig(t.sport ?? sportParam).defaultRules, ...t.rules })
         // No PIN set on the tournament yet -- nothing to gate, go straight in
         if (!t.pin) setUnlocked(true)
       })
@@ -77,7 +79,7 @@ export default function EditTournament() {
         organizerType: organizerType || null,
         rules,
       })
-      navigate(`/basketball/${tournamentId}`)
+      navigate(`/${getSportConfig(tournament.sport ?? sportParam).key}/${tournamentId}`)
     } catch (err) {
       console.error('Failed to save tournament:', err)
       setError('Could not save changes. Check your connection and try again.')
@@ -100,12 +102,14 @@ export default function EditTournament() {
     )
   }
 
+  const sportConfig = getSportConfig(tournament.sport ?? sportParam)
+  const sport = sportConfig.key
   const locked = isTournamentLocked(tournament)
 
   if (locked) {
     return (
       <div className="max-w-lg mx-auto px-4 py-10">
-        <Link to={`/basketball/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
+        <Link to={`/${sport}/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
           ← Back
         </Link>
         <div className="mt-4 rounded-xl border border-line bg-panel p-6 text-center">
@@ -122,7 +126,7 @@ export default function EditTournament() {
   if (!unlocked) {
     return (
       <div className="max-w-sm mx-auto px-4 py-10">
-        <Link to={`/basketball/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
+        <Link to={`/${sport}/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
           ← Back
         </Link>
         <h1 className="text-xl font-display font-bold tracking-wide text-ink mt-1 mb-4">Enter PIN to edit</h1>
@@ -153,7 +157,7 @@ export default function EditTournament() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-10">
-      <Link to={`/basketball/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
+      <Link to={`/${sport}/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
         ← Back
       </Link>
       <h1 className="text-2xl font-display font-bold tracking-wide text-ink mt-1 mb-1">Edit Tournament</h1>
@@ -225,12 +229,14 @@ export default function EditTournament() {
 
         {rules && (
           <div className="grid grid-cols-2 gap-4">
-            <RuleInput label="Quarter length (min)" value={rules.quarterMinutes} onChange={(v) => updateRule('quarterMinutes', v)} />
-            <RuleInput label="Foul limit (foul-out)" value={rules.foulLimit} onChange={(v) => updateRule('foulLimit', v)} />
-            <RuleInput label="Overtime length (min)" value={rules.otMinutes} onChange={(v) => updateRule('otMinutes', v)} />
-            <RuleInput label="Timeouts per team" value={rules.timeoutsPerTeam} onChange={(v) => updateRule('timeoutsPerTeam', v)} />
-            <RuleInput label="Max roster size" value={rules.maxRosterSize} onChange={(v) => updateRule('maxRosterSize', v)} />
-            <RuleInput label="Min games for avg stats" value={rules.avgStatMinGames} onChange={(v) => updateRule('avgStatMinGames', v)} />
+            {sportConfig.ruleFields.map((f) => (
+              <RuleInput
+                key={f.key}
+                field={f}
+                value={rules[f.key]}
+                onChange={(v) => updateRule(f.key, v)}
+              />
+            ))}
           </div>
         )}
 
@@ -252,17 +258,27 @@ export default function EditTournament() {
   )
 }
 
-function RuleInput({ label, value, onChange }) {
+function RuleInput({ field, value, onChange }) {
+  const cls =
+    'w-full rounded-lg border border-line-strong bg-panel-alt px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent'
   return (
     <div>
-      <label className="block text-xs font-medium text-ink-dim mb-1">{label}</label>
-      <input
-        type="number"
-        min="0"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-line-strong px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-      />
+      <label className="block text-xs font-medium text-ink-dim mb-1">{field.label}</label>
+      {field.type === 'select' ? (
+        <select value={value} onChange={(e) => onChange(e.target.value)} className={cls}>
+          {field.options.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      ) : (
+        <input
+          type="number"
+          min="0"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={cls}
+        />
+      )}
     </div>
   )
 }

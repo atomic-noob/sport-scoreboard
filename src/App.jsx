@@ -5,11 +5,11 @@ import SyncStatusBadge from './components/SyncStatusBadge'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { signOut } from './lib/auth'
-import BasketballHome from './features/basketball/BasketballHome'
-import NewTournament from './features/basketball/NewTournament'
-import TournamentAdmin from './features/basketball/TournamentAdmin'
+import TournamentHome from './features/tournament/TournamentHome'
+import NewTournament from './features/tournament/NewTournament'
+import TournamentAdmin from './features/tournament/TournamentAdmin'
 import TeamRoster from './features/basketball/TeamRoster'
-import EditTournament from './features/basketball/EditTournament'
+import EditTournament from './features/tournament/EditTournament'
 import TournamentFormat from './features/basketball/TournamentFormat'
 import TournamentSchedule from './features/basketball/TournamentSchedule'
 import MatchSimulate from './features/basketball/MatchSimulate'
@@ -19,7 +19,7 @@ import WatchTournament from './features/basketball/WatchTournament'
 import WatchMatch from './features/basketball/WatchMatch'
 import ShareRedirect from './features/basketball/ShareRedirect'
 import ManualBracketBuilder from './features/basketball/ManualBracketBuilder'
-import TournamentLeaderboard from './features/basketball/TournamentLeaderboard'
+import TournamentLeaderboard from './features/tournament/TournamentLeaderboard'
 
 function AppHeader() {
   const location = useLocation()
@@ -74,7 +74,7 @@ export default function App() {
             <Route path="/login" element={<Login />} />
 
             {/* Organizer/scorer routes -- require an account */}
-            <Route path="/basketball" element={<ProtectedRoute><BasketballHome /></ProtectedRoute>} />
+            <Route path="/basketball" element={<ProtectedRoute><TournamentHome /></ProtectedRoute>} />
             <Route path="/basketball/new" element={<ProtectedRoute><NewTournament /></ProtectedRoute>} />
             <Route path="/basketball/leaderboard" element={<ProtectedRoute><TournamentLeaderboard /></ProtectedRoute>} />
             <Route path="/basketball/:tournamentId" element={<ProtectedRoute><TournamentAdmin /></ProtectedRoute>} />

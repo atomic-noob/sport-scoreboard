@@ -2,23 +2,10 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { getTournament } from '../../lib/adminData'
 import { getTeamLeaderboard, getPlayerLeaderboard } from '../../lib/leaderboardData'
-
-const PLAYER_STATS = [
-  { key: 'points', label: 'Points' },
-  { key: 'rebounds', label: 'Rebounds' },
-  { key: 'assists', label: 'Assists' },
-  { key: 'steals', label: 'Steals' },
-  { key: 'blocks', label: 'Blocks' },
-]
-
-const TEAM_STATS = [
-  { key: 'wins', label: 'Most Wins' },
-  { key: 'avgScore', label: 'Avg Score' },
-  { key: 'pointDiff', label: 'Point Differential' },
-]
+import { getSportConfig } from '../../lib/sportConfig'
 
 export default function TournamentLeaderboard() {
-  const { tournamentId } = useParams() // undefined = global/career view
+  const { tournamentId, sport: sportParam } = useParams() // tournamentId undefined = global/career view
   const isGlobal = !tournamentId
 
   const [tournament, setTournament] = useState(null)
@@ -36,6 +23,9 @@ export default function TournamentLeaderboard() {
     }
   }, [tournamentId])
 
+  const sportConfig = getSportConfig(tournament?.sport ?? sportParam)
+  const sport = sportConfig.key
+
   if (tournamentId && !tournament) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-10 text-ink-dim">
@@ -51,7 +41,7 @@ export default function TournamentLeaderboard() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
       <Link
-        to={tournamentId ? `/basketball/${tournamentId}/schedule` : '/basketball'}
+        to={tournamentId ? `/${sport}/${tournamentId}/schedule` : `/${sport}`}
         className="text-sm text-ink-faint hover:text-ink-dim"
       >
         ← {tournamentId ? 'Back to schedule' : 'Back to tournaments'}
@@ -66,7 +56,7 @@ export default function TournamentLeaderboard() {
       </p>
 
       {!isGlobal && (
-        <Link to="/basketball/leaderboard" className="text-xs text-accent hover:text-accent font-medium">
+        <Link to={`/${sport}/leaderboard`} className="text-xs text-accent hover:text-accent font-medium">
           View global/career leaderboard instead →
         </Link>
       )}
@@ -94,15 +84,21 @@ export default function TournamentLeaderboard() {
       )}
 
       {section === 'players' ? (
-        <PlayerLeaderboards tournamentId={tournamentId} tournament={tournament} />
+        sportConfig.hasPlayerStats ? (
+          <PlayerLeaderboards tournamentId={tournamentId} tournament={tournament} sportConfig={sportConfig} />
+        ) : (
+          <div className="text-center text-ink-faint py-10 border border-dashed border-line rounded-xl">
+            Player stats aren't tracked for {sportConfig.label.toLowerCase()} yet.
+          </div>
+        )
       ) : (
-        <TeamLeaderboards tournamentId={tournamentId} />
+        <TeamLeaderboards tournamentId={tournamentId} sportConfig={sportConfig} />
       )}
     </div>
   )
 }
 
-function PlayerLeaderboards({ tournamentId, tournament }) {
+function PlayerLeaderboards({ tournamentId, tournament, sportConfig }) {
   const [stat, setStat] = useState('points')
   const [mode, setMode] = useState('total') // 'total' | 'average'
   const [list, setList] = useState([])
@@ -129,7 +125,7 @@ function PlayerLeaderboards({ tournamentId, tournament }) {
   return (
     <div>
       <div className="flex flex-wrap gap-1.5 mb-4">
-        {PLAYER_STATS.map((s) => (
+        {sportConfig.playerStats.map((s) => (
           <button
             key={s.key}
             onClick={() => { setStat(s.key); setExpanded(false) }}
@@ -203,7 +199,7 @@ function PlayerLeaderboards({ tournamentId, tournament }) {
   )
 }
 
-function TeamLeaderboards({ tournamentId }) {
+function TeamLeaderboards({ tournamentId, sportConfig }) {
   const [stat, setStat] = useState('wins')
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -234,7 +230,7 @@ function TeamLeaderboards({ tournamentId }) {
   return (
     <div>
       <div className="flex flex-wrap gap-1.5 mb-4">
-        {TEAM_STATS.map((s) => (
+        {sportConfig.teamStats.map((s) => (
           <button
             key={s.key}
             onClick={() => { setStat(s.key); setExpanded(false) }}
