@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getTournament, getTeamsForTournament, createTeam } from '../../lib/adminData'
+import { getTournament, getTeamsForTournament, createTeam, getEvent } from '../../lib/adminData'
 import { getSportConfig } from '../../lib/sportConfig'
 
 export default function TournamentAdmin() {
@@ -11,6 +11,7 @@ export default function TournamentAdmin() {
   const [adding, setAdding] = useState(false)
   const [duplicateWarning, setDuplicateWarning] = useState(null) // name that duplicates an existing team
   const [error, setError] = useState('')
+  const [event, setEvent] = useState(null)
 
   async function refresh() {
     try {
@@ -29,6 +30,11 @@ export default function TournamentAdmin() {
   useEffect(() => {
     refresh()
   }, [tournamentId])
+
+  useEffect(() => {
+    if (!tournament?.eventId) { setEvent(null); return }
+    getEvent(tournament.eventId).then(setEvent).catch(() => setEvent(null))
+  }, [tournament?.eventId])
 
   async function doCreateTeam(name) {
     setAdding(true)
@@ -73,7 +79,7 @@ export default function TournamentAdmin() {
 
   if (!tournament) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-10 text-ink-dim">
+      <div className="max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 sm:px-6 py-10 text-ink-dim">
         {error ? (
           <div className="rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
             {error}
@@ -89,10 +95,15 @@ export default function TournamentAdmin() {
   const sport = sportConfig.key
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
+    <div className="max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 sm:px-6 py-10">
       <Link to={`/${sport}`} className="text-sm text-ink-faint hover:text-ink-dim">
         ← Back to tournaments
       </Link>
+      {event && (
+        <Link to={`/events/${event.id}`} className="block text-xs text-accent hover:text-accent-strong mt-1">
+          Part of event: {event.name} →
+        </Link>
+      )}
       <div className="flex items-center justify-between mt-1 mb-1">
         <h1 className="text-2xl font-display font-bold tracking-wide text-ink">{tournament.name}</h1>
         <Link

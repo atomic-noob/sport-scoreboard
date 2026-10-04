@@ -5,7 +5,7 @@ import { signInWithEmail, signUpWithEmail, signInWithGoogle } from '../lib/auth'
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
-  const redirectTo = location.state?.from ?? '/basketball'
+  const redirectTo = location.state?.from ?? '/dashboard'
 
   const [mode, setMode] = useState('signin') // 'signin' | 'signup'
   const [email, setEmail] = useState('')

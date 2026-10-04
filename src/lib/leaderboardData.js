@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient'
 import { getTeamsForTournament } from './adminData'
 import { getMatchesForTournament } from './matchesData'
+import { getVolleyballPlayerLeaderboard } from './volleyballData'
 
 /**
  * Team leaderboard is always scoped to a single tournament -- unlike
@@ -72,7 +73,15 @@ const PLAYER_STAT_COLUMNS = {
  *
  * Only completed games count (forfeits have no real stat line attached).
  */
-export async function getPlayerLeaderboard(statKey, { tournamentId = null, minGames = 1, mode = 'total' } = {}) {
+export async function getPlayerLeaderboard(
+  statKey,
+  { sport = 'basketball', tournamentId = null, minGames = 1, mode = 'total' } = {}
+) {
+  // Each sport keeps its player stats in its own table; add a branch here
+  // for a new sport.
+  if (sport === 'volleyball') {
+    return getVolleyballPlayerLeaderboard(statKey, { tournamentId, minGames, mode })
+  }
   const column = PLAYER_STAT_COLUMNS[statKey]
   if (!column) throw new Error(`Unknown stat: ${statKey}`)
 
@@ -98,7 +107,10 @@ export async function getPlayerLeaderboard(statKey, { tournamentId = null, minGa
     byPlayer[pid].total += row[column] ?? 0
   }
 
-  let list = Object.values(byPlayer).map((p) => ({ ...p, average: p.games ? p.total / p.games : 0 }))
+  let list = Object.values(byPlayer).map((p) => {
+    const average = p.games ? p.total / p.games : 0
+    return { ...p, average, display: mode === 'average' ? average.toFixed(1) : String(p.total), detail: null }
+  })
 
   if (mode === 'average') {
     list = list.filter((p) => p.games >= minGames)

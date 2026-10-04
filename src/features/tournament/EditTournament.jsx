@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getTournament, updateTournament, isTournamentLocked } from '../../lib/adminData'
 import { getSportConfig } from '../../lib/sportConfig'
@@ -90,7 +90,7 @@ export default function EditTournament() {
 
   if (!tournament) {
     return (
-      <div className="max-w-lg mx-auto px-4 py-10 text-ink-dim">
+      <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-6 py-10 text-ink-dim">
         {error ? (
           <div className="rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
             {error}
@@ -108,7 +108,7 @@ export default function EditTournament() {
 
   if (locked) {
     return (
-      <div className="max-w-lg mx-auto px-4 py-10">
+      <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-6 py-10">
         <Link to={`/${sport}/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
           ← Back
         </Link>
@@ -156,7 +156,7 @@ export default function EditTournament() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-10">
+    <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-6 py-10">
       <Link to={`/${sport}/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
         ← Back
       </Link>

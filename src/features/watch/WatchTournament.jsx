@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getTournament, getTeamsForTournament } from '../../lib/adminData'
+import { getTournament, getTeamsForTournament, getEvent } from '../../lib/adminData'
 import { getMatchesForTournament, computeStandings } from '../../lib/matchesData'
+import { getSportConfig } from '../../lib/sportConfig'
+import { PlayerLeaderboards, TeamLeaderboards } from '../tournament/LeaderboardPanels'
 
 export default function WatchTournament() {
   const { tournamentId } = useParams()
@@ -9,7 +11,9 @@ export default function WatchTournament() {
   const [teams, setTeams] = useState([])
   const [matches, setMatches] = useState([])
   const [error, setError] = useState('')
+  const [event, setEvent] = useState(null)
   const [tab, setTab] = useState('games')
+  const [leaderSection, setLeaderSection] = useState('players')
 
   async function refresh() {
     try {
@@ -36,6 +40,11 @@ export default function WatchTournament() {
     return () => clearInterval(interval)
   }, [tournamentId])
 
+  useEffect(() => {
+    if (!tournament?.eventId) { setEvent(null); return }
+    getEvent(tournament.eventId).then(setEvent).catch(() => setEvent(null))
+  }, [tournament?.eventId])
+
   const teamById = new Map(teams.map((t) => [t.id, t]))
   const teamName = (id) => teamById.get(id)?.name ?? (id ? 'Unknown team' : 'TBD')
 
@@ -46,6 +55,7 @@ export default function WatchTournament() {
   const isResolved = (m) => ['completed', 'forfeit', 'bye'].includes(m.status)
   const roundRobinComplete = roundRobinMatches.length > 0 && roundRobinMatches.every(isResolved)
   const liveCount = matches.filter((m) => m.status === 'live').length
+  const sportConfig = getSportConfig(tournament?.sport)
 
   if (!tournament) {
     return (
@@ -64,7 +74,7 @@ export default function WatchTournament() {
   return (
     <div className="min-h-screen bg-page">
       <header className="border-b border-line bg-panel">
-        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div className="max-w-2xl lg:max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/watch" className="text-sm text-ink-faint hover:text-ink-dim">
             ← All tournaments
           </Link>
@@ -77,8 +87,19 @@ export default function WatchTournament() {
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-display font-bold tracking-wide text-ink mb-4">{tournament.name}</h1>
+      <div className="max-w-2xl lg:max-w-4xl mx-auto px-4 py-8">
+        <h1 className="text-2xl font-display font-bold tracking-wide text-ink mb-1">{tournament.name}</h1>
+        <p className="text-xs text-ink-faint mb-4">
+          {sportConfig.emoji} {sportConfig.label}
+          {event && (
+            <>
+              {' · '}
+              <Link to={`/watch/events/${event.id}`} className="text-accent hover:text-accent-strong">
+                {event.name}
+              </Link>
+            </>
+          )}
+        </p>
 
         {error && (
           <div className="mb-4 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
@@ -86,18 +107,18 @@ export default function WatchTournament() {
           </div>
         )}
 
-        <div className="flex gap-2 mb-6 border-b border-line">
-          {['games', 'standings', 'schedule', 'bracket'].map((t) => (
+        <div className="flex gap-2 mb-6 border-b border-line overflow-x-auto">
+          {['games', 'standings', 'schedule', 'bracket', 'leaders'].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition ${
+              className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition whitespace-nowrap ${
                 tab === t
                   ? 'border-accent text-accent'
                   : 'border-transparent text-ink-faint hover:text-ink-dim'
               }`}
             >
-              {t === 'games' ? 'Games' : t === 'standings' ? 'Standings' : t === 'schedule' ? 'Round-Robin' : 'Bracket'}
+              {t === 'games' ? 'Games' : t === 'standings' ? 'Standings' : t === 'schedule' ? 'Round-Robin' : t === 'bracket' ? 'Bracket' : 'Leaders'}
             </button>
           ))}
         </div>
@@ -155,8 +176,8 @@ export default function WatchTournament() {
                     <th className="py-2 pr-2">Team</th>
                     <th className="py-2 pr-2 text-center">W</th>
                     <th className="py-2 pr-2 text-center">L</th>
-                    <th className="py-2 pr-2 text-center">PF</th>
-                    <th className="py-2 pr-2 text-center">PA</th>
+                    <th className="py-2 pr-2 text-center">{sportConfig.standingLabels.for}</th>
+                    <th className="py-2 pr-2 text-center">{sportConfig.standingLabels.against}</th>
                     <th className="py-2 pr-2 text-center">Win%</th>
                   </tr>
                 </thead>
@@ -229,6 +250,35 @@ export default function WatchTournament() {
                     ))
                 )}
               </>
+            )}
+          </div>
+        )}
+
+        {tab === 'leaders' && (
+          <div>
+            <div className="flex gap-2 mb-4">
+              {['players', 'teams'].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setLeaderSection(s)}
+                  className={`text-xs font-medium rounded-full px-3 py-1.5 capitalize transition ${
+                    leaderSection === s
+                      ? 'bg-accent text-on-accent'
+                      : 'bg-panel border border-line text-ink-dim hover:border-accent'
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+            {leaderSection === 'players' ? (
+              sportConfig.hasPlayerStats ? (
+                <PlayerLeaderboards tournamentId={tournamentId} tournament={tournament} sportConfig={sportConfig} />
+              ) : (
+                <EmptyState text={`Player stats aren't tracked for ${sportConfig.label.toLowerCase()} yet.`} />
+              )
+            ) : (
+              <TeamLeaderboards tournamentId={tournamentId} sportConfig={sportConfig} />
             )}
           </div>
         )}

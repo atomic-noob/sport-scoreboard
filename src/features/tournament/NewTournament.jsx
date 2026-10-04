@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { createTournament, getOrganizerProfile } from '../../lib/adminData'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { createTournament, getOrganizerProfile, getEvent } from '../../lib/adminData'
 import { getSportConfig } from '../../lib/sportConfig'
 
 const LEVELS = ['Casual / Community', 'Barangay', 'Municipal / City', 'Provincial', 'Regional', 'National', 'International', 'Official / Organization']
@@ -11,6 +11,9 @@ export default function NewTournament() {
   const { sport: sportParam } = useParams()
   const sportConfig = getSportConfig(sportParam)
   const sport = sportConfig.key
+  const [searchParams] = useSearchParams()
+  const eventId = searchParams.get('event')
+  const [eventName, setEventName] = useState('')
 
   const [name, setName] = useState('')
   const [startDate, setStartDate] = useState('')
@@ -33,6 +36,11 @@ export default function NewTournament() {
     })
   }, [])
 
+  useEffect(() => {
+    if (!eventId) return
+    getEvent(eventId).then((ev) => setEventName(ev.name)).catch(() => setEventName(''))
+  }, [eventId])
+
   function updateRule(key, value) {
     setRules((r) => ({ ...r, [key]: Number(value) }))
   }
@@ -51,8 +59,9 @@ export default function NewTournament() {
         pin: pin.trim() || null,
         level: level || null,
         organizerType: organizerType || null,
+        eventId: eventId || null,
       })
-      navigate(`/${sport}/${tournament.id}`)
+      navigate(eventId ? `/events/${eventId}` : `/${sport}/${tournament.id}`)
     } catch (err) {
       console.error('Failed to create tournament:', err)
       setError(
@@ -64,10 +73,18 @@ export default function NewTournament() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-10">
+    <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-6 py-10">
+      {eventId && (
+        <Link to={`/events/${eventId}`} className="text-sm text-ink-faint hover:text-ink-dim">
+          ← Back to {eventName || 'event'}
+        </Link>
+      )}
       <h1 className="text-2xl font-display font-bold tracking-wide text-ink mb-1">
         New {sportConfig.label} Tournament
       </h1>
+      {eventId && eventName && (
+        <p className="text-xs text-accent mb-2">Part of event: {eventName}</p>
+      )}
       <p className="text-ink-dim mb-6 text-sm">
         Set the ground rules once — they apply to every {sport === 'volleyball' ? 'match' : 'game'} in
         this tournament, and can be overridden per-game later if needed.

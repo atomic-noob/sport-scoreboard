@@ -1,12 +1,12 @@
 // Per-sport differences for the shared tournament screens.
-// NOTE: the volleyball rule KEYS below (bestOf, setPoints, decidingSetPoints,
-// timeoutsPerSet) are my guesses. Make sure they match what
-// VolleyballMatchSimulate.jsx / volleyballData.js actually read.
 
 export const SPORTS = {
   basketball: {
     key: 'basketball',
     label: 'Basketball',
+    emoji: '🏀',
+    // Column headings for the public standings table (points for / against).
+    standingLabels: { for: 'PF', against: 'PA' },
     defaultRules: {
       quarterMinutes: 10,
       foulLimit: 5,
@@ -43,32 +43,57 @@ export const SPORTS = {
   volleyball: {
     key: 'volleyball',
     label: 'Volleyball',
+    emoji: '🏐',
+    // matches.team_a_score / team_b_score hold SETS WON for volleyball.
+    standingLabels: { for: 'SW', against: 'SL' },
+    // Keys match what VolleyballMatchSimulate.jsx reads.
+    // setsToWin: 2 = best of 3, 3 = best of 5.
     defaultRules: {
-      bestOf: 3,
-      setPoints: 25,
-      decidingSetPoints: 15,
+      setsToWin: 2,
+      pointsPerSet: 25,
+      deciderSetPoints: 15,
       timeoutsPerSet: 2,
+      subsPerSet: 6,
+      technicalTimeout: 0,
       maxRosterSize: 12,
     },
     ruleFields: [
       {
-        key: 'bestOf',
+        key: 'setsToWin',
         label: 'Match format',
         type: 'select',
         options: [
-          { value: 3, label: 'Best of 3' },
-          { value: 5, label: 'Best of 5' },
+          { value: 2, label: 'Best of 3' },
+          { value: 3, label: 'Best of 5' },
         ],
       },
-      { key: 'setPoints', label: 'Points per set' },
-      { key: 'decidingSetPoints', label: 'Deciding set points' },
+      { key: 'pointsPerSet', label: 'Points per set' },
+      { key: 'deciderSetPoints', label: 'Deciding set points' },
       { key: 'timeoutsPerSet', label: 'Timeouts per team per set' },
+      { key: 'subsPerSet', label: 'Substitutions per team per set' },
+      {
+        key: 'technicalTimeout',
+        label: 'Technical timeouts (at 8 & 16)',
+        type: 'select',
+        options: [
+          { value: 0, label: 'Off' },
+          { value: 1, label: 'On' },
+        ],
+      },
       { key: 'maxRosterSize', label: 'Max roster size' },
     ],
     summarizeRules: (r) =>
-      `Best of ${r.bestOf} · sets to ${r.setPoints} (deciding set to ${r.decidingSetPoints}), win by 2 · ${r.timeoutsPerSet} timeouts/set · max ${r.maxRosterSize} roster`,
-    playerStats: [],
-    hasPlayerStats: false,
+      `Best of ${r.setsToWin * 2 - 1} · sets to ${r.pointsPerSet} (deciding set to ${r.deciderSetPoints}), win by 2 · ${r.timeoutsPerSet} timeouts/set · ${r.subsPerSet ?? 6} subs/set${Number(r.technicalTimeout) ? ' · technical timeouts' : ''} · max ${r.maxRosterSize} roster`,
+    // Computed from the volleyball_events table (see volleyballData.js).
+    playerStats: [
+      { key: 'kills', label: 'Kills' },
+      { key: 'aces', label: 'Aces' },
+      { key: 'blocks', label: 'Blocks' },
+      { key: 'digs', label: 'Digs' },
+      { key: 'assists', label: 'Assists' },
+      { key: 'hitting', label: 'Hitting %' },
+    ],
+    hasPlayerStats: true,
     // matches.team_a_score / team_b_score hold SETS WON for volleyball,
     // so the team leaderboard's "score" numbers are set counts.
     teamStats: [
@@ -78,6 +103,9 @@ export const SPORTS = {
     ],
   },
 }
+
+/** Every sport the app knows about, as a list (for filters and pickers). */
+export const SPORT_LIST = Object.values(SPORTS)
 
 export function getSportConfig(sport) {
   return SPORTS[sport] ?? SPORTS.basketball
