@@ -9,7 +9,7 @@ import {
 } from '../../lib/matchesData'
 
 export default function TournamentSchedule() {
-  const { tournamentId } = useParams()
+  const { tournamentId, sport: sportParam } = useParams()
   const [tournament, setTournament] = useState(null)
   const [teams, setTeams] = useState([])
   const [matches, setMatches] = useState([])
@@ -99,7 +99,7 @@ export default function TournamentSchedule() {
 
   if (!tournament) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-10 text-ink-dim">
+      <div className="max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 sm:px-6 py-10 text-ink-dim">
         {error ? (
           <div className="rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
             {error}
@@ -111,15 +111,23 @@ export default function TournamentSchedule() {
     )
   }
 
+  const sport = tournament.sport ?? sportParam
+  const isVolleyball = sport === 'volleyball'
+  // For volleyball, matches.team_a_score/team_b_score hold SETS won/lost.
+  const forLabel = isVolleyball ? 'SW' : 'PF'
+  const againstLabel = isVolleyball ? 'SL' : 'PA'
+  // The manual bracket builder works for every sport.
+  const canBuildManually = true
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
-      <Link to={`/basketball/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
+    <div className="max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 sm:px-6 py-10">
+      <Link to={`/${sport}/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
         ← Back to teams
       </Link>
       <div className="flex items-center justify-between mt-1 mb-4">
         <h1 className="text-2xl font-display font-bold tracking-wide text-ink">{tournament.name}</h1>
         <Link
-          to={`/basketball/${tournamentId}/leaderboard`}
+          to={`/${sport}/${tournamentId}/leaderboard`}
           className="text-sm font-medium text-ink-faint hover:text-accent"
         >
           🏆 Leaderboard
@@ -145,7 +153,7 @@ export default function TournamentSchedule() {
           >
             {t === 'standings' ? 'Standings' : t === 'schedule' ? 'Round-Robin' : 'Bracket'}
             {t === 'bracket' && !roundRobinComplete && eliminationMatches.length === 0 && playInMatches.length === 0 && (
-              <span className="text-[10px]" title="Auto-generate locked until round-robin is complete -- manual building still works">🔒</span>
+              <span className="text-[10px]" title="Auto-generate locked until round-robin is complete">🔒</span>
             )}
           </button>
         ))}
@@ -164,8 +172,8 @@ export default function TournamentSchedule() {
                     <th className="py-2 pr-2">Team</th>
                     <th className="py-2 pr-2 text-center">W</th>
                     <th className="py-2 pr-2 text-center">L</th>
-                    <th className="py-2 pr-2 text-center">PF</th>
-                    <th className="py-2 pr-2 text-center">PA</th>
+                    <th className="py-2 pr-2 text-center">{forLabel}</th>
+                    <th className="py-2 pr-2 text-center">{againstLabel}</th>
                     <th className="py-2 pr-2 text-center">Win%</th>
                   </tr>
                 </thead>
@@ -211,21 +219,27 @@ export default function TournamentSchedule() {
                   ? 'Regenerate Elimination Bracket'
                   : 'Generate Elimination Bracket'}
             </button>
-            <Link
-              to={`/basketball/${tournamentId}/bracket-builder`}
-              className="flex items-center justify-center rounded-lg border border-line-strong text-ink-dim hover:bg-panel-alt text-sm font-medium px-4 py-2.5 transition text-center"
-            >
-              Build manually
-            </Link>
+            {canBuildManually && (
+              <Link
+                to={`/${sport}/${tournamentId}/bracket-builder`}
+                className="flex items-center justify-center rounded-lg border border-line-strong text-ink-dim hover:bg-panel-alt text-sm font-medium px-4 py-2.5 transition text-center"
+              >
+                Build manually
+              </Link>
+            )}
           </div>
           {roundRobinMatches.length > 0 && !roundRobinComplete && (
             <p className="text-xs text-ink-faint text-center mt-2">
-              🔒 Auto-generate is locked until round-robin finishes — building manually is still available anytime.
+              {canBuildManually
+                ? '🔒 Auto-generate is locked until round-robin finishes — building manually is still available anytime.'
+                : '🔒 Auto-generate is locked until round-robin finishes.'}
             </p>
           )}
           {roundRobinMatches.length === 0 && (
             <p className="text-xs text-ink-faint text-center mt-2">
-              Set up the format for auto-generation, or build the bracket manually if you're skipping round-robin.
+              {canBuildManually
+                ? "Set up the format for auto-generation, or build the bracket manually if you're skipping round-robin."
+                : 'Set up the format in Tournament Format to generate the schedule.'}
             </p>
           )}
 
@@ -260,7 +274,7 @@ export default function TournamentSchedule() {
             <EmptyState text="No round-robin schedule yet. Set it up in Tournament Format." />
           ) : (
             roundRobinMatches.map((m) => (
-              <MatchRow key={m.id} match={m} teamName={teamName} tournamentId={tournamentId} onForfeit={handleForfeit} />
+              <MatchRow key={m.id} match={m} teamName={teamName} sport={sport} tournamentId={tournamentId} onForfeit={handleForfeit} />
             ))
           )}
         </div>
@@ -272,10 +286,15 @@ export default function TournamentSchedule() {
             <div className="text-center text-ink-faint py-10 border border-dashed border-line rounded-xl">
               🔒 Auto-generate unlocks once round-robin finishes.
               <div className="text-xs mt-1">
-                {roundRobinMatches.filter((m) => !isResolved(m)).length} game(s) remaining — or{' '}
-                <Link to={`/basketball/${tournamentId}/bracket-builder`} className="text-accent hover:text-accent-strong">
-                  build manually
-                </Link>
+                {roundRobinMatches.filter((m) => !isResolved(m)).length} game(s) remaining
+                {canBuildManually && (
+                  <>
+                    {' '}— or{' '}
+                    <Link to={`/${sport}/${tournamentId}/bracket-builder`} className="text-accent hover:text-accent-strong">
+                      build manually
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           ) : (
@@ -285,7 +304,7 @@ export default function TournamentSchedule() {
                   <h3 className="text-xs font-semibold text-ink-faint uppercase mb-2">Play-in</h3>
                   <div className="space-y-2">
                     {playInMatches.map((m) => (
-                      <MatchRow key={m.id} match={m} teamName={teamName} tournamentId={tournamentId} onForfeit={handleForfeit} />
+                      <MatchRow key={m.id} match={m} teamName={teamName} sport={sport} tournamentId={tournamentId} onForfeit={handleForfeit} />
                     ))}
                   </div>
                 </div>
@@ -309,7 +328,7 @@ export default function TournamentSchedule() {
                       </h3>
                       <div className="space-y-2">
                         {roundMatches.map((m) => (
-                          <MatchRow key={m.id} match={m} teamName={teamName} tournamentId={tournamentId} onForfeit={handleForfeit} />
+                          <MatchRow key={m.id} match={m} teamName={teamName} sport={sport} tournamentId={tournamentId} onForfeit={handleForfeit} />
                         ))}
                       </div>
                     </div>
@@ -323,7 +342,7 @@ export default function TournamentSchedule() {
   )
 }
 
-function MatchRow({ match, teamName, tournamentId, onForfeit }) {
+function MatchRow({ match, teamName, sport, tournamentId, onForfeit }) {
   const [confirmingForfeit, setConfirmingForfeit] = useState(false)
   const isBye = match.status === 'bye'
   const canForfeit =
@@ -355,7 +374,11 @@ function MatchRow({ match, teamName, tournamentId, onForfeit }) {
           <span className="text-live">Forfeit ({teamName(match.forfeitTeamId)})</span>
         )}
         {isPlayable && <span className="text-accent font-medium">Play →</span>}
-        {isViewable && <span className="text-ink-faint font-medium">Box score →</span>}
+        {isViewable && (
+          <span className="text-ink-faint font-medium">
+            {sport === 'volleyball' ? 'Results →' : 'Box score →'}
+          </span>
+        )}
       </div>
     </div>
   )
@@ -363,7 +386,7 @@ function MatchRow({ match, teamName, tournamentId, onForfeit }) {
   return (
     <div>
       {isPlayable ? (
-        <Link to={`/basketball/${tournamentId}/match/${match.id}/lineup`} className="block hover:border-accent rounded-lg transition">
+        <Link to={`/${sport}/${tournamentId}/match/${match.id}/lineup`} className="block hover:border-accent rounded-lg transition">
           {content}
         </Link>
       ) : isViewable ? (

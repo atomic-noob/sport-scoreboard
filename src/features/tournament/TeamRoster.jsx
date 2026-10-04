@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
   getTournament,
@@ -13,7 +13,7 @@ import {
 } from '../../lib/adminData'
 
 export default function TeamRoster() {
-  const { tournamentId, teamId } = useParams()
+  const { tournamentId, teamId, sport: sportParam } = useParams()
   const [tournament, setTournament] = useState(null)
   const [roster, setRoster] = useState([])
   const [query, setQuery] = useState('')
@@ -62,6 +62,7 @@ export default function TeamRoster() {
     return () => clearTimeout(timeout)
   }, [query, roster])
 
+  const sport = tournament?.sport ?? sportParam
   const rosterFull = tournament && roster.length >= tournament.rules.maxRosterSize
   const rosterIds = new Set(roster.map((p) => p.id))
 
@@ -153,8 +154,8 @@ export default function TeamRoster() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-10">
-      <Link to={`/basketball/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
+    <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-6 py-10">
+      <Link to={`/${sport}/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
         ← Back to teams
       </Link>
       <h1 className="text-2xl font-display font-bold tracking-wide text-ink mt-1 mb-1">Roster</h1>

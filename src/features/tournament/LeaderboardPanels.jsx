@@ -1,108 +1,14 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { getTournament } from '../../lib/adminData'
 import { getTeamLeaderboard, getPlayerLeaderboard } from '../../lib/leaderboardData'
+import { MIN_ATTACK_ATTEMPTS } from '../../lib/volleyballData'
 
-const PLAYER_STATS = [
-  { key: 'points', label: 'Points' },
-  { key: 'rebounds', label: 'Rebounds' },
-  { key: 'assists', label: 'Assists' },
-  { key: 'steals', label: 'Steals' },
-  { key: 'blocks', label: 'Blocks' },
-]
+/**
+ * The player and team boards, shared by the organizer's leaderboard page
+ * and the public watch page. Which stats appear comes from sportConfig,
+ * and the numbers come from leaderboardData.js (one branch per sport).
+ */
 
-const TEAM_STATS = [
-  { key: 'wins', label: 'Most Wins' },
-  { key: 'avgScore', label: 'Avg Score' },
-  { key: 'pointDiff', label: 'Point Differential' },
-]
-
-export default function TournamentLeaderboard() {
-  const { tournamentId } = useParams() // undefined = global/career view
-  const isGlobal = !tournamentId
-
-  const [tournament, setTournament] = useState(null)
-  const [section, setSection] = useState('players') // 'players' | 'teams'
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (tournamentId) {
-      getTournament(tournamentId)
-        .then(setTournament)
-        .catch((err) => {
-          console.error('Failed to load tournament:', err)
-          setError('Could not load this tournament.')
-        })
-    }
-  }, [tournamentId])
-
-  if (tournamentId && !tournament) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-10 text-ink-dim">
-        {error ? (
-          <div className="rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">{error}</div>
-        ) : (
-          'Loading...'
-        )}
-      </div>
-    )
-  }
-
-  return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
-      <Link
-        to={tournamentId ? `/basketball/${tournamentId}/schedule` : '/basketball'}
-        className="text-sm text-ink-faint hover:text-ink-dim"
-      >
-        ← {tournamentId ? 'Back to schedule' : 'Back to tournaments'}
-      </Link>
-      <h1 className="text-2xl font-display font-bold tracking-wide text-ink mt-1 mb-1">
-        {isGlobal ? 'Global Leaderboard' : `${tournament.name} Leaderboard`}
-      </h1>
-      <p className="text-ink-dim text-sm mb-6">
-        {isGlobal
-          ? 'Career stats across every tournament a player has ever played.'
-          : 'Stats for this tournament only.'}
-      </p>
-
-      {!isGlobal && (
-        <Link to="/basketball/leaderboard" className="text-xs text-accent hover:text-accent font-medium">
-          View global/career leaderboard instead →
-        </Link>
-      )}
-
-      <div className="flex gap-2 my-6 border-b border-line">
-        {['players', 'teams'].map((s) => (
-          <button
-            key={s}
-            onClick={() => setSection(s)}
-            disabled={s === 'teams' && isGlobal}
-            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition capitalize disabled:opacity-30 disabled:cursor-not-allowed ${
-              section === s
-                ? 'border-accent text-accent'
-                : 'border-transparent text-ink-faint hover:text-ink-dim'
-            }`}
-          >
-            {s}
-          </button>
-        ))}
-      </div>
-      {section === 'teams' && isGlobal && (
-        <p className="text-xs text-ink-faint -mt-4 mb-4">
-          Team boards aren't available globally, since teams belong to a single tournament.
-        </p>
-      )}
-
-      {section === 'players' ? (
-        <PlayerLeaderboards tournamentId={tournamentId} tournament={tournament} />
-      ) : (
-        <TeamLeaderboards tournamentId={tournamentId} />
-      )}
-    </div>
-  )
-}
-
-function PlayerLeaderboards({ tournamentId, tournament }) {
+export function PlayerLeaderboards({ tournamentId, tournament, sportConfig }) {
   const [stat, setStat] = useState('points')
   const [mode, setMode] = useState('total') // 'total' | 'average'
   const [list, setList] = useState([])
@@ -115,21 +21,22 @@ function PlayerLeaderboards({ tournamentId, tournament }) {
   useEffect(() => {
     setLoading(true)
     setError('')
-    getPlayerLeaderboard(stat, { tournamentId, minGames, mode })
+    getPlayerLeaderboard(stat, { sport: sportConfig.key, tournamentId, minGames, mode })
       .then(setList)
       .catch((err) => {
         console.error('Failed to load player leaderboard:', err)
         setError('Could not load this leaderboard. Check your connection and try refreshing.')
       })
       .finally(() => setLoading(false))
-  }, [stat, mode, tournamentId, minGames])
+  }, [stat, mode, tournamentId, minGames, sportConfig.key])
 
   const visible = expanded ? list : list.slice(0, 10)
+  const isHitting = stat === 'hitting'
 
   return (
     <div>
       <div className="flex flex-wrap gap-1.5 mb-4">
-        {PLAYER_STATS.map((s) => (
+        {sportConfig.playerStats.map((s) => (
           <button
             key={s.key}
             onClick={() => { setStat(s.key); setExpanded(false) }}
@@ -145,6 +52,11 @@ function PlayerLeaderboards({ tournamentId, tournament }) {
       </div>
 
       <div className="flex items-center justify-between mb-3">
+        {isHitting ? (
+          <span className="text-[11px] text-ink-faint">
+            Min. {MIN_ATTACK_ATTEMPTS} attacks · (kills − errors) ÷ attempts
+          </span>
+        ) : (
         <div className="flex rounded-lg border border-line overflow-hidden text-xs">
           <button
             onClick={() => setMode('total')}
@@ -159,7 +71,8 @@ function PlayerLeaderboards({ tournamentId, tournament }) {
             Average
           </button>
         </div>
-        {mode === 'average' && (
+        )}
+        {mode === 'average' && !isHitting && (
           <span className="text-[11px] text-ink-faint">Min. {minGames} game{minGames === 1 ? '' : 's'}</span>
         )}
       </div>
@@ -181,11 +94,12 @@ function PlayerLeaderboards({ tournamentId, tournament }) {
               <div className="flex items-center gap-3">
                 <span className="text-ink-faint w-5 text-right">{i + 1}</span>
                 <span className="font-medium text-ink">{p.playerName}</span>
-                <span className="text-[11px] text-ink-faint">{p.games} game{p.games === 1 ? '' : 's'}</span>
+                <span className="text-[11px] text-ink-faint">
+                  {p.games} game{p.games === 1 ? '' : 's'}
+                  {p.detail ? ` · ${p.detail}` : ''}
+                </span>
               </div>
-              <span className="font-bold text-ink">
-                {mode === 'average' ? p.average.toFixed(1) : p.total}
-              </span>
+              <span className="font-bold text-ink">{p.display}</span>
             </div>
           ))}
         </div>
@@ -203,7 +117,7 @@ function PlayerLeaderboards({ tournamentId, tournament }) {
   )
 }
 
-function TeamLeaderboards({ tournamentId }) {
+export function TeamLeaderboards({ tournamentId, sportConfig }) {
   const [stat, setStat] = useState('wins')
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -234,7 +148,7 @@ function TeamLeaderboards({ tournamentId }) {
   return (
     <div>
       <div className="flex flex-wrap gap-1.5 mb-4">
-        {TEAM_STATS.map((s) => (
+        {sportConfig.teamStats.map((s) => (
           <button
             key={s.key}
             onClick={() => { setStat(s.key); setExpanded(false) }}

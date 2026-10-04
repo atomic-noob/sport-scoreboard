@@ -1,27 +1,33 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { createTournament, getOrganizerProfile } from '../../lib/adminData'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { createTournament, getOrganizerProfile, getEvent } from '../../lib/adminData'
+import { getSportConfig } from '../../lib/sportConfig'
 
 const LEVELS = ['Casual / Community', 'Barangay', 'Municipal / City', 'Provincial', 'Regional', 'National', 'International', 'Official / Organization']
 const ORGANIZER_TYPES = ['Individual', 'Barangay', 'School', 'Club', 'League', 'LGU', 'Sports Organization', 'Other']
 
 export default function NewTournament() {
   const navigate = useNavigate()
+  const { sport: sportParam } = useParams()
+  const sportConfig = getSportConfig(sportParam)
+  const sport = sportConfig.key
+  const [searchParams] = useSearchParams()
+  const eventId = searchParams.get('event')
+  const [eventName, setEventName] = useState('')
+
   const [name, setName] = useState('')
   const [startDate, setStartDate] = useState('')
   const [pin, setPin] = useState('')
   const [level, setLevel] = useState('')
   const [organizerType, setOrganizerType] = useState('')
-  const [rules, setRules] = useState({
-    quarterMinutes: 10,
-    foulLimit: 5,
-    otMinutes: 5,
-    timeoutsPerTeam: 4,
-    maxRosterSize: 15,
-    avgStatMinGames: 3,
-  })
+  const [rules, setRules] = useState(sportConfig.defaultRules)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  // If the route switches between sports without remounting, reset to that sport's defaults.
+  useEffect(() => {
+    setRules(sportConfig.defaultRules)
+  }, [sport])
 
   useEffect(() => {
     // Prefill Organizer Type from whatever they used last time, if anything.
@@ -29,6 +35,11 @@ export default function NewTournament() {
       if (profile?.organizerType) setOrganizerType(profile.organizerType)
     })
   }, [])
+
+  useEffect(() => {
+    if (!eventId) return
+    getEvent(eventId).then((ev) => setEventName(ev.name)).catch(() => setEventName(''))
+  }, [eventId])
 
   function updateRule(key, value) {
     setRules((r) => ({ ...r, [key]: Number(value) }))
@@ -42,14 +53,15 @@ export default function NewTournament() {
     try {
       const tournament = await createTournament({
         name: name.trim(),
-        sport: 'basketball',
+        sport,
         rules,
         startDate: startDate || null,
         pin: pin.trim() || null,
         level: level || null,
         organizerType: organizerType || null,
+        eventId: eventId || null,
       })
-      navigate(`/basketball/${tournament.id}`)
+      navigate(eventId ? `/events/${eventId}` : `/${sport}/${tournament.id}`)
     } catch (err) {
       console.error('Failed to create tournament:', err)
       setError(
@@ -61,11 +73,21 @@ export default function NewTournament() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-10">
-      <h1 className="text-2xl font-display font-bold tracking-wide text-ink mb-1">New Basketball Tournament</h1>
+    <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-6 py-10">
+      {eventId && (
+        <Link to={`/events/${eventId}`} className="text-sm text-ink-faint hover:text-ink-dim">
+          ← Back to {eventName || 'event'}
+        </Link>
+      )}
+      <h1 className="text-2xl font-display font-bold tracking-wide text-ink mb-1">
+        New {sportConfig.label} Tournament
+      </h1>
+      {eventId && eventName && (
+        <p className="text-xs text-accent mb-2">Part of event: {eventName}</p>
+      )}
       <p className="text-ink-dim mb-6 text-sm">
-        Set the ground rules once — they apply to every game in this tournament, and can be
-        overridden per-game later if needed.
+        Set the ground rules once — they apply to every {sport === 'volleyball' ? 'match' : 'game'} in
+        this tournament, and can be overridden per-game later if needed.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -134,12 +156,14 @@ export default function NewTournament() {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <RuleInput label="Quarter length (min)" value={rules.quarterMinutes} onChange={(v) => updateRule('quarterMinutes', v)} />
-          <RuleInput label="Foul limit (foul-out)" value={rules.foulLimit} onChange={(v) => updateRule('foulLimit', v)} />
-          <RuleInput label="Overtime length (min)" value={rules.otMinutes} onChange={(v) => updateRule('otMinutes', v)} />
-          <RuleInput label="Timeouts per team" value={rules.timeoutsPerTeam} onChange={(v) => updateRule('timeoutsPerTeam', v)} />
-          <RuleInput label="Max roster size" value={rules.maxRosterSize} onChange={(v) => updateRule('maxRosterSize', v)} />
-          <RuleInput label="Min games for avg stats" value={rules.avgStatMinGames} onChange={(v) => updateRule('avgStatMinGames', v)} />
+          {sportConfig.ruleFields.map((f) => (
+            <RuleInput
+              key={f.key}
+              field={f}
+              value={rules[f.key]}
+              onChange={(v) => updateRule(f.key, v)}
+            />
+          ))}
         </div>
 
         {error && (
@@ -160,17 +184,27 @@ export default function NewTournament() {
   )
 }
 
-function RuleInput({ label, value, onChange }) {
+function RuleInput({ field, value, onChange }) {
+  const cls =
+    'w-full rounded-lg border border-line-strong bg-panel-alt px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent'
   return (
     <div>
-      <label className="block text-xs font-medium text-ink-dim mb-1">{label}</label>
-      <input
-        type="number"
-        min="0"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-line-strong bg-panel-alt px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent"
-      />
+      <label className="block text-xs font-medium text-ink-dim mb-1">{field.label}</label>
+      {field.type === 'select' ? (
+        <select value={value} onChange={(e) => onChange(e.target.value)} className={cls}>
+          {field.options.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      ) : (
+        <input
+          type="number"
+          min="0"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={cls}
+        />
+      )}
     </div>
   )
 }

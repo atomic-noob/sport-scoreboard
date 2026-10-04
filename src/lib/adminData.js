@@ -28,6 +28,8 @@ function tournamentFromRow(row) {
     organizerType: row.organizer_type,
     verificationStatus: row.verification_status,
     createdAt: row.created_at,
+    eventId: row.event_id ?? null,
+    createdBy: row.created_by ?? null,
   }
 }
 
@@ -49,7 +51,7 @@ function generatePlayerCode() {
 
 // ---------- Tournaments ----------
 
-export async function createTournament({ name, sport = 'basketball', rules, startDate = null, pin = null, level = null, organizerType = null }) {
+export async function createTournament({ name, sport = 'basketball', rules, startDate = null, pin = null, level = null, organizerType = null, eventId = null }) {
   const { data: userData } = await supabase.auth.getUser()
   const userId = userData?.user?.id
   if (!userId) throw new Error('You must be signed in to create a tournament.')
@@ -59,6 +61,7 @@ export async function createTournament({ name, sport = 'basketball', rules, star
     .insert({
       name, sport, rules, start_date: startDate, pin, created_by: userId,
       level, organizer_type: organizerType,
+      ...(eventId ? { event_id: eventId } : {}),
     })
     .select()
     .single()
@@ -89,15 +92,24 @@ export async function getOrganizerProfile() {
   return data ? { organizerType: data.organizer_type } : null
 }
 
-export async function getTournaments() {
-  const { data, error } = await supabase
+/**
+ * All tournaments, newest first. Pass { sport } to only get one sport's
+ * tournaments (e.g. getTournaments({ sport: 'volleyball' })); with no
+ * argument it returns every sport (used by the landing page).
+ */
+export async function getTournaments({ sport } = {}) {
+  let query = supabase
     .from('tournaments')
     .select('*')
     .order('created_at', { ascending: false })
+  if (sport) query = query.eq('sport', sport)
+
+  const { data, error } = await query
 
   if (error) {
     console.warn('Falling back to local cache for tournaments (offline?):', error.message)
-    return db.tournaments.orderBy('createdAt').reverse().toArray()
+    const cached = await db.tournaments.orderBy('createdAt').reverse().toArray()
+    return sport ? cached.filter((t) => t.sport === sport) : cached
   }
 
   const tournaments = data.map(tournamentFromRow)
@@ -310,4 +322,85 @@ export async function findPlayerTeamInTournament(playerId, tournamentId, exclude
 export async function transferPlayerToTeam(oldRosterEntryId, newTeamId, playerId, jerseyNumber) {
   await removeFromRoster(oldRosterEntryId)
   return addPlayerToRoster(newTeamId, playerId, jerseyNumber)
+}
+
+
+// ---------------------------------------------------------------------
+// Events -- a named group holding tournaments of any sport. Online-only
+// (not cached in IndexedDB); everything inside still works as before.
+// ---------------------------------------------------------------------
+
+function eventFromRow(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    startDate: row.start_date,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+  }
+}
+
+export async function createEvent({ name, description = null, startDate = null }) {
+  const { data: userData } = await supabase.auth.getUser()
+  const userId = userData?.user?.id
+  if (!userId) throw new Error('You must be signed in to create an event.')
+  const { data, error } = await supabase
+    .from('events')
+    .insert({ name, description, start_date: startDate, created_by: userId })
+    .select()
+    .single()
+  if (error) throw error
+  return eventFromRow(data)
+}
+
+export async function getEvents() {
+  const { data, error } = await supabase.from('events').select('*').order('created_at', { ascending: false })
+  if (error) throw error
+  return data.map(eventFromRow)
+}
+
+export async function getEvent(id) {
+  const { data, error } = await supabase.from('events').select('*').eq('id', id).single()
+  if (error) throw error
+  return eventFromRow(data)
+}
+
+export async function updateEvent(id, updates) {
+  const payload = {}
+  if (updates.name !== undefined) payload.name = updates.name
+  if (updates.description !== undefined) payload.description = updates.description
+  if (updates.startDate !== undefined) payload.start_date = updates.startDate
+  const { data, error } = await supabase.from('events').update(payload).eq('id', id).select().single()
+  if (error) throw error
+  return eventFromRow(data)
+}
+
+/** Deleting an event keeps its tournaments -- they just become ungrouped. */
+export async function deleteEvent(id) {
+  const { error } = await supabase.from('events').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function setTournamentEvent(tournamentId, eventId) {
+  const { data, error } = await supabase
+    .from('tournaments')
+    .update({ event_id: eventId || null })
+    .eq('id', tournamentId)
+    .select()
+    .single()
+  if (error) throw error
+  const tournament = tournamentFromRow(data)
+  await db.tournaments.put(tournament)
+  return tournament
+}
+
+export async function getTournamentsForEvent(eventId) {
+  const { data, error } = await supabase
+    .from('tournaments')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return data.map(tournamentFromRow)
 }

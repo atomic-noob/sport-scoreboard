@@ -9,22 +9,8 @@ import {
   getCloudMatchState,
   clearMatchState,
 } from '../../lib/liveMatchState'
-
-// Real JS-based check instead of Tailwind's hidden/md:block classes --
-// guarantees only ONE layout is ever in the DOM at a time, no matter
-// what happens with CSS class generation.
-function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = useState(
-    typeof window !== 'undefined' ? window.innerWidth >= 768 : true
-  )
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)')
-    const handler = (e) => setIsDesktop(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-  return isDesktop
-}
+import { TEAM_CLASS } from '../../lib/teamColors'
+import usePortrait from '../../hooks/usePortrait'
 
 const emptyStats = () => ({
   points: 0, fouls: 0, turnovers: 0, assists: 0,
@@ -36,7 +22,7 @@ const emptyStats = () => ({
 export default function MatchSimulate() {
   const { tournamentId, matchId } = useParams()
   const navigate = useNavigate()
-  const isDesktop = useIsDesktop()
+  const portrait = usePortrait()
 
   const [tournament, setTournament] = useState(null)
   const [match, setMatch] = useState(null)
@@ -50,8 +36,10 @@ export default function MatchSimulate() {
   const [benchB, setBenchB] = useState([])
 
   const [playerStats, setPlayerStats] = useState({})
-  const [selectedA, setSelectedA] = useState(null)
-  const [selectedB, setSelectedB] = useState(null)
+  // One selection at a time, from either team: { team: 'A' | 'B', player }.
+  // The action buttons always act on this player.
+  const [selected, setSelected] = useState(null)
+  const [sheet, setSheet] = useState(null) // null | 'sub'
 
   // Append-only log of every scoring action taken. Nothing is ever
   // edited or removed from here -- a "correction" just adds a new
@@ -213,6 +201,11 @@ export default function MatchSimulate() {
     else setTimeoutsB((t) => Math.max(0, t - 1))
     setRunning(false)
     startRest(60)
+  }
+
+  function resetQuarterClock() {
+    setRunning(false)
+    setQuarterSeconds((tournament?.rules?.quarterMinutes ?? 10) * 60)
   }
 
   function buildSnapshot() {
@@ -432,23 +425,17 @@ export default function MatchSimulate() {
     if (team === 'A') {
       setLineupA((l) => l.map((p) => (p.id === outPlayer.id ? inPlayer : p)))
       setBenchA((b) => b.map((p) => (p.id === inPlayer.id ? outPlayer : p)))
-      setSelectedA({ player: inPlayer, isBench: false })
     } else {
       setLineupB((l) => l.map((p) => (p.id === outPlayer.id ? inPlayer : p)))
       setBenchB((b) => b.map((p) => (p.id === inPlayer.id ? outPlayer : p)))
-      setSelectedB({ player: inPlayer, isBench: false })
     }
+    // The incoming player takes over the selection so scoring can continue.
+    setSelected({ team, player: inPlayer })
     logAction({ type: 'SUB', playerId: inPlayer.id, teamId: team, amount: 0, quarter, note: `In for ${outPlayer.name}` })
   }
 
-  function selectPlayer(team, player, isBench) {
-    const selected = team === 'A' ? selectedA : selectedB
-    const setSelected = team === 'A' ? setSelectedA : setSelectedB
-    if (isBench && selected && !selected.isBench) {
-      substitute(team, selected.player, player)
-      return
-    }
-    setSelected({ player, isBench })
+  function selectPlayer(team, player) {
+    setSelected((cur) => (cur?.team === team && cur.player.id === player.id ? null : { team, player }))
   }
 
   function allPlayersWithTeam() {
@@ -533,48 +520,161 @@ export default function MatchSimulate() {
 
   const hasUndoable = actionLog.some((a) => !a.reversed)
 
-  const sharedProps = {
-    tournament, teamA, teamB, scoreA, scoreB, teamFoulsA, teamFoulsB,
-    lineupA, benchA, lineupB, benchB,
-    playerStats, foulLimit,
-    selectedA, selectedB, selectPlayer,
-    addPoints, addPersonalFoul, addTurnover, addAssist,
-    addMiss, addRebound, addSteal, addBlock, addTechnicalFoul,
-    quarter, quarterLabel,
-    quarterSeconds, setQuarterSeconds, running, setRunning,
-    shotClock, setShotClock, timeoutsA, timeoutsB, useTimeout,
-    possession, setPossession,
-    restSeconds, setRestSeconds,
-    formatClock, saving, handleComplete, error,
-    undoLastAction, hasUndoable, showLogModal, setShowLogModal,
-  }
+  // ---------- The selected player ----------
+  const selTeam = selected?.team ?? null
+  const selPlayer = selected?.player ?? null
+  const selStats = selPlayer ? (playerStats[selPlayer.id] ?? emptyStats()) : null
+  const selBench = selTeam === 'A' ? benchA : selTeam === 'B' ? benchB : []
+  const selTeamObj = selTeam === 'A' ? teamA : selTeam === 'B' ? teamB : null
+  const selFouledOut = !!selStats && selStats.fouls >= foulLimit
 
+  // Every button on the right acts on the selected player.
+  const pid = selPlayer?.id
+  const actionButtons = [
+    { key: 'p1', label: '+1', kind: 'points', run: () => addPoints(pid, 1) },
+    { key: 'p2', label: '+2', kind: 'points', run: () => addPoints(pid, 2) },
+    { key: 'p3', label: '+3', kind: 'points', run: () => addPoints(pid, 3) },
+    { key: 'miss', label: 'Miss', color: 'slate', run: () => addMiss(pid) },
+    { key: 'foul', label: 'Foul', color: 'red', run: () => addPersonalFoul(pid) },
+    { key: 'tov', label: 'TOV', color: 'slate', run: () => addTurnover(pid) },
+    { key: 'ast', label: 'AST', color: 'sky', run: () => addAssist(pid) },
+    { key: 'reb', label: 'REB', color: 'violet', run: () => addRebound(pid) },
+    { key: 'stl', label: 'STL', color: 'emerald', run: () => addSteal(pid) },
+    { key: 'blk', label: 'BLK', color: 'amber', run: () => addBlock(pid) },
+    { key: 'tech', label: 'Tech', color: 'red', run: () => addTechnicalFoul(pid) },
+  ]
+
+  // ---------- Full-screen layout, no scrolling ----------
   return (
-    <div className="px-3 py-3">
-      <div className="flex items-center justify-between mb-2">
-        <Link to={`/basketball/${tournamentId}/schedule`} className="text-sm text-ink-faint hover:text-ink-dim">
-          ← Back to schedule
+    <div className="fixed inset-0 z-40 bg-page flex flex-col">
+      <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-1.5 border-b border-line">
+        <Link to={`/basketball/${tournamentId}/schedule`} className="text-xs text-ink-faint hover:text-ink-dim shrink-0">
+          ← Schedule
         </Link>
-        {resumedFromSnapshot && (
-          <span className="text-xs font-medium text-accent flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+        {resumedFromSnapshot && !portrait ? (
+          <span className="text-[11px] font-medium text-accent flex items-center gap-1 truncate">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
             Resumed from saved progress
           </span>
+        ) : (
+          <span />
         )}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={undoLastAction}
+            disabled={!hasUndoable}
+            className="text-xs rounded-md border border-line-strong text-ink-dim hover:bg-panel-alt px-2 py-1 transition disabled:opacity-30"
+          >
+            ↶ Undo
+          </button>
+          <button
+            onClick={() => setShowLogModal(true)}
+            className="text-xs rounded-md border border-line-strong text-ink-dim hover:bg-panel-alt px-2 py-1 transition"
+          >
+            Log
+          </button>
+          <button
+            onClick={handleComplete}
+            disabled={saving}
+            className="text-xs rounded-md bg-accent-strong hover:bg-accent text-on-accent font-medium px-2.5 py-1 transition disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : 'Complete'}
+          </button>
+        </div>
+      </div>
+      {error && !showPotgStep && <div className="shrink-0 bg-live-soft px-3 py-1 text-xs text-live">{error}</div>}
+
+      <div className="flex-1 min-h-0 grid" style={{ gridTemplateColumns: '3fr 1fr' }}>
+        <div className="min-w-0 min-h-0 flex flex-col gap-2 p-2">
+          <Scoreboard
+            portrait={portrait}
+            teamA={teamA}
+            teamB={teamB}
+            scoreA={scoreA}
+            scoreB={scoreB}
+            teamFoulsA={teamFoulsA}
+            teamFoulsB={teamFoulsB}
+            timeoutsA={timeoutsA}
+            timeoutsB={timeoutsB}
+            onTimeout={useTimeout}
+            quarter={quarter}
+            quarterLabel={quarterLabel}
+            quarterSeconds={quarterSeconds}
+            running={running}
+            setRunning={setRunning}
+            onResetClock={resetQuarterClock}
+            shotClock={shotClock}
+            setShotClock={setShotClock}
+            possession={possession}
+            setPossession={setPossession}
+            restSeconds={restSeconds}
+            setRestSeconds={setRestSeconds}
+            formatClock={formatClock}
+          />
+          <div className="flex-1 min-h-0 relative">
+            <BasketballCourt
+              portrait={portrait}
+              lineupA={lineupA}
+              lineupB={lineupB}
+              playerStats={playerStats}
+              foulLimit={foulLimit}
+              selected={selected}
+              onSelectPlayer={selectPlayer}
+            />
+          </div>
+        </div>
+
+        <ActionColumn
+          portrait={portrait}
+          team={selTeam}
+          teamName={selTeamObj?.name}
+          player={selPlayer}
+          stats={selStats}
+          foulLimit={foulLimit}
+          fouledOut={selFouledOut}
+          actions={actionButtons}
+          onOpenSub={() => setSheet('sub')}
+        />
       </div>
 
-      {error && (
-        <div className="mb-2 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
-          {error}
-        </div>
-      )}
-
-      {isDesktop ? (
-        <div style={{ height: 'calc(100vh - 88px)' }}>
-          <DesktopGrid {...sharedProps} />
-        </div>
-      ) : (
-        <MobileStack {...sharedProps} />
+      {sheet === 'sub' && selPlayer && (
+        <Sheet title={`Substitute · ${selTeamObj?.name ?? ''}`} onClose={() => setSheet(null)}>
+          <p className="text-sm text-ink-dim mb-3">
+            Replace <span className="font-medium text-ink">#{selPlayer.jerseyNumber ?? '--'} {selPlayer.name}</span> with:
+          </p>
+          {selBench.length === 0 ? (
+            <p className="text-sm text-ink-dim">No bench players available.</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {selBench.map((p) => {
+                const f = playerStats[p.id]?.fouls ?? 0
+                const out = f >= foulLimit
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => {
+                      substitute(selTeam, selPlayer, p)
+                      setSheet(null)
+                    }}
+                    className={`rounded-md border px-2 py-3 text-sm text-left transition hover:border-accent hover:bg-accent-soft ${
+                      out ? 'border-live bg-live-soft text-ink' : 'border-line-strong text-ink'
+                    }`}
+                  >
+                    <span className="block truncate">
+                      <span className="text-ink-faint">#{p.jerseyNumber ?? '--'} </span>
+                      {p.name}
+                    </span>
+                    {(f > 0 || out) && (
+                      <span className={`block text-[10px] ${out ? 'text-live font-medium' : 'text-ink-faint'}`}>
+                        {out ? 'Fouled out' : `${f} foul${f === 1 ? '' : 's'}`}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </Sheet>
       )}
 
       {showPotgStep && (
@@ -602,6 +702,345 @@ export default function MatchSimulate() {
           onClose={() => setShowLogModal(false)}
         />
       )}
+    </div>
+  )
+}
+
+// Complete literal class strings per color -- Tailwind's scanner needs
+// these to appear whole in the source, not built from a template
+// literal at runtime.
+const STAT_BTN_COLORS = {
+  red: 'border-live text-live hover:bg-live-soft',
+  slate: 'border-line-strong text-ink-dim hover:bg-panel-alt',
+  sky: 'border-sky-600 text-sky-400 hover:bg-panel-alt',
+  violet: 'border-violet-600 text-violet-400 hover:bg-panel-alt',
+  emerald: 'border-accent text-accent hover:bg-accent-soft',
+  amber: 'border-warn text-warn hover:bg-warn-soft',
+}
+
+/** Simple modal used for the substitute picker. */
+function Sheet({ title, onClose, children }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-3" onClick={onClose}>
+      <div
+        className="w-full max-w-md max-h-[85dvh] overflow-y-auto rounded-xl border border-line bg-panel p-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <p className="font-medium text-ink">{title}</p>
+          <button
+            onClick={onClose}
+            className="text-xs rounded-md border border-line-strong text-ink-dim hover:bg-panel-alt px-2 py-1 transition"
+          >
+            Close
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+/** Scores, team fouls, timeouts, game clock, shot clock and possession. */
+function Scoreboard({
+  portrait, teamA, teamB, scoreA, scoreB, teamFoulsA, teamFoulsB, timeoutsA, timeoutsB, onTimeout,
+  quarter, quarterLabel, quarterSeconds, running, setRunning, onResetClock,
+  shotClock, setShotClock, possession, setPossession, restSeconds, setRestSeconds, formatClock,
+}) {
+  const block = (side, team, score, teamFouls, timeouts) => {
+    const right = side === 'B'
+    return (
+      <div className={`min-w-0 ${right ? 'text-right' : ''}`}>
+        <p className={`flex items-center gap-1 text-xs lg:text-sm font-medium text-ink min-w-0 ${right ? 'flex-row-reverse' : ''}`}>
+          <span className={`w-2 h-2 rounded-full shrink-0 ${TEAM_CLASS[side].bg}`} />
+          <span className="truncate">{team?.name ?? 'TBD'}</span>
+        </p>
+        <div className={`flex items-center gap-2 ${right ? 'flex-row-reverse' : ''}`}>
+          <span className="text-3xl lg:text-5xl font-display font-bold text-accent leading-none">{score}</span>
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={() => onTimeout(side)}
+              disabled={!timeouts}
+              className="text-[10px] rounded border border-line-strong text-ink-dim hover:bg-panel-alt px-1.5 py-0.5 transition disabled:opacity-30"
+            >
+              TO · {timeouts ?? 0}
+            </button>
+            <span className="text-[10px] text-ink-faint">Fouls {teamFouls}</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const clocks = (
+    <div className="min-w-0 text-center">
+      {restSeconds !== null ? (
+        <div className="flex items-center justify-center gap-2">
+          <div>
+            <p className="text-[9px] text-warn font-medium uppercase">Rest / timeout</p>
+            <span className="text-2xl lg:text-4xl font-display font-bold text-warn leading-none">{formatClock(restSeconds)}</span>
+          </div>
+          <button
+            onClick={() => setRestSeconds(null)}
+            className="text-[10px] rounded border border-line-strong text-ink-dim hover:bg-panel-alt px-1.5 py-1 transition"
+          >
+            Skip
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center gap-2">
+          <div>
+            <p className="text-[10px] text-ink-faint uppercase">{quarterLabel(quarter)}</p>
+            <span className="text-2xl lg:text-4xl font-display font-bold text-ink leading-none">{formatClock(quarterSeconds ?? 0)}</span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={() => setRunning((r) => !r)}
+              className="text-[10px] font-medium rounded bg-accent hover:bg-accent-strong text-on-accent px-2 py-0.5 transition"
+            >
+              {running ? 'Pause' : 'Start'}
+            </button>
+            <button
+              onClick={onResetClock}
+              className="text-[10px] rounded border border-line-strong text-ink-dim hover:bg-panel-alt px-2 py-0.5 transition"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="mt-1 flex items-center justify-center gap-1.5 text-[10px] text-ink-dim">
+        <span>Shot</span>
+        <span className={`text-sm font-display font-bold ${shotClock <= 5 ? 'text-live' : 'text-ink'}`}>{shotClock}</span>
+        <button onClick={() => setShotClock(24)} className="rounded border border-line-strong px-1.5 py-0.5 hover:bg-panel-alt transition">24</button>
+        <button onClick={() => setShotClock(14)} className="rounded border border-line-strong px-1.5 py-0.5 hover:bg-panel-alt transition">14</button>
+        <button
+          onClick={() => setPossession((p) => (p === 'left' ? 'right' : 'left'))}
+          title="Possession"
+          className="rounded border border-line-strong px-1.5 py-0.5 text-sm font-bold text-accent hover:bg-panel-alt transition leading-none"
+        >
+          {possession === 'left' ? '←' : '→'}
+        </button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="shrink-0 rounded-xl border border-line bg-panel px-2.5 py-1.5">
+      {portrait ? (
+        <>
+          <div className="grid gap-2" style={{ gridTemplateColumns: '1fr 1fr' }}>
+            {block('A', teamA, scoreA, teamFoulsA, timeoutsA)}
+            {block('B', teamB, scoreB, teamFoulsB, timeoutsB)}
+          </div>
+          <div className="mt-1.5 border-t border-line pt-1.5">{clocks}</div>
+        </>
+      ) : (
+        <div className="grid items-center gap-2" style={{ gridTemplateColumns: 'auto 1fr auto' }}>
+          {block('A', teamA, scoreA, teamFoulsA, timeoutsA)}
+          {clocks}
+          {block('B', teamB, scoreB, teamFoulsB, timeoutsB)}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** The right-hand column: stat buttons for whichever player is selected. */
+function ActionColumn({ portrait, team, teamName, player, stats, foulLimit, fouledOut, actions, onOpenSub }) {
+  const cols = portrait ? 1 : 2
+  const items = actions.length + 1
+  const rows = Math.ceil(items / cols)
+  const has = !!player
+
+  return (
+    <div className="min-w-0 min-h-0 flex flex-col gap-1.5 border-l border-line bg-panel p-1.5">
+      <div className="shrink-0 min-h-[2.25rem]">
+        {has ? (
+          <>
+            <p className="text-[10px] text-ink-faint truncate flex items-center gap-1">
+              <span className={`w-2 h-2 rounded-full shrink-0 ${TEAM_CLASS[team].bg}`} />
+              {teamName}
+            </p>
+            <p className="text-xs font-medium text-ink truncate">
+              #{player.jerseyNumber ?? '--'} {player.name}
+            </p>
+            <p className={`text-[10px] truncate ${fouledOut ? 'text-live font-medium' : 'text-ink-faint'}`}>
+              {fouledOut ? 'Fouled out -- sub' : `${stats?.points ?? 0} pts · ${stats?.fouls ?? 0}/${foulLimit} fouls`}
+            </p>
+          </>
+        ) : (
+          <p className="text-[11px] text-ink-dim leading-tight">Tap a player on the court</p>
+        )}
+      </div>
+
+      <div
+        className="flex-1 min-h-0 grid gap-1"
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))` }}
+      >
+        {actions.map((a) => (
+          <button
+            key={a.key}
+            onClick={a.run}
+            disabled={!has}
+            className={`min-h-0 overflow-hidden rounded-md border px-1 text-xs lg:text-sm font-medium leading-tight transition disabled:opacity-30 ${
+              a.kind === 'points'
+                ? 'border-transparent bg-accent hover:bg-accent-strong text-on-accent font-bold text-sm lg:text-lg'
+                : STAT_BTN_COLORS[a.color]
+            }`}
+          >
+            {a.label}
+          </button>
+        ))}
+        <button
+          onClick={onOpenSub}
+          disabled={!has}
+          className="min-h-0 overflow-hidden rounded-md border border-line-strong px-1 text-xs lg:text-sm font-medium leading-tight text-ink hover:bg-panel-alt transition disabled:opacity-30"
+        >
+          ⇄ Sub
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Top-down full court (28 m x 15 m plus a margin), drawn in real
+ * proportions. Logical coordinates: u runs along the length (0..30), v
+ * across the width (0..17). In portrait the picture is turned 90 degrees
+ * so it fills a tall phone screen. Team A defends the left basket, Team B
+ * the right. Basketball has no fixed positions, so each team's five
+ * on-court players sit in a simple 2-1-2 formation on their half; a
+ * substitute takes over the exact spot of the player they replace.
+ */
+const COURT_LEN = 30
+const COURT_WID = 17
+const CHIP = 3
+const SPOTS_A = [[3.8, 5.2], [3.8, 11.8], [8.0, 8.5], [12.2, 5.2], [12.2, 11.8]]
+
+function BasketballCourt({ portrait, lineupA, lineupB, playerStats, foulLimit, selected, onSelectPlayer }) {
+  const toScreen = (u, v) =>
+    portrait ? { x: (COURT_WID - v) / COURT_WID, y: u / COURT_LEN } : { x: u / COURT_LEN, y: v / COURT_WID }
+  const chipW = portrait ? CHIP / COURT_WID : CHIP / COURT_LEN
+  const chipH = portrait ? CHIP / COURT_LEN : CHIP / COURT_WID
+  const ratio = portrait ? COURT_WID / COURT_LEN : COURT_LEN / COURT_WID
+
+  const chips = []
+  for (const side of ['A', 'B']) {
+    const lineup = side === 'A' ? lineupA : lineupB
+    lineup.slice(0, 5).forEach((p, i) => {
+      const [ua, v] = SPOTS_A[i]
+      const u = side === 'A' ? ua : COURT_LEN - ua
+      const { x, y } = toScreen(u, v)
+      const s = playerStats[p.id]
+      const fouls = s?.fouls ?? 0
+      const points = s?.points ?? 0
+      const fouledOut = fouls >= foulLimit
+      const warning = !fouledOut && fouls === foulLimit - 1
+      const isSelected = selected?.team === side && selected.player.id === p.id
+      const tone = isSelected
+        ? 'bg-accent text-on-accent border-ink'
+        : `${fouledOut ? 'bg-live-soft' : warning ? 'bg-warn-soft' : 'bg-page'} text-ink ${TEAM_CLASS[side].border}`
+      chips.push(
+        <button
+          key={p.id}
+          type="button"
+          title={p.name}
+          onClick={() => onSelectPlayer(side, p)}
+          className={`absolute flex flex-col items-center justify-center rounded-md leading-none border-2 ${tone}`}
+          style={{
+            left: `${x * 100}%`,
+            top: `${y * 100}%`,
+            width: `${chipW * 100}%`,
+            height: `${chipH * 100}%`,
+            transform: 'translate(-50%, -50%)',
+            padding: 0,
+          }}
+        >
+          <span style={{ fontSize: portrait ? 'max(11px, 4.4cqw)' : 'max(11px, 2.8cqw)', fontWeight: 700 }}>
+            {p.jerseyNumber ?? '--'}
+          </span>
+          <span
+            style={{
+              fontSize: portrait ? 'max(8px, 2.6cqw)' : 'max(8px, 1.7cqw)',
+              maxWidth: '96%',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              marginTop: 2,
+            }}
+          >
+            {p.name}
+          </span>
+          {fouledOut ? (
+            <span className="absolute top-0 right-0 bg-live text-white rounded-bl" style={{ fontSize: 8, padding: '1px 3px' }}>
+              OUT
+            </span>
+          ) : (
+            fouls > 0 && (
+              <span
+                className={`absolute top-0 right-0 rounded-bl ${warning ? 'bg-warn text-on-warn' : 'bg-panel-alt text-ink-dim'}`}
+                style={{ fontSize: 8, padding: '1px 3px' }}
+              >
+                {fouls}F
+              </span>
+            )
+          )}
+          {points > 0 && (
+            <span className={`absolute bottom-0 right-0 text-on-accent rounded-tl ${TEAM_CLASS[side].bg}`} style={{ fontSize: 8, padding: '1px 3px' }}>
+              {points}
+            </span>
+          )}
+        </button>
+      )
+    })
+  }
+
+  // One half of the court (the left one); the right half is the same
+  // drawing mirrored. Basket is 1.575 m from the baseline.
+  const half = (fillClass) => (
+    <>
+      <rect x="1" y="6.05" width="5.8" height="4.9" className={fillClass} fillOpacity="0.14" />
+      <rect x="1" y="6.05" width="5.8" height="4.9" fill="none" className="stroke-ink-dim" strokeWidth="0.1" />
+      <path d="M 6.8 6.7 A 1.8 1.8 0 0 1 6.8 10.3" fill="none" className="stroke-ink-dim" strokeWidth="0.1" />
+      <path d="M 6.8 6.7 A 1.8 1.8 0 0 0 6.8 10.3" fill="none" className="stroke-ink-dim" strokeWidth="0.1" strokeDasharray="0.3 0.25" />
+      <path d="M 1 1.9 L 3.99 1.9 A 6.75 6.75 0 0 1 3.99 15.1 L 1 15.1" fill="none" className="stroke-ink-dim" strokeWidth="0.1" />
+      <line x1="2.2" y1="7.6" x2="2.2" y2="9.4" className="stroke-ink" strokeWidth="0.14" />
+      <circle cx="2.575" cy="8.5" r="0.3" fill="none" className="stroke-ink" strokeWidth="0.1" />
+    </>
+  )
+
+  return (
+    <div className="absolute inset-0" style={{ containerType: 'size' }}>
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: `min(100cqw, calc(100cqh * ${ratio}))`,
+          aspectRatio: `${portrait ? COURT_WID : COURT_LEN} / ${portrait ? COURT_LEN : COURT_WID}`,
+          containerType: 'inline-size',
+        }}
+      >
+        <svg
+          viewBox={portrait ? `0 0 ${COURT_WID} ${COURT_LEN}` : `0 0 ${COURT_LEN} ${COURT_WID}`}
+          className="absolute inset-0 w-full h-full rounded-lg"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <g transform={portrait ? `translate(${COURT_WID} 0) rotate(90)` : undefined}>
+            <rect x="0" y="0" width="30" height="17" className="fill-panel" />
+            <rect x="1" y="1" width="28" height="15" className="fill-panel-alt" />
+            <rect x="1" y="1" width="28" height="15" fill="none" className="stroke-ink-dim" strokeWidth="0.12" />
+            <line x1="15" y1="1" x2="15" y2="16" className="stroke-ink-dim" strokeWidth="0.1" />
+            <circle cx="15" cy="8.5" r="1.8" fill="none" className="stroke-ink-dim" strokeWidth="0.1" />
+            <g>{half(TEAM_CLASS.A.fill)}</g>
+            <g transform="translate(30 0) scale(-1 1)">{half(TEAM_CLASS.B.fill)}</g>
+          </g>
+        </svg>
+        {chips}
+      </div>
     </div>
   )
 }
@@ -707,509 +1146,6 @@ function ActionLogOverlay({ actionLog, playerName, teamName, onClose }) {
           ))}
         </div>
       </div>
-    </div>
-  )
-}
-
-function DesktopGrid(props) {
-  const {
-    teamA, teamB, scoreA, scoreB, teamFoulsA, teamFoulsB, lineupA, benchA, lineupB, benchB,
-    playerStats, foulLimit, selectedA, selectedB, selectPlayer,
-    addPoints, addPersonalFoul, addTurnover, addAssist,
-    addMiss, addRebound, addSteal, addBlock, addTechnicalFoul,
-    quarter, quarterLabel,
-    quarterSeconds, setQuarterSeconds, running, setRunning,
-    shotClock, setShotClock, timeoutsA, timeoutsB, useTimeout,
-    possession, setPossession, restSeconds, setRestSeconds,
-    formatClock, saving, handleComplete, tournament,
-    undoLastAction, hasUndoable, setShowLogModal,
-  } = props
-
-  const statActions = { addPoints, addPersonalFoul, addTurnover, addAssist, addMiss, addRebound, addSteal, addBlock, addTechnicalFoul }
-
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gridTemplateRows: 'repeat(6, 1fr)', gap: '8px', height: '100%' }}>
-      <div style={{ gridColumn: '1 / 3', gridRow: '1 / 5', minHeight: 0 }}>
-        <TeamPanel
-          team={teamA} score={scoreA} teamFouls={teamFoulsA} lineup={lineupA}
-          stats={playerStats} foulLimit={foulLimit} selected={selectedA}
-          onSelect={(p, b) => selectPlayer('A', p, b)}
-          actions={statActions}
-          compact
-        />
-      </div>
-
-      <div style={{ gridColumn: '3 / 5', gridRow: '1 / 5', minHeight: 0 }}>
-        <TeamPanel
-          team={teamB} score={scoreB} teamFouls={teamFoulsB} lineup={lineupB}
-          stats={playerStats} foulLimit={foulLimit} selected={selectedB}
-          onSelect={(p, b) => selectPlayer('B', p, b)}
-          actions={statActions}
-          compact
-        />
-      </div>
-
-      <RailPanel style={{ gridColumn: '5 / 6', gridRow: '1 / 2' }}>
-        {restSeconds !== null ? (
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[9px] text-warn font-medium uppercase">Rest</p>
-              <span className="font-display font-bold text-warn">{formatClock(restSeconds)}</span>
-            </div>
-            <button onClick={() => setRestSeconds(null)} className="text-[10px] rounded border border-line-strong px-1.5 py-1 hover:bg-panel-alt transition">
-              Skip
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[9px] text-ink-faint uppercase">{quarterLabel(quarter)}</p>
-              <span className="font-display font-bold text-ink">{formatClock(quarterSeconds ?? 0)}</span>
-            </div>
-            <div className="flex gap-1">
-              <button onClick={() => setRunning((r) => !r)} className="text-[10px] font-medium rounded bg-accent hover:bg-accent-strong text-on-accent px-1.5 py-1 transition">
-                {running ? 'II' : '▶'}
-              </button>
-              <button onClick={() => { setRunning(false); setQuarterSeconds((tournament.rules?.quarterMinutes ?? 10) * 60) }} className="text-[10px] font-medium rounded border border-line-strong px-1.5 py-1 hover:bg-panel-alt transition">
-                ↺
-              </button>
-            </div>
-          </div>
-        )}
-      </RailPanel>
-
-      <RailPanel style={{ gridColumn: '5 / 6', gridRow: '2 / 3' }}>
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] text-ink-dim">Shot clock</span>
-          <span className={`font-display font-bold ${shotClock <= 5 ? 'text-live' : 'text-ink'}`}>{shotClock}</span>
-        </div>
-        <div className="flex gap-1 mt-1">
-          <button onClick={() => setShotClock(24)} className="flex-1 text-[10px] rounded border border-line-strong py-1 hover:bg-panel-alt transition">24</button>
-          <button onClick={() => setShotClock(14)} className="flex-1 text-[10px] rounded border border-line-strong py-1 hover:bg-panel-alt transition">14</button>
-        </div>
-      </RailPanel>
-
-      <RailPanel style={{ gridColumn: '5 / 6', gridRow: '3 / 4' }}>
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] text-ink-dim">Possession</span>
-          <button onClick={() => setPossession((p) => (p === 'left' ? 'right' : 'left'))} className="text-base font-bold text-accent">
-            {possession === 'left' ? '←' : '→'}
-          </button>
-        </div>
-      </RailPanel>
-
-      <RailPanel style={{ gridColumn: '5 / 6', gridRow: '4 / 5' }}>
-        <div className="flex flex-col gap-1 text-[10px]">
-          <button onClick={() => useTimeout('A')} disabled={!timeoutsA} className="rounded border border-line-strong px-1 py-1 hover:bg-panel-alt transition disabled:opacity-30">
-            TO {teamA?.name ?? 'A'} ({timeoutsA ?? 0})
-          </button>
-          <button onClick={() => useTimeout('B')} disabled={!timeoutsB} className="rounded border border-line-strong px-1 py-1 hover:bg-panel-alt transition disabled:opacity-30">
-            TO {teamB?.name ?? 'B'} ({timeoutsB ?? 0})
-          </button>
-        </div>
-      </RailPanel>
-
-      {/* Bench panels now span both columns each, since team-foul cards were removed */}
-      <div style={{ gridColumn: '1 / 3', gridRow: '5 / 7', minHeight: 0 }}>
-        <BenchPanel team={teamA} bench={benchA} stats={playerStats} selected={selectedA} onSelect={(p) => selectPlayer('A', p, true)} />
-      </div>
-      <div style={{ gridColumn: '3 / 5', gridRow: '5 / 7', minHeight: 0 }}>
-        <BenchPanel team={teamB} bench={benchB} stats={playerStats} selected={selectedB} onSelect={(p) => selectPlayer('B', p, true)} />
-      </div>
-
-      <RailPanel style={{ gridColumn: '5 / 6', gridRow: '5 / 6' }}>
-        <div className="flex flex-col gap-1">
-          <button
-            onClick={undoLastAction}
-            disabled={!hasUndoable}
-            className="text-[10px] rounded border border-line-strong px-1.5 py-1 hover:bg-panel-alt transition disabled:opacity-30"
-          >
-            Undo last
-          </button>
-          <button
-            onClick={() => setShowLogModal(true)}
-            className="text-[10px] rounded border border-line-strong px-1.5 py-1 hover:bg-panel-alt transition"
-          >
-            View log
-          </button>
-        </div>
-      </RailPanel>
-
-      <div style={{ gridColumn: '5 / 6', gridRow: '6 / 7' }}>
-        <button
-          onClick={handleComplete}
-          disabled={saving}
-          className="w-full h-full rounded-xl bg-accent-strong hover:bg-accent text-on-accent font-medium text-xs transition disabled:opacity-50"
-        >
-          {saving ? 'Saving...' : 'Complete Match'}
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function RailPanel({ style, children }) {
-  return (
-    <div
-      style={{ ...style, minHeight: 0, overflow: 'hidden' }}
-      className="rounded-xl border border-line bg-panel p-2"
-    >
-      {children}
-    </div>
-  )
-}
-
-// Complete literal class strings per color -- Tailwind's scanner needs
-// these to appear whole in the source, not built from a template
-// literal at runtime (that silently produces unstyled buttons, which
-// bit us once already with the court circles).
-const STAT_BTN_COLORS = {
-  red: 'border-live text-live hover:bg-live-soft',
-  slate: 'border-line-strong text-ink-dim hover:bg-panel-alt',
-  sky: 'border-sky-600 text-sky-400 hover:bg-panel-alt',
-  violet: 'border-violet-600 text-violet-400 hover:bg-panel-alt',
-  emerald: 'border-accent text-accent hover:bg-accent-soft',
-  amber: 'border-warn text-warn hover:bg-warn-soft',
-}
-
-function SmallStatBtn({ label, color, onClick, disabled }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`flex-1 rounded-md border font-medium py-1 text-[11px] transition disabled:opacity-30 ${STAT_BTN_COLORS[color]}`}
-    >
-      {label}
-    </button>
-  )
-}
-
-function TeamPanel({ team, score, teamFouls, lineup, stats, foulLimit, selected, onSelect, actions, compact }) {
-  const selectedFouls = selected ? (stats[selected.player.id]?.fouls ?? 0) : 0
-  const selectedFouledOut = selected && !selected.isBench && selectedFouls >= foulLimit
-  const canAct = selected && !selected.isBench
-  const pid = selected?.player.id
-
-  return (
-    <div className="h-full rounded-xl border border-line bg-panel flex flex-col overflow-hidden">
-      <div className="px-3 py-1.5 border-b border-line flex items-center justify-between shrink-0">
-        <span className="font-medium text-ink truncate text-sm">{team?.name ?? 'TBD'}</span>
-        <div className="text-right">
-          <span className="text-lg font-display font-bold text-accent">{score}</span>
-          <span className="block text-[10px] text-ink-faint -mt-0.5">Team fouls: {teamFouls}</span>
-        </div>
-      </div>
-
-      <div className="px-2 py-1.5 border-b border-line bg-page shrink-0">
-        <p className="text-[10px] text-ink-dim mb-1 truncate">
-          {selected ? `#${selected.player.jerseyNumber ?? '--'} ${selected.player.name}` : 'Tap a player'}
-        </p>
-        <div className="flex gap-1 mb-1">
-          {[1, 2, 3].map((pts) => (
-            <button
-              key={pts}
-              onClick={() => canAct && actions.addPoints(pid, pts)}
-              disabled={!canAct}
-              className="flex-1 rounded-md bg-accent hover:bg-accent-strong text-on-accent font-bold py-1.5 text-sm transition disabled:opacity-30"
-            >
-              +{pts}
-            </button>
-          ))}
-          <button
-            onClick={() => canAct && actions.addMiss(pid)}
-            disabled={!canAct}
-            className="flex-1 rounded-md border border-line-strong text-ink-dim hover:bg-panel-alt font-medium py-1.5 text-[11px] transition disabled:opacity-30"
-          >
-            Miss
-          </button>
-        </div>
-        <div className="flex gap-1 mb-1">
-          <SmallStatBtn label="Foul" color="red" onClick={() => canAct && actions.addPersonalFoul(pid)} disabled={!canAct} />
-          <SmallStatBtn label="TOV" color="slate" onClick={() => canAct && actions.addTurnover(pid)} disabled={!canAct} />
-          <SmallStatBtn label="AST" color="sky" onClick={() => canAct && actions.addAssist(pid)} disabled={!canAct} />
-        </div>
-        <div className="flex gap-1">
-          <SmallStatBtn label="REB" color="violet" onClick={() => canAct && actions.addRebound(pid)} disabled={!canAct} />
-          <SmallStatBtn label="STL" color="emerald" onClick={() => canAct && actions.addSteal(pid)} disabled={!canAct} />
-          <SmallStatBtn label="BLK" color="amber" onClick={() => canAct && actions.addBlock(pid)} disabled={!canAct} />
-          <SmallStatBtn label="Tech" color="red" onClick={() => canAct && actions.addTechnicalFoul(pid)} disabled={!canAct} />
-        </div>
-        {selectedFouledOut && (
-          <p className="text-[10px] text-live font-medium mt-1">Fouled out -- sub from bench below</p>
-        )}
-      </div>
-
-      <div className="flex-1 min-h-0 overflow-y-auto px-1.5 py-1">
-        {lineup.map((player) => (
-          <PlayerRow
-            key={player.id}
-            player={player}
-            fouls={stats[player.id]?.fouls ?? 0}
-            turnovers={stats[player.id]?.turnovers ?? 0}
-            assists={stats[player.id]?.assists ?? 0}
-            foulLimit={foulLimit}
-            selected={selected?.player.id === player.id && !selected.isBench}
-            onTap={() => onSelect(player, false)}
-            compact={compact}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function BenchPanel({ team, bench, stats, selected, onSelect }) {
-  return (
-    <div className="h-full rounded-xl border border-line bg-panel p-1.5 overflow-y-auto">
-      <p className="text-[10px] font-semibold text-ink-faint uppercase px-1 pt-0.5 truncate">{team?.name} bench</p>
-      {bench.length === 0 && <p className="text-[10px] text-ink-faint px-1 pt-1">Empty</p>}
-      <div className="grid grid-cols-2 gap-1">
-        {bench.map((player) => (
-          <PlayerRow
-            key={player.id}
-            player={player}
-            fouls={stats[player.id]?.fouls ?? 0}
-            turnovers={stats[player.id]?.turnovers ?? 0}
-            assists={stats[player.id]?.assists ?? 0}
-            foulLimit={99}
-            selected={selected?.player.id === player.id && selected.isBench}
-            onTap={() => onSelect(player)}
-            compact
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function PlayerRow({ player, fouls, turnovers = 0, assists = 0, foulLimit, selected, onTap, compact }) {
-  const fouledOut = fouls >= foulLimit
-  const warning = fouls === foulLimit - 1
-
-  let rowClasses = 'border-transparent hover:bg-panel-alt'
-  if (selected) rowClasses = 'border-accent bg-accent-soft'
-  else if (fouledOut) rowClasses = 'border-transparent bg-live-soft'
-  else if (warning) rowClasses = 'border-transparent bg-warn-soft'
-
-  return (
-    <button
-      onClick={onTap}
-      className={`w-full flex items-center justify-between rounded-md border px-1.5 ${compact ? 'py-1' : 'py-1.5'} my-0.5 text-left transition ${rowClasses}`}
-    >
-      <span className="flex items-center gap-1.5 min-w-0">
-        <span className="text-xs font-bold text-ink-dim w-5 text-center shrink-0">{player.jerseyNumber ?? '--'}</span>
-        <span className="text-xs text-ink truncate">{player.name}</span>
-      </span>
-      <span className="flex items-center gap-1 shrink-0">
-        {fouledOut && <span className="text-[9px] font-bold bg-live text-white rounded px-1">OUT</span>}
-        {!fouledOut && fouls > 0 && (
-          <span className={`text-[10px] ${warning ? 'text-warn font-medium' : 'text-ink-faint'}`}>{fouls}F</span>
-        )}
-        {turnovers > 0 && <span className="text-[10px] text-ink-faint">{turnovers}TO</span>}
-        {assists > 0 && <span className="text-[10px] text-sky-400">{assists}A</span>}
-      </span>
-    </button>
-  )
-}
-
-function MobileStack(props) {
-  const {
-    teamA, teamB, scoreA, scoreB, teamFoulsA, teamFoulsB, lineupA, benchA, lineupB, benchB,
-    playerStats, foulLimit, selectedA, selectedB, selectPlayer,
-    addPoints, addPersonalFoul, addTurnover, addAssist,
-    addMiss, addRebound, addSteal, addBlock, addTechnicalFoul,
-    quarter, quarterLabel,
-    quarterSeconds, setQuarterSeconds, running, setRunning,
-    shotClock, setShotClock, timeoutsA, timeoutsB, useTimeout,
-    possession, setPossession, restSeconds, setRestSeconds,
-    formatClock, saving, handleComplete, tournament,
-    undoLastAction, hasUndoable, setShowLogModal,
-  } = props
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="rounded-xl border border-line bg-panel p-3 flex flex-col gap-2">
-        {restSeconds !== null ? (
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] text-warn font-medium uppercase">Rest / Timeout</p>
-              <span className="text-lg font-display font-bold text-warn">{formatClock(restSeconds)}</span>
-            </div>
-            <button onClick={() => setRestSeconds(null)} className="text-xs font-medium rounded-md border border-line-strong px-2.5 py-1 hover:bg-panel-alt transition">
-              Skip Rest
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] text-ink-faint uppercase">{quarterLabel(quarter)}</p>
-              <span className="text-lg font-display font-bold text-ink">{formatClock(quarterSeconds ?? 0)}</span>
-            </div>
-            <div className="flex gap-1">
-              <button onClick={() => setRunning((r) => !r)} className="text-xs font-medium rounded-md bg-accent hover:bg-accent-strong text-on-accent px-2.5 py-1 transition">
-                {running ? 'Pause' : 'Start'}
-              </button>
-              <button onClick={() => { setRunning(false); setQuarterSeconds((tournament.rules?.quarterMinutes ?? 10) * 60) }} className="text-xs font-medium rounded-md border border-line-strong text-ink-dim px-2.5 py-1 hover:bg-panel-alt transition">
-                Reset
-              </button>
-            </div>
-          </div>
-        )}
-        <div className="flex items-center justify-between border-t border-line pt-2">
-          <span className="text-xs text-ink-dim">Shot clock</span>
-          <span className={`font-display font-bold ${shotClock <= 5 ? 'text-live' : 'text-ink'}`}>{shotClock}</span>
-          <div className="flex gap-1">
-            <button onClick={() => setShotClock(24)} className="text-[11px] rounded-md border border-line-strong px-2 py-1 hover:bg-panel-alt transition">24</button>
-            <button onClick={() => setShotClock(14)} className="text-[11px] rounded-md border border-line-strong px-2 py-1 hover:bg-panel-alt transition">14</button>
-          </div>
-        </div>
-        <div className="flex items-center justify-between border-t border-line pt-2">
-          <span className="text-xs text-ink-dim">Possession</span>
-          <button onClick={() => setPossession((p) => (p === 'left' ? 'right' : 'left'))} className="text-lg font-bold text-accent">
-            {possession === 'left' ? '←' : '→'}
-          </button>
-        </div>
-        <div className="flex items-center justify-between border-t border-line pt-2 text-xs">
-          <button onClick={() => useTimeout('A')} disabled={!timeoutsA} className="rounded-md border border-line-strong px-2 py-1 hover:bg-panel-alt transition disabled:opacity-30">TO A ({timeoutsA ?? 0})</button>
-          <button onClick={() => useTimeout('B')} disabled={!timeoutsB} className="rounded-md border border-line-strong px-2 py-1 hover:bg-panel-alt transition disabled:opacity-30">TO B ({timeoutsB ?? 0})</button>
-        </div>
-        <div className="flex items-center justify-between border-t border-line pt-2 text-xs">
-          <button onClick={undoLastAction} disabled={!hasUndoable} className="rounded-md border border-line-strong px-2 py-1 hover:bg-panel-alt transition disabled:opacity-30">Undo last</button>
-          <button onClick={() => setShowLogModal(true)} className="rounded-md border border-line-strong px-2 py-1 hover:bg-panel-alt transition">View log</button>
-        </div>
-      </div>
-
-      {[
-        { team: teamA, score: scoreA, teamFouls: teamFoulsA, lineup: lineupA, bench: benchA, selected: selectedA, key: 'A' },
-        { team: teamB, score: scoreB, teamFouls: teamFoulsB, lineup: lineupB, bench: benchB, selected: selectedB, key: 'B' },
-      ].map(({ team, score, teamFouls, lineup, bench, selected, key }) => (
-        <div key={key} className="rounded-xl border border-line bg-panel overflow-hidden">
-          <div className="px-3 py-2 border-b border-line flex items-center justify-between">
-            <span className="font-medium text-ink truncate">{team?.name ?? 'TBD'}</span>
-            <div className="text-right">
-              <span className="text-xl font-display font-bold text-accent">{score}</span>
-              <span className="block text-[10px] text-ink-faint -mt-0.5">Team fouls: {teamFouls}</span>
-            </div>
-          </div>
-          <div className="px-3 py-2 border-b border-line bg-page">
-            <p className="text-xs text-ink-dim mb-1.5 truncate">
-              {selected ? `Scoring: #${selected.player.jerseyNumber ?? '--'} ${selected.player.name}` : 'Tap a player to select them'}
-            </p>
-            <div className="flex gap-1.5 mb-1.5">
-              {[1, 2, 3].map((pts) => (
-                <button
-                  key={pts}
-                  onClick={() => selected && !selected.isBench && addPoints(selected.player.id, pts)}
-                  disabled={!selected || selected.isBench}
-                  className="flex-1 rounded-lg bg-accent hover:bg-accent-strong text-on-accent font-bold py-2 transition disabled:opacity-30"
-                >
-                  +{pts}
-                </button>
-              ))}
-              <button
-                onClick={() => selected && !selected.isBench && addMiss(selected.player.id)}
-                disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-line-strong text-ink-dim hover:bg-panel-alt font-medium py-2 text-sm transition disabled:opacity-30"
-              >
-                Miss
-              </button>
-            </div>
-            <div className="flex gap-1.5 mb-1.5">
-              <button
-                onClick={() => selected && !selected.isBench && addPersonalFoul(selected.player.id)}
-                disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-live text-live hover:bg-live-soft font-medium py-2 text-sm transition disabled:opacity-30"
-              >
-                Foul
-              </button>
-              <button
-                onClick={() => selected && !selected.isBench && addTurnover(selected.player.id)}
-                disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-line-strong text-ink-dim hover:bg-panel-alt font-medium py-2 text-sm transition disabled:opacity-30"
-              >
-                TOV
-              </button>
-              <button
-                onClick={() => selected && !selected.isBench && addAssist(selected.player.id)}
-                disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-sky-600 text-sky-400 hover:bg-panel-alt font-medium py-2 text-sm transition disabled:opacity-30"
-              >
-                AST
-              </button>
-            </div>
-            <div className="flex gap-1.5">
-              <button
-                onClick={() => selected && !selected.isBench && addRebound(selected.player.id)}
-                disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-violet-600 text-violet-400 hover:bg-panel-alt font-medium py-2 text-sm transition disabled:opacity-30"
-              >
-                REB
-              </button>
-              <button
-                onClick={() => selected && !selected.isBench && addSteal(selected.player.id)}
-                disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-accent text-accent hover:bg-accent-soft font-medium py-2 text-sm transition disabled:opacity-30"
-              >
-                STL
-              </button>
-              <button
-                onClick={() => selected && !selected.isBench && addBlock(selected.player.id)}
-                disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-warn text-warn hover:bg-warn-soft font-medium py-2 text-sm transition disabled:opacity-30"
-              >
-                BLK
-              </button>
-              <button
-                onClick={() => selected && !selected.isBench && addTechnicalFoul(selected.player.id)}
-                disabled={!selected || selected.isBench}
-                className="flex-1 rounded-lg border border-live text-live hover:bg-live-soft font-medium py-2 text-sm transition disabled:opacity-30"
-              >
-                Tech
-              </button>
-            </div>
-          </div>
-          <div className="px-2 py-1.5">
-            <p className="text-[10px] font-semibold text-ink-faint uppercase px-1 pt-1">On court</p>
-            {lineup.map((player) => (
-              <PlayerRow
-                key={player.id}
-                player={player}
-                fouls={playerStats[player.id]?.fouls ?? 0}
-                turnovers={playerStats[player.id]?.turnovers ?? 0}
-                assists={playerStats[player.id]?.assists ?? 0}
-                foulLimit={foulLimit}
-                selected={selected?.player.id === player.id && !selected.isBench}
-                onTap={() => selectPlayer(key, player, false)}
-              />
-            ))}
-          </div>
-          {bench.length > 0 && (
-            <div className="px-2 py-1.5 border-t border-line">
-              <p className="text-[10px] font-semibold text-ink-faint uppercase px-1 pt-1">Bench</p>
-              {bench.map((player) => (
-                <PlayerRow
-                  key={player.id}
-                  player={player}
-                  fouls={playerStats[player.id]?.fouls ?? 0}
-                  turnovers={playerStats[player.id]?.turnovers ?? 0}
-                  assists={playerStats[player.id]?.assists ?? 0}
-                  foulLimit={foulLimit}
-                  selected={selected?.player.id === player.id && selected.isBench}
-                  onTap={() => selectPlayer(key, player, true)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
-
-      <button
-        onClick={handleComplete}
-        disabled={saving}
-        className="w-full rounded-lg bg-accent-strong hover:bg-accent text-on-accent font-medium py-3 transition disabled:opacity-50"
-      >
-        {saving ? 'Saving result...' : 'Complete Match & Advance Winner'}
-      </button>
     </div>
   )
 }
