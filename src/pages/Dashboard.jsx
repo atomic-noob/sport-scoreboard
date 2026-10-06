@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const SPORTS = [
-  { id: 'basketball', name: 'Basketball', emoji: '🏀', ready: true },
-  { id: 'volleyball', name: 'Volleyball', emoji: '🏐', ready: true },
+  { id: 'basketball', name: 'Basketball', emoji: '🏀', ready: true, hint: 'Tournaments, live scoring, brackets and leaderboards' },
+  { id: 'volleyball', name: 'Volleyball', emoji: '🏐', ready: true, hint: 'Sets, rotations, libero, subs and player stats' },
   { id: 'badminton', name: 'Badminton', emoji: '🏸', ready: false },
   { id: 'soccer', name: 'Soccer', emoji: '⚽', ready: false },
   { id: 'tennis', name: 'Tennis', emoji: '🎾', ready: false },
@@ -10,54 +11,75 @@ const SPORTS = [
 ]
 
 export default function Dashboard() {
+  const { user } = useAuth()
+  const glass = 'rounded-2xl border border-white/10 bg-white/5 backdrop-blur'
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
-      <div className="flex items-start justify-between mb-1 gap-4">
-        <h1 className="text-3xl font-display font-bold tracking-wide text-ink">All-Sport Scoreboard</h1>
-        <a
-          href="/watch"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="shrink-0 rounded-lg bg-accent hover:bg-accent-strong text-on-accent text-sm font-medium px-4 py-2 transition flex items-center gap-1.5"
+    <div className="min-h-[calc(100vh-3.5rem)] w-full relative overflow-hidden text-white">
+      {/* Emerald Void */}
+      <div
+        className="fixed inset-0 z-0"
+        style={{ background: 'radial-gradient(125% 125% at 50% 10%, #000000 40%, #072607 100%)' }}
+      />
+
+      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 py-10">
+        <div className="flex items-start justify-between mb-1 gap-4">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-display font-bold tracking-wide">
+              Welcome to <span className="text-emerald-400">Sylve</span>
+            </h1>
+            {user?.email && <p className="text-xs text-white/40 mt-1">{user.email}</p>}
+          </div>
+          <a
+            href="/watch"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-medium px-4 py-2 transition flex items-center gap-1.5"
+          >
+            📺 Watch Live
+          </a>
+        </div>
+        <p className="text-white/60 mb-8">Pick a sport to set up or score a game.</p>
+
+        <Link
+          to="/events"
+          className="group flex items-center gap-4 rounded-2xl border border-emerald-400/30 bg-emerald-400/5 p-5 mb-8 transition duration-300 hover:-translate-y-0.5 hover:border-emerald-400/60 hover:bg-emerald-400/10"
         >
-          📺 Watch Live
-        </a>
-      </div>
-      <p className="text-ink-dim mb-6">Pick a sport to set up or score a game.</p>
+          <span className="text-3xl">🏟️</span>
+          <span className="flex-1 min-w-0">
+            <span className="block font-medium">Events</span>
+            <span className="block text-sm text-white/60">Group basketball and volleyball tournaments under one event and one public link</span>
+          </span>
+          <span className="text-emerald-400 transition group-hover:translate-x-1">→</span>
+        </Link>
 
-      <Link
-        to="/events"
-        className="flex items-center gap-3 rounded-xl border border-accent bg-accent-soft p-4 mb-6 transition hover:shadow-md text-ink"
-      >
-        <span className="text-2xl">🏟️</span>
-        <span>
-          <span className="block font-medium">Events</span>
-          <span className="block text-xs text-ink-dim">Group basketball and volleyball tournaments under one event</span>
-        </span>
-      </Link>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {SPORTS.map((sport) =>
-          sport.ready ? (
-            <Link
-              key={sport.id}
-              to={`/${sport.id}`}
-              className="rounded-xl border border-line bg-panel p-5 text-center font-medium transition hover:border-accent hover:shadow-md cursor-pointer text-ink"
-            >
-              <div className="text-2xl mb-1">{sport.emoji}</div>
-              {sport.name}
-            </Link>
-          ) : (
-            <div
-              key={sport.id}
-              className="rounded-xl border border-line bg-page p-5 text-center font-medium text-ink-faint cursor-not-allowed"
-            >
-              <div className="text-2xl mb-1 opacity-40">{sport.emoji}</div>
-              {sport.name}
-              <div className="text-xs mt-1 font-normal">Coming soon</div>
-            </div>
-          )
-        )}
+        <h2 className="text-xs font-semibold uppercase text-white/40 mb-3">Sports</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {SPORTS.map((sport) =>
+            sport.ready ? (
+              <Link
+                key={sport.id}
+                to={`/${sport.id}`}
+                className={`${glass} group p-6 text-center font-medium transition duration-300 hover:-translate-y-1 hover:border-emerald-400/40 hover:bg-emerald-400/5 hover:shadow-lg hover:shadow-emerald-500/10`}
+              >
+                <div className="text-4xl mb-2 transition duration-300 group-hover:scale-110">{sport.emoji}</div>
+                {sport.name}
+                <p className="text-xs font-normal text-emerald-200/80 max-h-0 opacity-0 overflow-hidden transition-all duration-300 group-hover:max-h-16 group-hover:opacity-100 group-hover:mt-2">
+                  {sport.hint}
+                </p>
+              </Link>
+            ) : (
+              <div
+                key={sport.id}
+                className={`${glass} p-6 text-center font-medium text-white/30 cursor-not-allowed`}
+              >
+                <div className="text-4xl mb-2 opacity-40">{sport.emoji}</div>
+                {sport.name}
+                <div className="text-xs mt-1 font-normal">Coming soon</div>
+              </div>
+            )
+          )}
+        </div>
       </div>
     </div>
   )

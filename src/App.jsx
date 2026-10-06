@@ -35,7 +35,8 @@ function AppHeader() {
   // /watch and /live pages are the public spectator experience and have
   // their own self-contained header -- skip the organizer-facing app
   // header there so it doesn't double up.
-  if (location.pathname.startsWith('/watch') || location.pathname.startsWith('/live')) return null
+  // The landing page has its own full-width navigation bar too.
+  if (location.pathname === '/' || location.pathname === '/login' || location.pathname.startsWith('/watch') || location.pathname.startsWith('/live')) return null
 
   async function handleSignOut() {
     await signOut()
@@ -43,10 +44,10 @@ function AppHeader() {
   }
 
   return (
-    <header className="border-b border-line bg-panel">
+    <header className="relative z-20 border-b border-line bg-panel">
       <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link to={user ? '/dashboard' : '/'} className="font-bold text-ink">
-          🏆 Scoreboard
+          🏆 Sylve
         </Link>
         <div className="flex items-center gap-4">
           <SyncStatusBadge />

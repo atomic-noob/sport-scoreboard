@@ -47,30 +47,42 @@ export default function Login() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-page flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <Link to="/" className="text-sm text-ink-faint hover:text-ink-dim">← Back home</Link>
+  const inputCls =
+    'w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-400'
 
-        <div className="rounded-xl border border-line bg-panel p-6 mt-3">
-          <h1 className="text-xl font-display font-bold tracking-wide text-ink mb-1">
+  return (
+    <div className="min-h-screen w-full relative overflow-hidden text-white flex items-center justify-center px-4">
+      {/* Emerald Void */}
+      <div
+        className="fixed inset-0 z-0"
+        style={{ background: 'radial-gradient(125% 125% at 50% 10%, #000000 40%, #072607 100%)' }}
+      />
+
+      <div className="relative z-10 w-full max-w-sm">
+        <div className="flex items-center justify-between mb-3">
+          <Link to="/" className="text-sm text-white/50 hover:text-white/80">← Back home</Link>
+          <Link to="/" className="text-lg font-display font-bold tracking-wide text-emerald-400">Sylve</Link>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6">
+          <h1 className="text-xl font-display font-bold tracking-wide mb-1">
             {mode === 'signin' ? 'Sign in' : 'Create an organizer account'}
           </h1>
-          <p className="text-ink-dim text-sm mb-5">
+          <p className="text-white/60 text-sm mb-5">
             Needed to create tournaments and score games. Watching live scores never requires an account.
           </p>
 
           <button
             onClick={handleGoogle}
-            className="w-full rounded-lg border border-line-strong bg-panel-alt hover:bg-panel-raised text-ink font-medium py-2.5 mb-4 transition"
+            className="w-full rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 font-medium py-2.5 mb-4 transition"
           >
             Continue with Google
           </button>
 
           <div className="flex items-center gap-3 mb-4">
-            <div className="h-px flex-1 bg-line" />
-            <span className="text-xs text-ink-faint">or</span>
-            <div className="h-px flex-1 bg-line" />
+            <div className="h-px flex-1 bg-white/10" />
+            <span className="text-xs text-white/40">or</span>
+            <div className="h-px flex-1 bg-white/10" />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
@@ -80,7 +92,7 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
               required
-              className="w-full rounded-lg border border-line-strong bg-panel-alt px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+              className={inputCls}
             />
             <input
               type="password"
@@ -89,26 +101,26 @@ export default function Login() {
               placeholder="Password"
               required
               minLength={6}
-              className="w-full rounded-lg border border-line-strong bg-panel-alt px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+              className={inputCls}
             />
 
-            {error && <p className="text-xs text-live">{error}</p>}
-            {info && <p className="text-xs text-accent">{info}</p>}
+            {error && <p className="text-xs text-red-400">{error}</p>}
+            {info && <p className="text-xs text-emerald-300">{info}</p>}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-accent hover:bg-accent-strong text-on-accent font-medium py-2.5 transition disabled:opacity-50"
+              className="w-full rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-medium py-2.5 transition disabled:opacity-50"
             >
               {loading ? 'Please wait...' : mode === 'signin' ? 'Sign in' : 'Sign up'}
             </button>
           </form>
 
-          <p className="text-xs text-ink-faint text-center mt-4">
+          <p className="text-xs text-white/50 text-center mt-4">
             {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
             <button
               onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setInfo('') }}
-              className="text-accent hover:text-accent-strong font-medium"
+              className="text-emerald-400 hover:text-emerald-300 font-medium"
             >
               {mode === 'signin' ? 'Sign up' : 'Sign in'}
             </button>
