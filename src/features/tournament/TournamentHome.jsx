@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getTournaments } from '../../lib/adminData'
 import { SPORTS } from '../../lib/sportConfig'
+import { useAuth } from '../../context/AuthContext'
 
 
 // Short one-line rules summary for the list rows.
@@ -19,6 +20,7 @@ function shortRules(sport, rules) {
 export default function TournamentHome() {
   const { sport } = useParams()
   const sportConfig = SPORTS[sport]
+  const { user } = useAuth()
 
   const [tournaments, setTournaments] = useState([])
   const [loading, setLoading] = useState(true)
@@ -29,13 +31,13 @@ export default function TournamentHome() {
     setLoading(true)
     setError('')
     getTournaments({ sport })
-      .then(setTournaments)
+      .then((all) => setTournaments(all.filter((t) => user?.id && t.createdBy === user.id)))
       .catch((err) => {
         console.error('Failed to load tournaments:', err)
         setError('Could not load tournaments. Check your connection and try refreshing.')
       })
       .finally(() => setLoading(false))
-  }, [sport])
+  }, [sport, user?.id])
 
   if (!sportConfig) {
     return (
@@ -82,7 +84,8 @@ export default function TournamentHome() {
         <p className="text-ink-faint text-sm py-6 text-center">Loading...</p>
       ) : tournaments.length === 0 ? (
         <div className="text-center text-ink-faint py-16 border border-dashed border-line rounded-xl">
-          No {sportConfig.label.toLowerCase()} tournaments yet. Create your first one to get started.
+          You haven't created any {sportConfig.label.toLowerCase()} tournaments yet. Create your first one to get started.
+          <div className="text-xs mt-2">Looking for other leagues? Browse them on the public scoreboard.</div>
         </div>
       ) : (
         <div className="space-y-2">
