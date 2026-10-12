@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getTournaments, getEvents } from '../../lib/adminData'
+import { Tv, Layers, Check } from 'lucide-react'
 import { SPORT_LIST, getSportConfig } from '../../lib/sportConfig'
+import SportIcon from '../../components/SportIcon'
 
 export default function WatchHome() {
   const [tournaments, setTournaments] = useState([])
@@ -39,9 +41,9 @@ export default function WatchHome() {
     <div className="min-h-screen bg-void">
       <header className="border-b border-line bg-panel">
         <div className="max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <span className="font-bold text-ink">📺 Watch Live</span>
+          <span className="inline-flex items-center gap-2 font-bold text-ink"><Tv className="w-4 h-4" /> Watch live</span>
           <Link to="/" className="text-xs text-ink-dim hover:text-ink">
-            🏆 Scoreboard home →
+            Sylve home →
           </Link>
         </div>
       </header>
@@ -61,7 +63,7 @@ export default function WatchHome() {
         />
 
         <div className="flex flex-wrap gap-1.5 mb-6">
-          {[{ key: 'all', label: 'All sports', emoji: '' }, ...SPORT_LIST].map((s) => (
+          {[{ key: 'all', label: 'All sports' }, ...SPORT_LIST].map((s) => (
             <button
               key={s.key}
               onClick={() => setSportFilter(s.key)}
@@ -71,8 +73,10 @@ export default function WatchHome() {
                   : 'bg-panel border border-line text-ink-dim hover:border-accent'
               }`}
             >
-              {s.emoji ? `${s.emoji} ` : ''}
-              {s.label}
+              <span className="inline-flex items-center gap-1.5">
+                {s.key !== 'all' && <SportIcon sport={s.key} className="w-3.5 h-3.5" />}
+                {s.label}
+              </span>
             </button>
           ))}
         </div>
@@ -87,7 +91,7 @@ export default function WatchHome() {
                   to={`/watch/events/${ev.id}`}
                   className="block rounded-lg border border-accent bg-accent-soft px-4 py-3 hover:shadow-sm transition"
                 >
-                  <div className="font-medium text-ink">🏟️ {ev.name}</div>
+                  <div className="flex items-center gap-2 font-medium text-ink"><Layers className="w-4 h-4 text-accent" /> {ev.name}</div>
                   <div className="text-xs text-ink-faint mt-0.5">
                     Multi-sport event{ev.startDate && <> · starts {ev.startDate}</>}
                   </div>
@@ -121,12 +125,12 @@ export default function WatchHome() {
                 >
                   <div className="font-medium text-ink">{t.name}</div>
                   <div className="text-xs text-ink-faint mt-0.5">
-                    {cfg.emoji} {cfg.label}
+                    <span className="inline-flex items-center gap-1 align-middle"><SportIcon sport={t.sport} className="w-3 h-3" />{cfg.label}</span>
                     {t.level && <> · {t.level}</>}
                     {t.startDate && <> · starts {t.startDate}</>}
                     {t.eventId && eventName.get(t.eventId) && <> · {eventName.get(t.eventId)}</>}
                     {t.verificationStatus && t.verificationStatus !== 'unverified' && (
-                      <span className="text-accent"> · ✓ {t.verificationStatus}</span>
+                      <span className="text-accent"> · verified: {t.verificationStatus}</span>
                     )}
                   </div>
                 </Link>

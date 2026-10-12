@@ -4,7 +4,9 @@ import { useAuth } from '../../context/AuthContext'
 import {
   getEvent, updateEvent, deleteEvent, getTournaments, setTournamentEvent,
 } from '../../lib/adminData'
+import { Tv } from 'lucide-react'
 import { SPORT_LIST, getSportConfig } from '../../lib/sportConfig'
+import SportIcon from '../../components/SportIcon'
 
 export default function EventAdmin() {
   const { eventId } = useParams()
@@ -128,9 +130,9 @@ export default function EventAdmin() {
             href={`/watch/events/${eventId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block mt-3 text-sm font-medium text-accent hover:text-accent-strong"
+            className="inline-flex items-center gap-1.5 mt-3 text-sm font-medium text-accent hover:text-accent-strong"
           >
-            📺 Open public page →
+            <Tv className="w-4 h-4" /> Open public page →
           </a>
         </div>
       )}
@@ -144,7 +146,7 @@ export default function EventAdmin() {
         return (
           <section key={s.key} className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="font-medium text-ink">{s.emoji} {s.label}</h2>
+              <h2 className="flex items-center gap-2 font-medium text-ink"><SportIcon sport={s.key} className="w-4 h-4 text-accent" />{s.label}</h2>
               {isOwner && (
                 <Link to={`/${s.key}/new?event=${eventId}`} className="text-sm font-medium text-accent hover:text-accent-strong">
                   ＋ New {s.label.toLowerCase()} tournament
@@ -191,7 +193,7 @@ export default function EventAdmin() {
                 <option value="">Choose a tournament…</option>
                 {attachable.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {getSportConfig(t.sport).emoji} {t.name}
+                    {t.name} ({getSportConfig(t.sport).label})
                   </option>
                 ))}
               </select>

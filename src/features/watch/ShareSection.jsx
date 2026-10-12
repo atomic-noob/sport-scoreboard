@@ -1,3 +1,4 @@
+import { Share2 } from 'lucide-react'
 import { useState } from 'react'
 
 /** Copy / QR / social share box for a live game. Used by every sport's watch page. */
@@ -41,7 +42,7 @@ export default function ShareSection({ match }) {
         onClick={() => setExpanded((e) => !e)}
         className="w-full flex items-center justify-between text-sm font-medium text-ink"
       >
-        <span>📤 Share this live game</span>
+        <span className="inline-flex items-center gap-2"><Share2 className="w-4 h-4" /> Share this live game</span>
         <span className="text-ink-faint text-xs">{expanded ? 'Hide' : 'Show'}</span>
       </button>
 

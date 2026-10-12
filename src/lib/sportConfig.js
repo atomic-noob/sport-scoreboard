@@ -4,7 +4,6 @@ export const SPORTS = {
   basketball: {
     key: 'basketball',
     label: 'Basketball',
-    emoji: '🏀',
     // Column headings for the public standings table (points for / against).
     standingLabels: { for: 'PF', against: 'PA' },
     defaultRules: {
@@ -43,7 +42,6 @@ export const SPORTS = {
   volleyball: {
     key: 'volleyball',
     label: 'Volleyball',
-    emoji: '🏐',
     // matches.team_a_score / team_b_score hold SETS WON for volleyball.
     standingLabels: { for: 'SW', against: 'SL' },
     // Keys match what VolleyballMatchSimulate.jsx reads.

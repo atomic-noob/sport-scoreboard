@@ -1,9 +1,10 @@
-﻿import { useEffect, useState } from 'react'
+import { Trophy, Lock } from 'lucide-react'
+import SportIcon from '../../components/SportIcon'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getTournaments } from '../../lib/adminData'
 import { SPORTS } from '../../lib/sportConfig'
 
-const SPORT_EMOJI = { basketball: '🏀', volleyball: '🏐' }
 
 // Short one-line rules summary for the list rows.
 function shortRules(sport, rules) {
@@ -53,14 +54,14 @@ export default function TournamentHome() {
     <div className="max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 sm:px-6 py-10">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-display font-bold tracking-wide text-ink">
-          {SPORT_EMOJI[sport] ?? '🏆'} {sportConfig.label}
+          <span className="inline-flex items-center gap-1.5"><SportIcon sport={sport} className="w-4 h-4" />{sportConfig.label}</span>
         </h1>
         <div className="flex items-center gap-3">
           <Link
             to={`/${sport}/leaderboard`}
             className="text-sm font-medium text-ink-faint hover:text-accent"
           >
-            🏆 Global Leaderboard
+            <span className="inline-flex items-center gap-1.5"><Trophy className="w-4 h-4" /> Global Leaderboard</span>
           </Link>
           <Link
             to={`/${sport}/new`}
@@ -96,7 +97,7 @@ export default function TournamentHome() {
                   {shortRules(sport, t.rules)}
                   {t.level && <> · {t.level}</>}
                   {t.startDate && <> · starts {t.startDate}</>}
-                  {t.pin && <> · 🔒 PIN protected</>}
+                  {t.pin && <span className="inline-flex items-center gap-1"> · <Lock className="w-3 h-3" /> PIN protected</span>}
                   {t.verificationStatus && t.verificationStatus !== 'unverified' && (
                     <span className="text-accent"> · {t.verificationStatus}</span>
                   )}

@@ -1,3 +1,4 @@
+import { Trophy, Lock } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { getTournament, getTeamsForTournament } from '../../lib/adminData'
@@ -130,7 +131,7 @@ export default function TournamentSchedule() {
           to={`/${sport}/${tournamentId}/leaderboard`}
           className="text-sm font-medium text-ink-faint hover:text-accent"
         >
-          🏆 Leaderboard
+          <span className="inline-flex items-center gap-1.5"><Trophy className="w-4 h-4" /> Leaderboard</span>
         </Link>
       </div>
 
@@ -153,7 +154,7 @@ export default function TournamentSchedule() {
           >
             {t === 'standings' ? 'Standings' : t === 'schedule' ? 'Round-Robin' : 'Bracket'}
             {t === 'bracket' && !roundRobinComplete && eliminationMatches.length === 0 && playInMatches.length === 0 && (
-              <span className="text-[10px]" title="Auto-generate locked until round-robin is complete">🔒</span>
+              <span className="text-[10px]" title="Auto-generate locked until round-robin is complete"><Lock className="w-3 h-3 inline" /></span>
             )}
           </button>
         ))}
@@ -199,7 +200,7 @@ export default function TournamentSchedule() {
           {roundRobinMatches.length > 0 && !roundRobinComplete && (
             <div className="mt-6 rounded-lg border border-line bg-page px-3 py-2.5 text-center">
               <p className="text-sm text-ink-dim">
-                🔒 Auto-generate locked until round-robin finishes.{' '}
+                Auto-generate locked until round-robin finishes.{' '}
                 <span className="font-medium text-ink-dim">
                   {roundRobinMatches.filter((m) => !isResolved(m)).length} game(s) remaining
                 </span>
@@ -231,8 +232,8 @@ export default function TournamentSchedule() {
           {roundRobinMatches.length > 0 && !roundRobinComplete && (
             <p className="text-xs text-ink-faint text-center mt-2">
               {canBuildManually
-                ? '🔒 Auto-generate is locked until round-robin finishes — building manually is still available anytime.'
-                : '🔒 Auto-generate is locked until round-robin finishes.'}
+                ? 'Auto-generate is locked until round-robin finishes — building manually is still available anytime.'
+                : 'Auto-generate is locked until round-robin finishes.'}
             </p>
           )}
           {roundRobinMatches.length === 0 && (
@@ -284,7 +285,7 @@ export default function TournamentSchedule() {
         <div className="space-y-4">
           {!roundRobinComplete && eliminationMatches.length === 0 && playInMatches.length === 0 ? (
             <div className="text-center text-ink-faint py-10 border border-dashed border-line rounded-xl">
-              🔒 Auto-generate unlocks once round-robin finishes.
+              Auto-generate unlocks once round-robin finishes.
               <div className="text-xs mt-1">
                 {roundRobinMatches.filter((m) => !isResolved(m)).length} game(s) remaining
                 {canBuildManually && (

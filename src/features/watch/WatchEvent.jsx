@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getEvent, getTournamentsForEvent } from '../../lib/adminData'
 import { SPORT_LIST, getSportConfig } from '../../lib/sportConfig'
+import SportIcon from '../../components/SportIcon'
 
 export default function WatchEvent() {
   const { eventId } = useParams()
@@ -54,7 +55,7 @@ export default function WatchEvent() {
           if (list.length === 0) return null
           return (
             <section key={s.key} className="mt-6">
-              <h2 className="font-medium text-ink mb-2">{s.emoji} {s.label}</h2>
+              <h2 className="flex items-center gap-2 font-medium text-ink mb-2"><SportIcon sport={s.key} className="w-4 h-4 text-accent" />{s.label}</h2>
               <div className="space-y-2">
                 {list.map((t) => (
                   <Link

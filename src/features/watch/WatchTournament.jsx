@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { getTournament, getTeamsForTournament, getEvent } from '../../lib/adminData'
 import { getMatchesForTournament, computeStandings } from '../../lib/matchesData'
 import { getSportConfig } from '../../lib/sportConfig'
+import SportIcon from '../../components/SportIcon'
 import { PlayerLeaderboards, TeamLeaderboards } from '../tournament/LeaderboardPanels'
 
 export default function WatchTournament() {
@@ -90,7 +91,7 @@ export default function WatchTournament() {
       <div className="max-w-2xl lg:max-w-4xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-display font-bold tracking-wide text-ink mb-1">{tournament.name}</h1>
         <p className="text-xs text-ink-faint mb-4">
-          {sportConfig.emoji} {sportConfig.label}
+          <span className="inline-flex items-center gap-1 align-middle"><SportIcon sport={sportConfig.key} className="w-3.5 h-3.5" />{sportConfig.label}</span>
           {event && (
             <>
               {' · '}

@@ -50,7 +50,7 @@ function AppHeader() {
     <header className="relative z-20 border-b border-line bg-panel">
       <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link to={user ? '/dashboard' : '/'} className="font-bold text-ink">
-          🏆 Sylve
+          Sylve
         </Link>
         <div className="flex items-center gap-4">
           <SyncStatusBadge />

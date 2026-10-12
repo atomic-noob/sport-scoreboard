@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getTournaments } from '../lib/adminData'
 import { supabase } from '../lib/supabaseClient'
+import { Tv, Trophy, BarChart3, Layers, Zap, Check } from 'lucide-react'
+import SportIcon from '../components/SportIcon'
 import { OPEN_COOKIE_SETTINGS } from '../lib/cookieConsent'
 
 // Optional real photos. Leave '' to use the drawn court and net.
@@ -13,14 +15,12 @@ const PHOTOS = { basketball: '', volleyball: '' }
 const SPORTS = {
   basketball: {
     label: 'Basketball',
-    emoji: '🏀',
     word: 'Hoops',
     line: 'Fouls, timeouts, quarters and a box score for every player.',
     sample: { a: 'Hawks', b: 'Lions', sa: 68, sb: 64, tag: 'Q4 · 2:41', stats: [['PTS', '24 · 19'], ['REB', '31 · 28'], ['AST', '14 · 11']] },
   },
   volleyball: {
     label: 'Volleyball',
-    emoji: '🏐',
     word: 'Spikes',
     line: 'Sets, rotations, a libero and kills, aces and blocks as they happen.',
     sample: { a: 'Spikers', b: 'Eagles', sa: 21, sb: 19, tag: 'SET 3 · 1–1', stats: [['KILLS', '14 · 11'], ['ACES', '4 · 2'], ['BLOCKS', '5 · 3']] },
@@ -28,11 +28,11 @@ const SPORTS = {
 }
 
 const BENTO = [
-  { emoji: '⚡', title: 'Score from your phone', text: 'One screen. Court, scoreboard and actions, no scrolling. A refresh never loses the match.', span: 'lg:col-span-2' },
-  { emoji: '📺', title: 'Anyone can watch', text: 'Share a link. No account, no download.' },
-  { emoji: '🏆', title: 'Brackets & standings', text: 'Round-robin or elimination, automatic or by hand.' },
-  { emoji: '📊', title: 'Leaders & box scores', text: 'Points, rebounds, kills, aces, hitting %. Per tournament.' },
-  { emoji: '🏟️', title: 'One event, every sport', text: 'Group a basketball and a volleyball tournament under a single link.', span: 'lg:col-span-2' },
+  { Icon: Zap, title: 'Score from your phone', text: 'One screen. Court, scoreboard and actions, no scrolling. A refresh never loses the match.', span: 'lg:col-span-2' },
+  { Icon: Tv, title: 'Anyone can watch', text: 'Share a link. No account, no download.' },
+  { Icon: Trophy, title: 'Brackets & standings', text: 'Round-robin or elimination, automatic or by hand.' },
+  { Icon: BarChart3, title: 'Leaders & box scores', text: 'Points, rebounds, kills, aces, hitting %. Per tournament.' },
+  { Icon: Layers, title: 'One event, every sport', text: 'Group a basketball and a volleyball tournament under a single link.', span: 'lg:col-span-3' },
 ]
 
 const STEPS = [
@@ -171,7 +171,7 @@ export default function Landing() {
         <nav className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="text-xl font-display font-bold tracking-wide text-emerald-400">Sylve</Link>
           <div className="flex items-center gap-2 sm:gap-3 text-sm">
-            <Link to="/watch" className="px-3 py-2 text-white/70 hover:text-white transition">📺 Watch Live</Link>
+            <Link to="/watch" className="px-3 py-2 text-white/70 hover:text-white transition"><span className="inline-flex items-center gap-1.5"><Tv className="w-4 h-4" /> Watch live</span></Link>
             <Link to={cta} className="rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-medium px-4 py-2 transition">
               {user ? 'Dashboard' : 'Sign in'}
             </Link>
@@ -203,7 +203,7 @@ export default function Landing() {
                       sport === key ? 'bg-emerald-500 text-black' : 'text-white/70 hover:text-white'
                     }`}
                   >
-                    {v.emoji} {v.label}
+                    <span className="inline-flex items-center gap-1.5"><SportIcon sport={key} className="w-4 h-4" />{v.label}</span>
                   </button>
                 ))}
               </div>
@@ -224,7 +224,7 @@ export default function Landing() {
                   Run a tournament
                 </Link>
                 <Link to="/watch" className="rounded-lg border border-white/20 text-white/80 hover:bg-white/10 font-medium px-7 py-3.5 transition">
-                  📺 Watch live
+                  <span className="inline-flex items-center gap-2"><Tv className="w-4 h-4" /> Watch live</span>
                 </Link>
               </div>
             </div>
@@ -285,7 +285,7 @@ export default function Landing() {
                     to={`/watch/${m.tournament_id}/match/${m.id}`}
                     className="flex items-center gap-3 whitespace-nowrap text-white/70 hover:text-white"
                   >
-                    <span>{t?.sport === 'volleyball' ? '🏐' : '🏀'}</span>
+                    <SportIcon sport={t?.sport} className="w-4 h-4 text-emerald-300" />
                     <span>{m.nameA}</span>
                     <span className="font-bold text-emerald-400">{m.team_a_score ?? 0}</span>
                     <span className="text-white/30">–</span>
@@ -315,11 +315,11 @@ export default function Landing() {
                 className={`${glass} group relative overflow-hidden p-7 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/40 hover:bg-emerald-400/5`}
               >
                 <Art className="absolute right-4 top-4 w-36 h-36 text-white/20 transition duration-500 group-hover:text-emerald-300/60 group-hover:scale-110" />
-                <p className="text-4xl mb-3">{SPORTS[key].emoji}</p>
+                <div className="w-12 h-12 rounded-xl border border-emerald-400/30 bg-emerald-400/10 text-emerald-300 flex items-center justify-center mb-4"><SportIcon sport={key} className="w-7 h-7" /></div>
                 <h3 className="font-display font-bold tracking-wide text-2xl mb-3">{title}</h3>
                 <ul className="space-y-1.5 text-sm text-white/65">
                   {points.map((p) => (
-                    <li key={p} className="flex gap-2"><span className="text-emerald-400">✓</span>{p}</li>
+                    <li key={p} className="flex gap-2"><Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />{p}</li>
                   ))}
                 </ul>
               </div>
@@ -352,7 +352,7 @@ export default function Landing() {
                 key={f.title}
                 className={`${glass} ${f.span ?? ''} p-6 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/40 hover:bg-emerald-400/5`}
               >
-                <div className="text-3xl mb-3">{f.emoji}</div>
+                <div className="w-10 h-10 rounded-lg border border-emerald-400/30 bg-emerald-400/10 text-emerald-300 flex items-center justify-center mb-4"><f.Icon className="w-5 h-5" strokeWidth={1.75} /></div>
                 <h3 className="font-display font-bold tracking-wide text-lg mb-1">{f.title}</h3>
                 <p className="text-white/60 text-sm">{f.text}</p>
               </div>
@@ -392,7 +392,7 @@ export default function Landing() {
             <span className="font-display font-bold tracking-wide text-emerald-400 text-sm">Sylve</span>
             <span>Live scoring for every game.</span>
             <div className="flex flex-wrap items-center gap-4">
-              <Link to="/watch" className="hover:text-white/70">📺 Watch Live</Link>
+              <Link to="/watch" className="hover:text-white/70">Watch live</Link>
               <Link to="/terms" className="hover:text-white/70">Terms</Link>
               <Link to="/privacy" className="hover:text-white/70">Privacy &amp; Cookies</Link>
               <button onClick={() => window.dispatchEvent(new Event(OPEN_COOKIE_SETTINGS))} className="hover:text-white/70">

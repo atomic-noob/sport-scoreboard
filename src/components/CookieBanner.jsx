@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { Cookie } from 'lucide-react'
 import { getCookieConsent, setCookieConsent, OPEN_COOKIE_SETTINGS } from '../lib/cookieConsent'
 
 export default function CookieBanner() {
@@ -24,7 +25,7 @@ export default function CookieBanner() {
   return (
     <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-5 sm:bottom-5 sm:max-w-md z-50">
       <div className="rounded-2xl border border-white/10 bg-black/85 backdrop-blur p-4 text-white shadow-2xl">
-        <p className="text-sm font-medium mb-1">🍪 Cookies &amp; local storage</p>
+        <p className="flex items-center gap-2 text-sm font-medium mb-1"><Cookie className="w-4 h-4 text-emerald-400" /> Cookies &amp; local storage</p>
         <p className="text-xs text-white/60 mb-3">
           We use essential storage to keep you signed in, remember your cookie choice and save a match in progress.
           No ads, no tracking. Read our{' '}
