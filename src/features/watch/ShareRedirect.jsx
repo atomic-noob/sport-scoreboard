@@ -26,7 +26,7 @@ export default function ShareRedirect() {
 
   if (notFound) {
     return (
-      <div className="min-h-screen bg-page flex items-center justify-center px-4">
+      <div className="min-h-screen bg-void flex items-center justify-center px-4">
         <div className="text-center">
           <p className="text-ink font-medium mb-1">Link not found</p>
           <p className="text-ink-dim text-sm">This game link doesn't exist or hasn't started yet.</p>
@@ -36,7 +36,7 @@ export default function ShareRedirect() {
   }
 
   return (
-    <div className="min-h-screen bg-page flex items-center justify-center px-4">
+    <div className="min-h-screen bg-void flex items-center justify-center px-4">
       <p className="text-ink-faint">Loading...</p>
     </div>
   )

@@ -36,7 +36,7 @@ export default function WatchHome() {
   )
 
   return (
-    <div className="min-h-screen bg-page">
+    <div className="min-h-screen bg-void">
       <header className="border-b border-line bg-panel">
         <div className="max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <span className="font-bold text-ink">📺 Watch Live</span>
