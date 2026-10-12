@@ -3,65 +3,119 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getTournaments } from '../lib/adminData'
 import { supabase } from '../lib/supabaseClient'
+import { OPEN_COOKIE_SETTINGS } from '../lib/cookieConsent'
 
-const FEATURES = [
-  {
+// Optional real photos. Leave '' to use the drawn court and net.
+// When you add one (e.g. '/photos/basketball.webp' in the public folder), it is shown
+// behind the drawing with an emerald tint. Only use photos you have the licence for.
+const PHOTOS = { basketball: '', volleyball: '' }
+
+const SPORTS = {
+  basketball: {
+    label: 'Basketball',
     emoji: '🏀',
-    title: 'Live Scoring',
-    description: 'Tap to score in real time from your phone.',
-    more: 'Points, fouls, timeouts and substitutions for basketball. Sets, rotations, a libero and per-player stats for volleyball.',
+    word: 'Hoops',
+    line: 'Fouls, timeouts, quarters and a box score for every player.',
+    sample: { a: 'Hawks', b: 'Lions', sa: 68, sb: 64, tag: 'Q4 · 2:41', stats: [['PTS', '24 · 19'], ['REB', '31 · 28'], ['AST', '14 · 11']] },
   },
-  {
-    emoji: '🏆',
-    title: 'Brackets & Standings',
-    description: 'Round-robin and elimination, built for you.',
-    more: 'Generate a schedule automatically or build the bracket by hand. Standings update the moment a game ends.',
+  volleyball: {
+    label: 'Volleyball',
+    emoji: '🏐',
+    word: 'Spikes',
+    line: 'Sets, rotations, a libero and kills, aces and blocks as they happen.',
+    sample: { a: 'Spikers', b: 'Eagles', sa: 21, sb: 19, tag: 'SET 3 · 1–1', stats: [['KILLS', '14 · 11'], ['ACES', '4 · 2'], ['BLOCKS', '5 · 3']] },
   },
-  {
-    emoji: '📊',
-    title: 'Stats & Leaderboards',
-    description: 'Box scores and leaders for every sport.',
-    more: 'Player of the Game, kills, aces, rebounds and hitting % — per tournament, with team leaderboards too.',
-  },
-  {
-    emoji: '📺',
-    title: 'Public Live Viewing',
-    description: 'Share a link. Anyone can watch.',
-    more: 'No account and no download for spectators. Scores, the court and the box score update live.',
-  },
-  {
-    emoji: '🏟️',
-    title: 'Multi-sport Events',
-    description: 'One event, one link, every sport.',
-    more: 'Group a basketball and a volleyball tournament under a single event page that spectators can follow.',
-  },
-  {
-    emoji: '📱',
-    title: 'Built for the Sideline',
-    description: 'Fits one screen. No scrolling mid-game.',
-    more: 'The scoring screen keeps the court, scoreboard and actions visible, in portrait or landscape. A refresh never loses the match.',
-  },
-]
+}
 
-const SPORTS = [
-  { emoji: '🏀', name: 'Basketball', ready: true },
-  { emoji: '🏐', name: 'Volleyball', ready: true },
-  { emoji: '🏸', name: 'Badminton', ready: false },
-  { emoji: '⚽', name: 'Soccer', ready: false },
-  { emoji: '🎾', name: 'Tennis', ready: false },
-  { emoji: '🥒', name: 'Pickleball', ready: false },
+const BENTO = [
+  { emoji: '⚡', title: 'Score from your phone', text: 'One screen. Court, scoreboard and actions, no scrolling. A refresh never loses the match.', span: 'lg:col-span-2' },
+  { emoji: '📺', title: 'Anyone can watch', text: 'Share a link. No account, no download.' },
+  { emoji: '🏆', title: 'Brackets & standings', text: 'Round-robin or elimination, automatic or by hand.' },
+  { emoji: '📊', title: 'Leaders & box scores', text: 'Points, rebounds, kills, aces, hitting %. Per tournament.' },
+  { emoji: '🏟️', title: 'One event, every sport', text: 'Group a basketball and a volleyball tournament under a single link.', span: 'lg:col-span-2' },
 ]
 
 const STEPS = [
-  { n: '1', title: 'Create', text: 'Set up a tournament or a multi-sport event, add teams and rosters.' },
-  { n: '2', title: 'Score', text: 'Run each game from your phone. Every action is saved as it happens.' },
-  { n: '3', title: 'Share', text: 'Send one link. Spectators follow scores, standings and leaders live.' },
+  { n: '01', title: 'Create', text: 'Set up a tournament or a multi-sport event. Add teams and rosters.' },
+  { n: '02', title: 'Score', text: 'Run each game from your phone. Every action is saved as it happens.' },
+  { n: '03', title: 'Share', text: 'Send one link. Spectators follow scores, standings and leaders live.' },
 ]
 
-const SPORT_EMOJI = { basketball: '🏀', volleyball: '🏐', badminton: '🏸', soccer: '⚽', tennis: '🎾', pickleball: '🥒' }
+/* ---------- Drawings ---------- */
+
+function BasketballArt() {
+  // Half court seen from above, hoop and net in the corner.
+  return (
+    <svg viewBox="0 0 400 300" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <rect x="10" y="10" width="380" height="280" rx="4" opacity=".5" />
+      <rect x="140" y="10" width="120" height="110" opacity=".6" />
+      <circle cx="200" cy="120" r="42" opacity=".6" />
+      <path d="M52 10 V70 A150 150 0 0 0 348 70 V10" opacity=".5" />
+      <path d="M170 24 H230" strokeWidth="4" />
+      <circle cx="200" cy="38" r="9" strokeWidth="3" className="text-emerald-300" />
+      <g className="text-emerald-300" strokeWidth="1.5" opacity=".9">
+        <path d="M191 40 L196 62 M197 41 L199 62 M203 41 L201 62 M209 40 L204 62 M194 46 H206 M195 53 H205" />
+      </g>
+      <circle cx="200" cy="205" r="14" className="text-emerald-400" strokeWidth="3" />
+    </svg>
+  )
+}
+
+function VolleyballArt() {
+  // Court from above with the net across the middle.
+  return (
+    <svg viewBox="0 0 400 300" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <rect x="10" y="30" width="380" height="240" rx="4" opacity=".5" />
+      <path d="M130 30 V270 M270 30 V270" opacity=".45" />
+      <path d="M200 14 V286" strokeWidth="3" className="text-emerald-300" />
+      <g className="text-emerald-300" strokeWidth="1" opacity=".55">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <path key={i} d={`M${194} ${30 + i * 20} H${206}`} />
+        ))}
+      </g>
+      <circle cx="200" cy="14" r="5" className="text-emerald-300" fill="currentColor" />
+      <circle cx="200" cy="286" r="5" className="text-emerald-300" fill="currentColor" />
+      <circle cx="120" cy="150" r="14" className="text-emerald-400" strokeWidth="3" />
+      <path d="M120 136 V164 M106 150 H134" className="text-emerald-400" strokeWidth="1.5" opacity=".7" />
+    </svg>
+  )
+}
+
+function HoopArt({ className = '' }) {
+  return (
+    <svg viewBox="0 0 120 150" className={className} fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+      <rect x="20" y="4" width="80" height="50" rx="3" opacity=".6" />
+      <rect x="45" y="26" width="30" height="22" opacity=".6" />
+      <ellipse cx="60" cy="62" rx="24" ry="7" strokeWidth="4" className="text-emerald-300" />
+      <g strokeWidth="1.6" opacity=".9">
+        <path d="M37 64 L48 130 M45 68 L54 132 M53 69 L58 134 M61 69 L62 134 M69 69 L66 134 M77 68 L72 132 M83 64 L74 130" />
+        <path d="M40 80 H80 M43 96 H77 M46 112 H74" />
+      </g>
+    </svg>
+  )
+}
+
+function NetArt({ className = '' }) {
+  return (
+    <svg viewBox="0 0 160 120" className={className} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M12 8 V112 M148 8 V112" strokeWidth="4" opacity=".7" />
+      <path d="M12 22 H148" strokeWidth="5" className="text-emerald-300" />
+      <g strokeWidth="1.2" opacity=".75">
+        {Array.from({ length: 13 }).map((_, i) => (
+          <path key={`v${i}`} d={`M${24 + i * 10} 22 V86`} />
+        ))}
+        {Array.from({ length: 6 }).map((_, i) => (
+          <path key={`h${i}`} d={`M12 ${34 + i * 11} H148`} />
+        ))}
+      </g>
+      <path d="M12 86 H148" strokeWidth="3" opacity=".7" />
+    </svg>
+  )
+}
 
 export default function Landing() {
   const { user } = useAuth()
+  const [sport, setSport] = useState('basketball')
   const [tournaments, setTournaments] = useState([])
   const [matches, setMatches] = useState([])
 
@@ -71,7 +125,6 @@ export default function Landing() {
       .catch((err) => console.warn('Could not load tournaments for landing page:', err.message))
   }, [])
 
-  // A small peek at the global scoreboard: the latest games across every tournament.
   useEffect(() => {
     async function loadMatches() {
       const { data: rows, error } = await supabase
@@ -79,7 +132,7 @@ export default function Landing() {
         .select('id, tournament_id, team_a_id, team_b_id, team_a_score, team_b_score, status')
         .in('status', ['live', 'completed'])
         .order('created_at', { ascending: false })
-        .limit(6)
+        .limit(8)
       if (error || !rows?.length) return
       const teamIds = [...new Set(rows.flatMap((r) => [r.team_a_id, r.team_b_id]).filter(Boolean))]
       const { data: teams } = await supabase.from('teams').select('id, name').in('id', teamIds)
@@ -89,14 +142,25 @@ export default function Landing() {
     loadMatches().catch((err) => console.warn('Could not load matches for landing page:', err.message))
   }, [])
 
+  const s = SPORTS[sport]
+  const photo = PHOTOS[sport]
   const tournamentById = new Map(tournaments.map((t) => [t.id, t]))
   const liveCount = matches.filter((m) => m.status === 'live').length
   const cta = user ? '/dashboard' : '/login'
   const glass = 'rounded-2xl border border-white/10 bg-white/5 backdrop-blur'
+  const outline = { WebkitTextStroke: '1.5px rgba(52,211,153,0.35)', color: 'transparent' }
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden text-white">
-      {/* Emerald Void */}
+      <style>{`
+        @keyframes sylve-marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+        @keyframes sylve-float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-10px) } }
+        .sylve-marquee { animation: sylve-marquee 40s linear infinite; }
+        .sylve-float { animation: sylve-float 6s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) { .sylve-marquee, .sylve-float { animation: none } }
+        .sylve-nums { font-variant-numeric: tabular-nums; }
+      `}</style>
+
       <div
         className="fixed inset-0 z-0"
         style={{ background: 'radial-gradient(125% 125% at 50% 10%, #000000 40%, #072607 100%)' }}
@@ -105,225 +169,220 @@ export default function Landing() {
       <div className="relative z-10">
         {/* Nav */}
         <nav className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="text-xl font-display font-bold tracking-wide">
-            <span className="text-emerald-400">Sylve</span>
-          </Link>
+          <Link to="/" className="text-xl font-display font-bold tracking-wide text-emerald-400">Sylve</Link>
           <div className="flex items-center gap-2 sm:gap-3 text-sm">
             <Link to="/watch" className="px-3 py-2 text-white/70 hover:text-white transition">📺 Watch Live</Link>
-            <Link
-              to={cta}
-              className="rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-medium px-4 py-2 transition"
-            >
+            <Link to={cta} className="rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-medium px-4 py-2 transition">
               {user ? 'Dashboard' : 'Sign in'}
             </Link>
           </div>
         </nav>
 
         {/* Hero */}
-        <header className="max-w-7xl mx-auto px-5 sm:px-8 min-h-[calc(100vh-4rem)] grid lg:grid-cols-2 gap-10 items-center py-10">
-          <div>
-            <p className="inline-block rounded-full border border-emerald-400/30 bg-emerald-400/10 text-emerald-300 text-xs font-medium px-3 py-1 mb-5">
-              Basketball · Volleyball · more coming
-            </p>
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold tracking-wide leading-[1.05] mb-5">
-              Score every game. <span className="text-emerald-400">Instantly.</span>
-            </h1>
-            <p className="text-white/70 text-lg sm:text-xl max-w-xl mb-8">
-              Run tournaments, score live games from your phone, and let anyone watch along —
-              no accounts for spectators, no spreadsheets for you.
-            </p>
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                to={cta}
-                className="rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-medium px-7 py-3.5 transition"
-              >
-                Get Started
-              </Link>
-              <Link
-                to="/watch"
-                className="rounded-lg border border-white/20 text-white/80 hover:bg-white/10 font-medium px-7 py-3.5 transition"
-              >
-                📺 Watch Live
-              </Link>
-            </div>
+        <header className="relative max-w-7xl mx-auto px-5 sm:px-8 min-h-[calc(100vh-4rem)] flex flex-col justify-center py-10">
+          {/* Giant outlined word behind everything */}
+          <div
+            className="pointer-events-none select-none absolute inset-x-0 top-6 text-center font-display font-bold leading-none text-[26vw] lg:text-[20rem] opacity-80"
+            style={outline}
+            aria-hidden="true"
+          >
+            {s.word}
           </div>
 
-          {/* Sample scoreboard that tilts on hover */}
-          <div className="group relative mx-auto w-full max-w-md [perspective:1000px]">
-            <div className="absolute -inset-6 rounded-3xl bg-emerald-500/10 blur-3xl group-hover:bg-emerald-500/20 transition" />
-            <div className={`${glass} relative p-5 transition duration-300 group-hover:[transform:rotateX(4deg)_rotateY(-6deg)_scale(1.02)] group-hover:border-emerald-400/40`}>
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-[11px] font-semibold uppercase text-white/50">Sample match</span>
-                <span className="flex items-center gap-1.5 text-xs font-medium text-red-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" /> LIVE
-                </span>
-              </div>
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 mb-5">
-                <div>
-                  <p className="text-sm text-white/70 truncate">Spikers</p>
-                  <p className="text-5xl font-display font-bold text-emerald-400">21</p>
-                </div>
-                <div className="text-center text-[11px] text-white/40">SET 3<br />1 – 1</div>
-                <div className="text-right">
-                  <p className="text-sm text-white/70 truncate">Hawks</p>
-                  <p className="text-5xl font-display font-bold text-white">19</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-center text-[11px] text-white/60">
-                {[['Kills', '14 · 11'], ['Aces', '4 · 2'], ['Blocks', '5 · 3']].map(([k, v]) => (
-                  <div key={k} className="rounded-lg bg-white/5 py-2">
-                    <p className="text-white/40">{k}</p>
-                    <p className="text-white text-sm font-medium">{v}</p>
-                  </div>
+          <div className="relative grid lg:grid-cols-[1.05fr_1fr] gap-10 items-center">
+            <div>
+              {/* Sport toggle */}
+              <div className="inline-flex rounded-full border border-white/15 bg-white/5 p-1 mb-6" role="tablist" aria-label="Sport">
+                {Object.entries(SPORTS).map(([key, v]) => (
+                  <button
+                    key={key}
+                    role="tab"
+                    aria-selected={sport === key}
+                    onClick={() => setSport(key)}
+                    className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                      sport === key ? 'bg-emerald-500 text-black' : 'text-white/70 hover:text-white'
+                    }`}
+                  >
+                    {v.emoji} {v.label}
+                  </button>
                 ))}
+              </div>
+
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold tracking-wide leading-[1.02] mb-5">
+                Every point.
+                <br />
+                <span className="text-emerald-400">Every game.</span>
+                <br />
+                Live.
+              </h1>
+              <p className="text-white/70 text-lg max-w-lg mb-2">{s.line}</p>
+              <p className="text-white/50 text-sm max-w-lg mb-8">
+                Run tournaments, score from your phone, and let anyone watch along. No accounts for spectators, no spreadsheets for you.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link to={cta} className="rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-medium px-7 py-3.5 transition">
+                  Run a tournament
+                </Link>
+                <Link to="/watch" className="rounded-lg border border-white/20 text-white/80 hover:bg-white/10 font-medium px-7 py-3.5 transition">
+                  📺 Watch live
+                </Link>
+              </div>
+            </div>
+
+            {/* Court + sample scoreboard */}
+            <div className="relative mx-auto w-full max-w-xl">
+              <div className="absolute -inset-8 rounded-full bg-emerald-500/10 blur-3xl" />
+              <div className={`${glass} relative aspect-[4/3] overflow-hidden text-white/40`}>
+                {photo && (
+                  <>
+                    <img src={photo} alt="" className="absolute inset-0 w-full h-full object-cover grayscale" />
+                    <div className="absolute inset-0 bg-emerald-900/60 mix-blend-multiply" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+                  </>
+                )}
+                <div className="absolute inset-0 p-3">{sport === 'basketball' ? <BasketballArt /> : <VolleyballArt />}</div>
+
+                <div className="absolute left-3 right-3 bottom-3 rounded-xl border border-white/10 bg-black/70 backdrop-blur p-3 text-white sylve-float">
+                  <div className="flex items-center justify-between text-[10px] mb-1.5">
+                    <span className="uppercase font-semibold text-white/40">Sample match</span>
+                    <span className="flex items-center gap-1.5 text-red-400 font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" /> LIVE · {s.sample.tag}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sylve-nums">
+                    <div>
+                      <p className="text-xs text-white/60">{s.sample.a}</p>
+                      <p className="text-3xl font-display font-bold text-emerald-400 leading-none">{s.sample.sa}</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5 text-center">
+                      {s.sample.stats.map(([k, v]) => (
+                        <div key={k} className="rounded bg-white/5 px-1.5 py-1">
+                          <p className="text-[8px] text-white/40">{k}</p>
+                          <p className="text-[11px] font-medium">{v}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-white/60">{s.sample.b}</p>
+                      <p className="text-3xl font-display font-bold leading-none">{s.sample.sb}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Numbers */}
-        <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-6">
-          <div className={`${glass} grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10`}>
-            {[
-              [tournaments.length || '—', 'Tournaments'],
-              [liveCount, 'Live right now'],
-              ['2', 'Sports ready'],
-              ['0', 'Accounts for spectators'],
-            ].map(([v, l]) => (
-              <div key={l} className="px-4 py-5 text-center">
-                <p className="text-3xl font-display font-bold text-emerald-400">{v}</p>
-                <p className="text-xs text-white/50 mt-0.5">{l}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Features */}
-        <section className="max-w-7xl mx-auto px-5 sm:px-8 py-16">
-          <h2 className="text-3xl sm:text-4xl font-display font-bold tracking-wide mb-2">Everything a tournament needs</h2>
-          <p className="text-white/60 mb-8 max-w-2xl">Hover a card to see what is inside.</p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {FEATURES.map((f) => (
-              <div
-                key={f.title}
-                className={`${glass} group p-6 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/40 hover:bg-emerald-400/5`}
-              >
-                <div className="text-3xl mb-3">{f.emoji}</div>
-                <h3 className="font-display font-bold tracking-wide text-lg mb-1">{f.title}</h3>
-                <p className="text-white/60 text-sm">{f.description}</p>
-                <p className="text-emerald-200/80 text-sm max-h-0 opacity-0 overflow-hidden transition-all duration-300 group-hover:max-h-32 group-hover:opacity-100 group-hover:mt-3">
-                  {f.more}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Global scoreboard peek */}
-        <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-16">
-          <div className="flex items-end justify-between gap-4 mb-6">
-            <div>
-              <h2 className="text-3xl sm:text-4xl font-display font-bold tracking-wide mb-2">The global scoreboard</h2>
-              <p className="text-white/60">A peek at the latest games across every tournament.</p>
-            </div>
-            <Link to="/watch" className="text-sm font-medium text-emerald-400 hover:text-emerald-300 shrink-0">
-              See all →
-            </Link>
-          </div>
-
-          {matches.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {matches.map((m) => {
+        {/* Live ticker */}
+        {matches.length > 0 && (
+          <div className="border-y border-white/10 bg-black/40 overflow-hidden">
+            <div className="flex w-max sylve-marquee gap-10 py-3 text-sm sylve-nums">
+              {[...matches, ...matches].map((m, i) => {
                 const t = tournamentById.get(m.tournament_id)
-                const live = m.status === 'live'
-                const sets = t?.sport === 'volleyball'
                 return (
                   <Link
-                    key={m.id}
+                    key={`${m.id}-${i}`}
                     to={`/watch/${m.tournament_id}/match/${m.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`${glass} group block p-4 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/40 hover:shadow-lg hover:shadow-emerald-500/10`}
+                    className="flex items-center gap-3 whitespace-nowrap text-white/70 hover:text-white"
                   >
-                    <div className="flex items-center justify-between text-[11px] mb-3">
-                      <span className="text-white/50 truncate">
-                        {SPORT_EMOJI[t?.sport] ?? '🏆'} {t?.name ?? 'Tournament'}
-                      </span>
-                      {live ? (
-                        <span className="flex items-center gap-1 text-red-400 font-medium shrink-0">
-                          <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" /> LIVE
-                        </span>
-                      ) : (
-                        <span className="text-white/40 shrink-0">Final</span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm text-white/80 truncate">{m.nameA}</span>
-                      <span className="text-2xl font-display font-bold text-emerald-400">{m.team_a_score ?? 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm text-white/80 truncate">{m.nameB}</span>
-                      <span className="text-2xl font-display font-bold">{m.team_b_score ?? 0}</span>
-                    </div>
-                    <p className="text-xs text-emerald-300 max-h-0 opacity-0 overflow-hidden transition-all duration-300 group-hover:max-h-8 group-hover:opacity-100 group-hover:mt-3">
-                      {sets ? 'Scores shown in sets · ' : ''}Open the live match →
-                    </p>
+                    <span>{t?.sport === 'volleyball' ? '🏐' : '🏀'}</span>
+                    <span>{m.nameA}</span>
+                    <span className="font-bold text-emerald-400">{m.team_a_score ?? 0}</span>
+                    <span className="text-white/30">–</span>
+                    <span className="font-bold text-emerald-400">{m.team_b_score ?? 0}</span>
+                    <span>{m.nameB}</span>
+                    {m.status === 'live' && <span className="text-[10px] font-semibold text-red-400">LIVE</span>}
                   </Link>
                 )
               })}
             </div>
-          ) : (
-            <div className={`${glass} p-10 text-center text-white/50 text-sm`}>
-              Games will show up here as soon as tournaments start.
-            </div>
-          )}
+          </div>
+        )}
+
+        {/* Two sports, one platform */}
+        <section className="max-w-7xl mx-auto px-5 sm:px-8 py-20">
+          <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">Two sports. One platform.</p>
+          <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-10 max-w-3xl">
+            Built for the way each game is actually scored
+          </h2>
+          <div className="grid md:grid-cols-2 gap-5">
+            {[
+              { key: 'basketball', Art: HoopArt, title: 'Basketball', points: ['Quarters, fouls and timeouts', 'Player of the Game and leaderboards', 'Live court with every substitution'] },
+              { key: 'volleyball', Art: NetArt, title: 'Volleyball', points: ['Sets, rotations and a libero', 'Kills, aces, blocks and hitting %', 'Reopen a set, resume after a refresh'] },
+            ].map(({ key, Art, title, points }) => (
+              <div
+                key={key}
+                className={`${glass} group relative overflow-hidden p-7 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/40 hover:bg-emerald-400/5`}
+              >
+                <Art className="absolute right-4 top-4 w-36 h-36 text-white/20 transition duration-500 group-hover:text-emerald-300/60 group-hover:scale-110" />
+                <p className="text-4xl mb-3">{SPORTS[key].emoji}</p>
+                <h3 className="font-display font-bold tracking-wide text-2xl mb-3">{title}</h3>
+                <ul className="space-y-1.5 text-sm text-white/65">
+                  {points.map((p) => (
+                    <li key={p} className="flex gap-2"><span className="text-emerald-400">✓</span>{p}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </section>
 
-        {/* Sports */}
-        <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-16">
-          <h2 className="text-3xl sm:text-4xl font-display font-bold tracking-wide mb-6">Sports</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {SPORTS.map((s) => (
+        {/* Numbers from real data */}
+        <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-20">
+          <div className={`${glass} grid grid-cols-3 divide-x divide-white/10`}>
+            {[
+              [tournaments.length || '—', 'Tournaments'],
+              [liveCount, 'Live right now'],
+              ['2', 'Sports ready'],
+            ].map(([v, l]) => (
+              <div key={l} className="px-4 py-6 text-center">
+                <p className="text-3xl sm:text-5xl font-display font-bold text-emerald-400 sylve-nums">{v}</p>
+                <p className="text-xs text-white/50 mt-1">{l}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Bento features */}
+        <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-20">
+          <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-10">Everything a tournament needs</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {BENTO.map((f) => (
               <div
-                key={s.name}
-                className={`${glass} p-5 text-center transition duration-300 ${
-                  s.ready ? 'hover:-translate-y-1 hover:border-emerald-400/40' : 'opacity-50'
-                }`}
+                key={f.title}
+                className={`${glass} ${f.span ?? ''} p-6 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/40 hover:bg-emerald-400/5`}
               >
-                <div className="text-3xl mb-1">{s.emoji}</div>
-                <p className="text-sm font-medium">{s.name}</p>
-                <p className={`text-[11px] mt-0.5 ${s.ready ? 'text-emerald-400' : 'text-white/40'}`}>
-                  {s.ready ? 'Ready' : 'Coming soon'}
-                </p>
+                <div className="text-3xl mb-3">{f.emoji}</div>
+                <h3 className="font-display font-bold tracking-wide text-lg mb-1">{f.title}</h3>
+                <p className="text-white/60 text-sm">{f.text}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* How it works */}
-        <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-16">
-          <h2 className="text-3xl sm:text-4xl font-display font-bold tracking-wide mb-6">How it works</h2>
-          <div className="grid md:grid-cols-3 gap-4">
-            {STEPS.map((s) => (
-              <div key={s.n} className={`${glass} p-6 transition duration-300 hover:border-emerald-400/40`}>
-                <div className="w-9 h-9 rounded-full bg-emerald-500 text-black font-bold flex items-center justify-center mb-3">{s.n}</div>
-                <h3 className="font-display font-bold tracking-wide text-lg mb-1">{s.title}</h3>
-                <p className="text-white/60 text-sm">{s.text}</p>
+        <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-20">
+          <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-10">How it works</h2>
+          <div className="grid md:grid-cols-3 gap-5">
+            {STEPS.map((st) => (
+              <div key={st.n} className="relative pt-12">
+                <span className="absolute top-0 left-0 text-6xl font-display font-bold leading-none" style={outline}>{st.n}</span>
+                <h3 className="font-display font-bold tracking-wide text-xl mb-1">{st.title}</h3>
+                <p className="text-white/60 text-sm">{st.text}</p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Closing CTA */}
+        {/* Closing */}
         <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-16">
-          <div className="rounded-3xl border border-emerald-400/20 bg-emerald-400/5 px-6 py-14 text-center">
-            <h2 className="text-3xl sm:text-4xl font-display font-bold tracking-wide mb-3">Ready to run your own tournament?</h2>
-            <p className="text-white/60 mb-6">Set it up in minutes. Share one link.</p>
-            <Link
-              to={cta}
-              className="rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-medium px-8 py-3.5 transition inline-block"
-            >
-              Get Started
+          <div className="relative overflow-hidden rounded-3xl border border-emerald-400/20 bg-emerald-400/5 px-6 py-16 text-center">
+            <NetArt className="absolute -left-6 -bottom-4 w-52 h-40 text-emerald-300/10" />
+            <HoopArt className="absolute -right-4 -top-2 w-40 h-48 text-emerald-300/10" />
+            <h2 className="relative text-3xl sm:text-5xl font-display font-bold tracking-wide mb-3">Ready for the first whistle?</h2>
+            <p className="relative text-white/60 mb-7">Set up in minutes. Share one link.</p>
+            <Link to={cta} className="relative rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-medium px-8 py-3.5 transition inline-block">
+              Get started
             </Link>
           </div>
         </section>
@@ -332,7 +391,14 @@ export default function Landing() {
           <div className="max-w-7xl mx-auto px-5 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-3 text-xs text-white/40">
             <span className="font-display font-bold tracking-wide text-emerald-400 text-sm">Sylve</span>
             <span>Live scoring for every game.</span>
-            <Link to="/watch" className="hover:text-white/70">📺 Watch Live</Link>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link to="/watch" className="hover:text-white/70">📺 Watch Live</Link>
+              <Link to="/terms" className="hover:text-white/70">Terms</Link>
+              <Link to="/privacy" className="hover:text-white/70">Privacy &amp; Cookies</Link>
+              <button onClick={() => window.dispatchEvent(new Event(OPEN_COOKIE_SETTINGS))} className="hover:text-white/70">
+                Cookie settings
+              </button>
+            </div>
           </div>
         </footer>
       </div>

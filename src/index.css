@@ -5,14 +5,14 @@
   --font-display: "Oswald", system-ui, sans-serif;
 
   /* Surfaces -- dark court/broadcast theme */
-  --color-page: #0F1115;
-  --color-panel: #181B21;
-  --color-panel-alt: #1F232B;
+  --color-page: #050a05;
+  --color-panel: #0c140c;
+  --color-panel-alt: #121c12;
   --color-panel-raised: #242832;
 
   /* Lines */
-  --color-line: #2A2F38;
-  --color-line-strong: #3A4049;
+  --color-line: #1f2e1f;
+  --color-line-strong: #2c402c;
 
   /* Text */
   --color-ink: #E8EAED;
@@ -20,10 +20,10 @@
   --color-ink-faint: #6B7280;
 
   /* Accent -- emerald, the app's signature color */
-  --color-accent: #3DDC8A;
-  --color-accent-strong: #2FC578;
-  --color-accent-soft: #10261C;
-  --color-on-accent: #04241A;
+  --color-accent: #34d399;
+  --color-accent-strong: #10b981;
+  --color-accent-soft: #0a2a1c;
+  --color-on-accent: #03150c;
 
   /* Live / alert / danger -- reserved for LIVE badges, fouls, errors */
   --color-live: #E5484D;
@@ -48,3 +48,6 @@ body {
 .font-display {
   font-variant-numeric: tabular-nums;
 }
+
+
+.bg-void { background: radial-gradient(125% 125% at 50% 10%, #000000 40%, #072607 100%) fixed; }

@@ -141,7 +141,7 @@ export default function BasketballWatchMatch() {
 
   if (!tournament || !match) {
     return (
-      <div className="min-h-screen bg-page flex items-center justify-center px-4">
+      <div className="min-h-screen bg-void flex items-center justify-center px-4">
         {error ? (
           <div className="rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
             {error}
@@ -171,7 +171,7 @@ export default function BasketballWatchMatch() {
   const scoreB = isCompleted || isForfeit ? match.teamBScore ?? 0 : liveScore(allBIds)
 
   return (
-    <div className="min-h-screen bg-page">
+    <div className="min-h-screen bg-void">
       <header className="border-b border-line bg-panel">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link to={`/watch/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">

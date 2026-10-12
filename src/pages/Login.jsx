@@ -116,7 +116,13 @@ export default function Login() {
             </button>
           </form>
 
-          <p className="text-xs text-white/50 text-center mt-4">
+          <p className="text-[11px] text-white/40 text-center mt-4">
+            By continuing you agree to our{' '}
+            <Link to="/terms" className="underline hover:text-white/70">Terms</Link> and{' '}
+            <Link to="/privacy" className="underline hover:text-white/70">Privacy &amp; Cookies</Link>.
+          </p>
+
+          <p className="text-xs text-white/50 text-center mt-3">
             {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
             <button
               onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setInfo('') }}

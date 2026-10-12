@@ -30,7 +30,7 @@ export default function WatchMatch() {
 
   if (!sport) {
     return (
-      <div className="min-h-screen bg-page flex items-center justify-center px-4">
+      <div className="min-h-screen bg-void flex items-center justify-center px-4">
         {error ? (
           <div className="rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">{error}</div>
         ) : (

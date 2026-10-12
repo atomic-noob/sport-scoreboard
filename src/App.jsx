@@ -4,6 +4,9 @@ import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import SyncStatusBadge from './components/SyncStatusBadge'
 import ProtectedRoute from './components/ProtectedRoute'
+import CookieBanner from './components/CookieBanner'
+import Terms from './pages/Terms'
+import Privacy from './pages/Privacy'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { signOut } from './lib/auth'
 import TournamentHome from './features/tournament/TournamentHome'
@@ -36,7 +39,7 @@ function AppHeader() {
   // their own self-contained header -- skip the organizer-facing app
   // header there so it doesn't double up.
   // The landing page has its own full-width navigation bar too.
-  if (location.pathname === '/' || location.pathname === '/login' || location.pathname.startsWith('/watch') || location.pathname.startsWith('/live')) return null
+  if (location.pathname === '/' || location.pathname === '/login' || location.pathname === '/terms' || location.pathname === '/privacy' || location.pathname.startsWith('/watch') || location.pathname.startsWith('/live')) return null
 
   async function handleSignOut() {
     await signOut()
@@ -96,6 +99,8 @@ export default function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
 
             {/* Organizer/scorer routes -- require an account. :sport is
                 the sport slug (basketball, volleyball, ...) -- these
@@ -128,6 +133,7 @@ export default function App() {
             <Route path="/watch/:tournamentId/match/:matchId" element={<WatchMatch />} />
             <Route path="/live/:code" element={<ShareRedirect />} />
           </Routes>
+          <CookieBanner />
         </div>
       </AuthProvider>
     </BrowserRouter>
