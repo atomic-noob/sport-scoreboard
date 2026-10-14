@@ -96,7 +96,7 @@ export default function Login() {
         {/* ---------- Left: brand panel (desktop only) ---------- */}
         <aside className="hidden lg:flex relative flex-col justify-between p-12 overflow-hidden border-r border-white/5">
           <HoopArt className="absolute -top-4 right-10 w-56 text-emerald-400/15" />
-          <SpikeArt className="absolute bottom-0 left-0 w-full max-w-md text-emerald-400/15" />
+          <SpikeArt className="absolute bottom-20 left-0 w-full max-w-md text-emerald-400/15" />
 
           <Link to="/" className="relative text-2xl font-display font-bold tracking-wide text-emerald-400">
             Sylve
