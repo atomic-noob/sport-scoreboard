@@ -10,7 +10,7 @@ import { OPEN_COOKIE_SETTINGS } from '../lib/cookieConsent'
 // Optional real photos. Leave '' to use the drawn court and net.
 // When you add one (e.g. '/photos/basketball.webp' in the public folder), it is shown
 // behind the drawing with an emerald tint. Only use photos you have the licence for.
-const PHOTOS = { basketball: '', volleyball: '' }
+const PHOTOS = { basketball: '', volleyball: '', badminton: '' }
 
 const SPORTS = {
   basketball: {
@@ -25,6 +25,12 @@ const SPORTS = {
     line: 'Sets, rotations, a libero and kills, aces and blocks as they happen.',
     sample: { a: 'Spikers', b: 'Eagles', sa: 21, sb: 19, tag: 'SET 3 · 1–1', stats: [['KILLS', '14 · 11'], ['ACES', '4 · 2'], ['BLOCKS', '5 · 3']] },
   },
+  badminton: {
+    label: 'Badminton',
+    word: 'Smash',
+    line: 'Rally-point games to 21, singles or doubles, with the serve court tracked for you.',
+    sample: { a: 'Smashers', b: 'Shuttlers', sa: 19, sb: 17, tag: 'GAME 3 · 1–1', stats: [['GAMES', '1 · 1'], ['SERVE', 'Right court'], ['TO WIN', '21, by 2']] },
+  },
 }
 
 const BENTO = [
@@ -32,7 +38,7 @@ const BENTO = [
   { Icon: Tv, title: 'Anyone can watch', text: 'Share a link. No account, no download.' },
   { Icon: Trophy, title: 'Brackets & standings', text: 'Round-robin or elimination, automatic or by hand.' },
   { Icon: BarChart3, title: 'Leaders & box scores', text: 'Points, rebounds, kills, aces, hitting %. Per tournament.' },
-  { Icon: Layers, title: 'One event, every sport', text: 'Group a basketball and a volleyball tournament under a single link.', span: 'lg:col-span-3' },
+  { Icon: Layers, title: 'One event, every sport', text: 'Group basketball, volleyball and badminton tournaments under a single link.', span: 'lg:col-span-3' },
 ]
 
 const STEPS = [
@@ -77,6 +83,33 @@ function VolleyballArt() {
       <circle cx="200" cy="286" r="5" className="text-emerald-300" fill="currentColor" />
       <circle cx="120" cy="150" r="14" className="text-emerald-400" strokeWidth="3" />
       <path d="M120 136 V164 M106 150 H134" className="text-emerald-400" strokeWidth="1.5" opacity=".7" />
+    </svg>
+  )
+}
+
+function BadmintonArt() {
+  // Doubles court from above: net across the middle, service lines and centre lines.
+  return (
+    <svg viewBox="0 0 400 300" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <rect x="20" y="30" width="360" height="240" rx="4" opacity=".5" />
+      <path d="M20 66 H380 M20 234 H380" opacity=".45" />
+      <path d="M92 30 V270 M308 30 V270" opacity=".45" />
+      <path d="M20 150 H92 M308 150 H380" opacity=".45" />
+      <path d="M200 14 V286" strokeWidth="3" className="text-emerald-300" />
+      <circle cx="200" cy="14" r="5" className="text-emerald-300" fill="currentColor" />
+      <circle cx="200" cy="286" r="5" className="text-emerald-300" fill="currentColor" />
+      <circle cx="150" cy="105" r="14" className="text-emerald-400" strokeWidth="3" />
+      <circle cx="250" cy="195" r="14" className="text-emerald-400" strokeWidth="3" />
+    </svg>
+  )
+}
+
+function ShuttleArt({ className = '' }) {
+  return (
+    <svg viewBox="0 0 120 150" className={className} fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+      <path d="M42 100 a18 18 0 0 0 36 0 z" className="text-emerald-300" strokeWidth="4" />
+      <path d="M42 100 L18 20 M78 100 L102 20 M60 100 V12" opacity=".8" />
+      <path d="M24 38 Q60 52 96 38 M31 66 Q60 80 89 66" opacity=".7" />
     </svg>
   )
 }
@@ -240,7 +273,7 @@ export default function Landing() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
                   </>
                 )}
-                <div className="absolute inset-0 p-3">{sport === 'basketball' ? <BasketballArt /> : <VolleyballArt />}</div>
+                <div className="absolute inset-0 p-3">{sport === 'basketball' ? <BasketballArt /> : sport === 'volleyball' ? <VolleyballArt /> : <BadmintonArt />}</div>
 
                 <div className="absolute left-3 right-3 bottom-3 rounded-xl border border-white/10 bg-black/70 backdrop-blur p-3 text-white sylve-float">
                   <div className="flex items-center justify-between text-[10px] mb-1.5">
@@ -299,16 +332,17 @@ export default function Landing() {
           </div>
         )}
 
-        {/* Two sports, one platform */}
+        {/* Three sports, one platform */}
         <section className="max-w-7xl mx-auto px-5 sm:px-8 py-20">
-          <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">Two sports. One platform.</p>
+          <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">Three sports. One platform.</p>
           <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-10 max-w-3xl">
             Built for the way each game is actually scored
           </h2>
-          <div className="grid md:grid-cols-2 gap-5">
+          <div className="grid md:grid-cols-3 gap-5">
             {[
               { key: 'basketball', Art: HoopArt, title: 'Basketball', points: ['Quarters, fouls and timeouts', 'Player of the Game and leaderboards', 'Live court with every substitution'] },
               { key: 'volleyball', Art: NetArt, title: 'Volleyball', points: ['Sets, rotations and a libero', 'Kills, aces, blocks and hitting %', 'Reopen a set, resume after a refresh'] },
+              { key: 'badminton', Art: ShuttleArt, title: 'Badminton', points: ['Rally-point games, singles or doubles', 'Serve court and change of ends tracked for you', 'Live court on the watch page'] },
             ].map(({ key, Art, title, points }) => (
               <div
                 key={key}
@@ -333,7 +367,7 @@ export default function Landing() {
             {[
               [tournaments.length || '—', 'Tournaments'],
               [liveCount, 'Live right now'],
-              ['2', 'Sports ready'],
+              ['3', 'Sports ready'],
             ].map(([v, l]) => (
               <div key={l} className="px-4 py-6 text-center">
                 <p className="text-3xl sm:text-5xl font-display font-bold text-emerald-400 sylve-nums">{v}</p>
