@@ -108,12 +108,12 @@ export default function WatchTournament() {
           </div>
         )}
 
-        <div className="flex gap-2 mb-6 border-b border-line overflow-x-auto">
+        <div className="flex gap-1 mb-4 border-b border-line overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {['games', 'standings', 'schedule', 'bracket', 'leaders'].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition whitespace-nowrap ${
+              className={`px-3 py-2 text-sm font-medium border-b-2 transition whitespace-nowrap ${
                 tab === t
                   ? 'border-accent text-accent'
                   : 'border-transparent text-ink-faint hover:text-ink-dim'
