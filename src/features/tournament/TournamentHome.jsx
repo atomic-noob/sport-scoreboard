@@ -14,6 +14,9 @@ function shortRules(sport, rules) {
     const setsToWin = rules.setsToWin ?? 2
     return `Best of ${setsToWin * 2 - 1} · sets to ${rules.pointsPerSet ?? 25}`
   }
+  if (sport === 'badminton') {
+    return `${Number(rules.gamesToWin ?? 2) === 1 ? 'Single game' : 'Best of 3'} · to ${rules.pointsPerGame ?? 21} · ${rules.matchType === 'doubles' ? 'doubles' : 'singles'}`
+  }
   return `${rules.quarterMinutes}min quarters · foul-out at ${rules.foulLimit}`
 }
 

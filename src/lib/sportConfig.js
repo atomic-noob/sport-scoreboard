@@ -100,6 +100,63 @@ export const SPORTS = {
       { key: 'pointDiff', label: 'Set Differential' },
     ],
   },
+  badminton: {
+    key: 'badminton',
+    label: 'Badminton',
+    // matches.team_a_score / team_b_score hold GAMES WON for badminton
+    // (same set-based storage as volleyball: the match_sets table).
+    standingLabels: { for: 'GW', against: 'GL' },
+    // Rally point scoring (BWF Laws of Badminton): every rally scores, a game
+    // goes to `pointsPerGame` and must be won by 2, capped at pointsPerGame + 9
+    // (21 -> 30, 15 -> 21). gamesToWin: 2 = best of 3, 1 = a single game.
+    // Many clubs still play to 21; the BWF standard becomes 3 x 15 in 2027.
+    defaultRules: {
+      gamesToWin: 2,
+      pointsPerGame: 21,
+      matchType: 'singles',
+      maxRosterSize: 6,
+    },
+    ruleFields: [
+      {
+        key: 'gamesToWin',
+        label: 'Match format',
+        type: 'select',
+        options: [
+          { value: 2, label: 'Best of 3 games' },
+          { value: 1, label: 'Single game' },
+        ],
+      },
+      {
+        key: 'pointsPerGame',
+        label: 'Points per game',
+        type: 'select',
+        options: [
+          { value: 21, label: '21 points (classic)' },
+          { value: 15, label: '15 points (BWF 2027)' },
+          { value: 11, label: '11 points (short)' },
+        ],
+      },
+      {
+        key: 'matchType',
+        label: 'Match type',
+        type: 'select',
+        options: [
+          { value: 'singles', label: 'Singles (1 v 1)' },
+          { value: 'doubles', label: 'Doubles (2 v 2)' },
+        ],
+      },
+      { key: 'maxRosterSize', label: 'Max roster size' },
+    ],
+    summarizeRules: (r) =>
+      `${Number(r.gamesToWin) === 1 ? 'Single game' : 'Best of 3'} to ${r.pointsPerGame} (win by 2, cap ${Number(r.pointsPerGame) + 9}) · ${r.matchType === 'doubles' ? 'doubles' : 'singles'} · max ${r.maxRosterSize} roster`,
+    playerStats: [],
+    hasPlayerStats: false,
+    teamStats: [
+      { key: 'wins', label: 'Most Wins' },
+      { key: 'avgScore', label: 'Avg Games Won' },
+      { key: 'pointDiff', label: 'Game Differential' },
+    ],
+  },
 }
 
 /** Every sport the app knows about, as a list (for filters and pickers). */

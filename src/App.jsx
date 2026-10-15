@@ -29,6 +29,8 @@ import WatchEvent from './features/watch/WatchEvent'
 import TournamentLeaderboard from './features/tournament/TournamentLeaderboard'
 import VolleyballMatchSimulate from './features/volleyball/VolleyballMatchSimulate'
 import VolleyballLineupSetup from './features/volleyball/VolleyballLineupSetup'
+import BadmintonMatchSimulate from './features/badminton/BadmintonMatchSimulate'
+import BadmintonLineupSetup from './features/badminton/BadmintonLineupSetup'
 
 function AppHeader() {
   const location = useLocation()
@@ -79,12 +81,14 @@ function AppHeader() {
 function SportMatchSimulate() {
   const { sport } = useParams()
   if (sport === 'volleyball') return <VolleyballMatchSimulate />
+  if (sport === 'badminton') return <BadmintonMatchSimulate />
   return <MatchSimulate />
 }
 
 function SportLineupSetup() {
   const { sport } = useParams()
   if (sport === 'volleyball') return <VolleyballLineupSetup />
+  if (sport === 'badminton') return <BadmintonLineupSetup />
   return <LineupSetup />
 }
 

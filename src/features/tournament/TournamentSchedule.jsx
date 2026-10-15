@@ -113,10 +113,12 @@ export default function TournamentSchedule() {
   }
 
   const sport = tournament.sport ?? sportParam
-  const isVolleyball = sport === 'volleyball'
+  // Set-based sports store sets/games won in team_a_score / team_b_score.
+  const isVolleyball = sport === 'volleyball' || sport === 'badminton'
+  const wonLost = sport === 'badminton' ? ['GW', 'GL'] : ['SW', 'SL']
   // For volleyball, matches.team_a_score/team_b_score hold SETS won/lost.
-  const forLabel = isVolleyball ? 'SW' : 'PF'
-  const againstLabel = isVolleyball ? 'SL' : 'PA'
+  const forLabel = isVolleyball ? wonLost[0] : 'PF'
+  const againstLabel = isVolleyball ? wonLost[1] : 'PA'
   // The manual bracket builder works for every sport.
   const canBuildManually = true
 
@@ -377,7 +379,7 @@ function MatchRow({ match, teamName, sport, tournamentId, onForfeit }) {
         {isPlayable && <span className="text-accent font-medium">Play →</span>}
         {isViewable && (
           <span className="text-ink-faint font-medium">
-            {sport === 'volleyball' ? 'Results →' : 'Box score →'}
+            {sport === 'volleyball' || sport === 'badminton' ? 'Results →' : 'Box score →'}
           </span>
         )}
       </div>

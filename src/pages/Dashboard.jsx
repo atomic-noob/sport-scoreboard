@@ -6,7 +6,7 @@ import SportIcon from '../components/SportIcon'
 const SPORTS = [
   { id: 'basketball', name: 'Basketball', ready: true, hint: 'Tournaments, live scoring, brackets and leaderboards' },
   { id: 'volleyball', name: 'Volleyball', ready: true, hint: 'Sets, rotations, libero, subs and player stats' },
-  { id: 'badminton', name: 'Badminton', ready: false },
+  { id: 'badminton', name: 'Badminton', ready: true, hint: 'Rally-point games, singles or doubles, live court and results' },
   { id: 'soccer', name: 'Soccer', ready: false },
   { id: 'tennis', name: 'Tennis', ready: false },
   { id: 'pickleball', name: 'Pickleball', ready: false },
@@ -50,7 +50,7 @@ export default function Dashboard() {
           <span className="w-11 h-11 rounded-xl border border-emerald-400/30 bg-emerald-400/10 text-emerald-300 flex items-center justify-center shrink-0"><Layers className="w-5 h-5" /></span>
           <span className="flex-1 min-w-0">
             <span className="block font-medium">Events</span>
-            <span className="block text-sm text-white/60">Group basketball and volleyball tournaments under one event and one public link</span>
+            <span className="block text-sm text-white/60">Group basketball, volleyball and badminton tournaments under one event and one public link</span>
           </span>
           <ArrowRight className="w-5 h-5 text-emerald-400 transition group-hover:translate-x-1" />
         </Link>

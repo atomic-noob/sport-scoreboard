@@ -37,5 +37,17 @@ export default function SportIcon({ sport, className = 'w-4 h-4', strokeWidth = 
     )
   }
 
+  if (sport === 'badminton') {
+    // A shuttlecock: rounded cork head at the bottom, feather skirt fanning up.
+    return (
+      <svg {...common}>
+        <path d="M9.2 14.5a2.8 2.8 0 0 0 5.6 0z" />
+        <path d="M9.2 14.5L6 3.5M14.8 14.5L18 3.5M12 14.5V3" />
+        <path d="M6.9 6.6Q12 8.4 17.1 6.6M7.9 10.2Q12 11.8 16.1 10.2" />
+        <path d="M10.4 18.2h3.2" />
+      </svg>
+    )
+  }
+
   return <Trophy className={className} strokeWidth={strokeWidth} aria-hidden="true" />
 }
