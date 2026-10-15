@@ -41,10 +41,10 @@ export default function WatchHome() {
     <div className="min-h-screen bg-void">
       <header className="border-b border-line bg-panel">
         <div className="max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <span className="inline-flex items-center gap-2 font-bold text-ink"><Tv className="w-4 h-4" /> Watch live</span>
-          <Link to="/" className="text-xs text-ink-dim hover:text-ink">
-            Sylve home →
+          <Link to="/" className="text-sm text-ink-faint hover:text-ink-dim">
+            ← Back to Sylve
           </Link>
+          <span className="inline-flex items-center gap-2 font-bold text-ink"><Tv className="w-4 h-4" /> Watch live</span>
         </div>
       </header>
 
@@ -59,7 +59,7 @@ export default function WatchHome() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search tournament name..."
-          className="w-full rounded-lg border border-line-strong px-4 py-2.5 mb-3 focus:outline-none focus:ring-2 focus:ring-accent"
+          className="w-full rounded-lg border border-line-strong bg-panel-alt text-ink placeholder:text-ink-faint px-4 py-2.5 mb-3 focus:outline-none focus:ring-2 focus:ring-accent"
         />
 
         <div className="flex flex-wrap gap-1.5 mb-6">

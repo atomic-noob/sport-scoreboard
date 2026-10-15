@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { getTournament, getTeamsForTournament } from '../../lib/adminData'
 import { setFormatConfig, generateRoundRobinSchedule } from '../../lib/matchesData'
@@ -100,9 +100,9 @@ export default function TournamentFormat() {
 
   if (!tournament) {
     return (
-      <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-6 py-10 text-slate-500">
+      <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-6 py-10 text-ink-dim">
         {error ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
             {error}
           </div>
         ) : (
@@ -116,27 +116,27 @@ export default function TournamentFormat() {
 
   return (
     <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-6 py-10">
-      <Link to={`/basketball/${tournamentId}`} className="text-sm text-slate-400 hover:text-slate-600">
+      <Link to={`/basketball/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
         ← Back to teams
       </Link>
-      <h1 className="text-2xl font-bold text-slate-900 mt-1 mb-1">Tournament Format</h1>
-      <p className="text-slate-500 text-sm mb-6">
+      <h1 className="text-2xl font-display font-bold tracking-wide text-ink mt-1 mb-1">Tournament Format</h1>
+      <p className="text-ink-dim text-sm mb-6">
         Set up the round-robin phase and how teams advance to elimination.
       </p>
 
       {notEnoughTeams && (
-        <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <div className="mb-6 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-sm text-amber-300">
           Add at least 2 teams before setting up the format.
         </div>
       )}
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="mb-4 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
           {error}
         </div>
       )}
       {success && (
-        <div className="mb-4 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <div className="mb-4 rounded-lg border border-accent bg-accent/10 px-3 py-2 text-sm text-accent">
           {success}
         </div>
       )}
@@ -144,7 +144,7 @@ export default function TournamentFormat() {
       <div className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-ink-dim mb-1">
               Games per round-robin matchup
             </label>
             <input
@@ -154,11 +154,11 @@ export default function TournamentFormat() {
               onChange={(e) =>
                 setConfig((c) => ({ ...c, roundRobinGamesPerMatchup: Number(e.target.value) }))
               }
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-lg border border-line-strong bg-panel-alt px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-ink-dim mb-1">
               Teams advancing to elimination
             </label>
             <input
@@ -169,21 +169,21 @@ export default function TournamentFormat() {
               onChange={(e) =>
                 setConfig((c) => ({ ...c, eliminationTeamsAdvancing: Number(e.target.value) }))
               }
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-lg border border-line-strong bg-panel-alt px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">Seeding method</label>
+          <label className="block text-sm font-medium text-ink-dim mb-2">Seeding method</label>
           <div className="flex gap-3">
             <button
               type="button"
               onClick={() => setConfig((c) => ({ ...c, seedingMethod: 'random' }))}
               className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
                 config.seedingMethod === 'random'
-                  ? 'border-orange-400 bg-orange-50 text-orange-700'
-                  : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+                  ? 'border-accent bg-accent/10 text-accent'
+                  : 'border-line-strong text-ink-dim hover:bg-panel-alt'
               }`}
             >
               Random draw
@@ -193,8 +193,8 @@ export default function TournamentFormat() {
               onClick={() => setConfig((c) => ({ ...c, seedingMethod: 'manual' }))}
               className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
                 config.seedingMethod === 'manual'
-                  ? 'border-orange-400 bg-orange-50 text-orange-700'
-                  : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+                  ? 'border-accent bg-accent/10 text-accent'
+                  : 'border-line-strong text-ink-dim hover:bg-panel-alt'
               }`}
             >
               Manual seeding
@@ -204,31 +204,31 @@ export default function TournamentFormat() {
 
         {config.seedingMethod === 'manual' && seedOrder.length > 0 && (
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="block text-sm font-medium text-ink-dim mb-2">
               Seed order (best to worst)
             </label>
             <div className="space-y-1">
               {seedOrder.map((team, index) => (
                 <div
                   key={team.id}
-                  className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2"
+                  className="flex items-center justify-between rounded-lg border border-line bg-panel px-3 py-2"
                 >
-                  <span className="text-sm text-slate-700">
-                    <span className="text-slate-400 font-mono mr-2">#{index + 1}</span>
+                  <span className="text-sm text-ink">
+                    <span className="text-ink-faint font-mono mr-2">#{index + 1}</span>
                     {team.name}
                   </span>
                   <div className="flex gap-1">
                     <button
                       onClick={() => moveSeed(index, -1)}
                       disabled={index === 0}
-                      className="text-slate-400 hover:text-orange-500 disabled:opacity-20 disabled:hover:text-slate-400 px-1.5"
+                      className="text-ink-faint hover:text-accent disabled:opacity-20 disabled:hover:text-ink-faint px-1.5"
                     >
                       ↑
                     </button>
                     <button
                       onClick={() => moveSeed(index, 1)}
                       disabled={index === seedOrder.length - 1}
-                      className="text-slate-400 hover:text-orange-500 disabled:opacity-20 disabled:hover:text-slate-400 px-1.5"
+                      className="text-ink-faint hover:text-accent disabled:opacity-20 disabled:hover:text-ink-faint px-1.5"
                     >
                       ↓
                     </button>
@@ -240,7 +240,7 @@ export default function TournamentFormat() {
         )}
 
         {config.seedingMethod === 'random' && (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-ink-faint">
             Seeds will be shuffled randomly when you generate the schedule below.
           </p>
         )}
@@ -248,14 +248,14 @@ export default function TournamentFormat() {
         <button
           onClick={handleSaveAndGenerate}
           disabled={saving || notEnoughTeams}
-          className="w-full rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 transition disabled:opacity-50"
+          className="w-full rounded-lg bg-accent hover:bg-accent-strong text-on-accent font-medium py-2.5 transition disabled:opacity-50"
         >
           {saving ? 'Generating...' : 'Save Format & Generate Round-Robin Schedule'}
         </button>
 
         <Link
           to={`/basketball/${tournamentId}/schedule`}
-          className="block text-center text-sm text-slate-500 hover:text-orange-600"
+          className="block text-center text-sm text-ink-dim hover:text-accent"
         >
           View schedule & standings →
         </Link>

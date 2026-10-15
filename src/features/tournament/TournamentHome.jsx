@@ -54,7 +54,10 @@ export default function TournamentHome() {
 
   return (
     <div className="max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 sm:px-6 py-10">
-      <div className="flex items-center justify-between mb-6">
+      <Link to="/dashboard" className="text-sm text-ink-faint hover:text-ink-dim">
+        ← Back to sports
+      </Link>
+      <div className="flex items-center justify-between mt-3 mb-6">
         <h1 className="text-2xl font-display font-bold tracking-wide text-ink">
           <span className="inline-flex items-center gap-1.5"><SportIcon sport={sport} className="w-4 h-4" />{sportConfig.label}</span>
         </h1>

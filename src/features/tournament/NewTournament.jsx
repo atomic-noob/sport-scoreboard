@@ -74,9 +74,13 @@ export default function NewTournament() {
 
   return (
     <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-6 py-10">
-      {eventId && (
+      {eventId ? (
         <Link to={`/events/${eventId}`} className="text-sm text-ink-faint hover:text-ink-dim">
           ← Back to {eventName || 'event'}
+        </Link>
+      ) : (
+        <Link to={`/${sport}`} className="text-sm text-ink-faint hover:text-ink-dim">
+          ← Back to tournaments
         </Link>
       )}
       <h1 className="text-2xl font-display font-bold tracking-wide text-ink mb-1">
