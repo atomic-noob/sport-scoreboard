@@ -69,8 +69,8 @@ export default function BadmintonCourt({ portrait, state, playersA, playersB, fl
     place('B', playersB)
   }
 
-  const chipW = portrait ? 2.5 / W : 2.5 / L
-  const chipH = portrait ? 2.5 / L : 2.5 / W
+  const chipW = portrait ? 1.9 / W : 1.9 / L
+  const chipH = portrait ? 1.9 / L : 1.9 / W
   const ratio = portrait ? W / L : L / W
   const initials = (name) =>
     (name ?? '?')
