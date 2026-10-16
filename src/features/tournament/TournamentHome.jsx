@@ -17,6 +17,10 @@ function shortRules(sport, rules) {
   if (sport === 'badminton') {
     return `${Number(rules.gamesToWin ?? 2) === 1 ? 'Single game' : 'Best of 3'} · to ${rules.pointsPerGame ?? 21} · ${rules.matchType === 'doubles' ? 'doubles' : 'singles'}`
   }
+  if (sport === 'pickleball') {
+    const g = Number(rules.gamesToWin ?? 2)
+    return `${g === 1 ? 'Single game' : `Best of ${g * 2 - 1}`} · to ${rules.pointsPerGame ?? 11} · ${rules.matchType === 'singles' ? 'singles' : 'doubles'}`
+  }
   return `${rules.quarterMinutes}min quarters · foul-out at ${rules.foulLimit}`
 }
 

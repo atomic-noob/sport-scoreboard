@@ -49,5 +49,17 @@ export default function SportIcon({ sport, className = 'w-4 h-4', strokeWidth = 
     )
   }
 
+  if (sport === 'pickleball') {
+    // A paddle (rounded face and handle) with a perforated ball.
+    return (
+      <svg {...common}>
+        <rect x="3" y="2.5" width="11" height="13" rx="5" transform="rotate(-35 8.5 9)" />
+        <path d="M13.2 14.2l5 5" />
+        <circle cx="18" cy="6" r="3" />
+        <path d="M17 5.2h.01M19 5.8h.01M17.6 7.2h.01" />
+      </svg>
+    )
+  }
+
   return <Trophy className={className} strokeWidth={strokeWidth} aria-hidden="true" />
 }

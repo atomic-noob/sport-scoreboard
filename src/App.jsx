@@ -31,6 +31,8 @@ import VolleyballMatchSimulate from './features/volleyball/VolleyballMatchSimula
 import VolleyballLineupSetup from './features/volleyball/VolleyballLineupSetup'
 import BadmintonMatchSimulate from './features/badminton/BadmintonMatchSimulate'
 import BadmintonLineupSetup from './features/badminton/BadmintonLineupSetup'
+import PickleballMatchSimulate from './features/pickleball/PickleballMatchSimulate'
+import PickleballLineupSetup from './features/pickleball/PickleballLineupSetup'
 
 function AppHeader() {
   const location = useLocation()
@@ -82,6 +84,7 @@ function SportMatchSimulate() {
   const { sport } = useParams()
   if (sport === 'volleyball') return <VolleyballMatchSimulate />
   if (sport === 'badminton') return <BadmintonMatchSimulate />
+  if (sport === 'pickleball') return <PickleballMatchSimulate />
   return <MatchSimulate />
 }
 
@@ -89,6 +92,7 @@ function SportLineupSetup() {
   const { sport } = useParams()
   if (sport === 'volleyball') return <VolleyballLineupSetup />
   if (sport === 'badminton') return <BadmintonLineupSetup />
+  if (sport === 'pickleball') return <PickleballLineupSetup />
   return <LineupSetup />
 }
 

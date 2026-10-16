@@ -4,6 +4,7 @@ import { getTournament } from '../../lib/adminData'
 import BasketballWatchMatch from '../basketball/BasketballWatchMatch'
 import VolleyballWatchMatch from '../volleyball/VolleyballWatchMatch'
 import BadmintonWatchMatch from '../badminton/BadmintonWatchMatch'
+import PickleballWatchMatch from '../pickleball/PickleballWatchMatch'
 
 /**
  * Public live/final view of one game. Each sport has its own view (the
@@ -14,6 +15,7 @@ const WATCH_VIEWS = {
   basketball: BasketballWatchMatch,
   volleyball: VolleyballWatchMatch,
   badminton: BadmintonWatchMatch,
+  pickleball: PickleballWatchMatch,
 }
 
 export default function WatchMatch() {

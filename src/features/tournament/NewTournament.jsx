@@ -90,7 +90,7 @@ export default function NewTournament() {
         <p className="text-xs text-accent mb-2">Part of event: {eventName}</p>
       )}
       <p className="text-ink-dim mb-6 text-sm">
-        Set the ground rules once — they apply to every {sport === 'volleyball' || sport === 'badminton' ? 'match' : 'game'} in
+        Set the ground rules once — they apply to every {sport === 'volleyball' || sport === 'badminton' || sport === 'pickleball' ? 'match' : 'game'} in
         this tournament, and can be overridden per-game later if needed.
       </p>
 

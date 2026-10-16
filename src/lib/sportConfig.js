@@ -157,6 +157,63 @@ export const SPORTS = {
       { key: 'pointDiff', label: 'Game Differential' },
     ],
   },
+  pickleball: {
+    key: 'pickleball',
+    label: 'Pickleball',
+    // matches.team_a_score / team_b_score hold GAMES WON for pickleball
+    // (same set-based storage as volleyball and badminton: the match_sets table).
+    standingLabels: { for: 'GW', against: 'GL' },
+    // Traditional side-out scoring (USA Pickleball): only the serving side scores,
+    // games go to `pointsPerGame` and are won by 2 (no cap).
+    // gamesToWin: 1 = a single game, 2 = best of 3, 3 = best of 5.
+    defaultRules: {
+      gamesToWin: 2,
+      pointsPerGame: 11,
+      matchType: 'doubles',
+      maxRosterSize: 8,
+    },
+    ruleFields: [
+      {
+        key: 'gamesToWin',
+        label: 'Match format',
+        type: 'select',
+        options: [
+          { value: 2, label: 'Best of 3 games' },
+          { value: 1, label: 'Single game' },
+          { value: 3, label: 'Best of 5 games' },
+        ],
+      },
+      {
+        key: 'pointsPerGame',
+        label: 'Points per game',
+        type: 'select',
+        options: [
+          { value: 11, label: '11 points (standard)' },
+          { value: 15, label: '15 points' },
+          { value: 21, label: '21 points' },
+        ],
+      },
+      {
+        key: 'matchType',
+        label: 'Match type',
+        type: 'select',
+        options: [
+          { value: 'doubles', label: 'Doubles (2 v 2)' },
+          { value: 'singles', label: 'Singles (1 v 1)' },
+        ],
+      },
+      { key: 'maxRosterSize', label: 'Max roster size' },
+    ],
+    summarizeRules: (r) =>
+      `${Number(r.gamesToWin) === 1 ? 'Single game' : `Best of ${Number(r.gamesToWin) * 2 - 1}`} to ${r.pointsPerGame} (win by 2) · ${r.matchType === 'singles' ? 'singles' : 'doubles'} · max ${r.maxRosterSize} roster`,
+    playerStats: [],
+    hasPlayerStats: false,
+    teamStats: [
+      { key: 'wins', label: 'Most Wins' },
+      { key: 'avgScore', label: 'Avg Games Won' },
+      { key: 'pointDiff', label: 'Game Differential' },
+    ],
+  },
 }
 
 /** Every sport the app knows about, as a list (for filters and pickers). */
