@@ -49,6 +49,19 @@ export default function SportIcon({ sport, className = 'w-4 h-4', strokeWidth = 
     )
   }
 
+  if (sport === 'basketball3x3') {
+    // Three players over a hoop.
+    return (
+      <svg {...common}>
+        <circle cx="5.5" cy="6" r="2" />
+        <circle cx="12" cy="6" r="2" />
+        <circle cx="18.5" cy="6" r="2" />
+        <ellipse cx="12" cy="15" rx="7" ry="2.2" />
+        <path d="M6 16.5L8 21.5M12 17.2V21.8M18 16.5L16 21.5" />
+      </svg>
+    )
+  }
+
   if (sport === 'pickleball') {
     // A paddle (rounded face and handle) with a perforated ball.
     return (

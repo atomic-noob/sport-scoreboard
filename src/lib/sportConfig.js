@@ -214,6 +214,37 @@ export const SPORTS = {
       { key: 'pointDiff', label: 'Game Differential' },
     ],
   },
+  basketball3x3: {
+    key: 'basketball3x3',
+    label: '3x3 Basketball',
+    // matches.team_a_score / team_b_score hold the final points, like basketball.
+    standingLabels: { for: 'PF', against: 'PA' },
+    // FIBA 3x3: 3 on court + subs, 10 minutes or first to 21, baskets inside the arc
+    // are 1 point and beyond it 2, 12 second shot clock, tied game -> first to 2 points.
+    defaultRules: {
+      gameMinutes: 10,
+      targetScore: 21,
+      timeoutsPerTeam: 1,
+      maxRosterSize: 4,
+      avgStatMinGames: 3,
+    },
+    ruleFields: [
+      { key: 'gameMinutes', label: 'Game length (min)' },
+      { key: 'targetScore', label: 'Winning score (first to)' },
+      { key: 'timeoutsPerTeam', label: 'Timeouts per team' },
+      { key: 'maxRosterSize', label: 'Max roster size' },
+      { key: 'avgStatMinGames', label: 'Min games for avg stats' },
+    ],
+    summarizeRules: (r) =>
+      `${r.gameMinutes}min or first to ${r.targetScore} · 12s shot clock · ${r.timeoutsPerTeam} timeout/team · max ${r.maxRosterSize} roster`,
+    playerStats: [{ key: 'points', label: 'Points' }],
+    hasPlayerStats: true,
+    teamStats: [
+      { key: 'wins', label: 'Most Wins' },
+      { key: 'avgScore', label: 'Avg Score' },
+      { key: 'pointDiff', label: 'Point Differential' },
+    ],
+  },
 }
 
 /** Every sport the app knows about, as a list (for filters and pickers). */
