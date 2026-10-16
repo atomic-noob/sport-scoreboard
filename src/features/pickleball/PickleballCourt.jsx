@@ -48,7 +48,7 @@ export default function PickleballCourt({ portrait, state, playersA, playersB, f
         const court = perSide === 1 ? who[state.serving === side ? 'server' : 'receiver'].court : idx === rightIdx ? 'right' : 'left'
         const isServer = who.server.side === side && who.server.playerIdx === idx
         const isReceiver = who.receiver.side === side && who.receiver.playerIdx === idx
-        const dist = isServer ? 21 : isReceiver ? 19 : KITCHEN + 2.5 // partners wait just outside the kitchen
+        const dist = isServer ? 19.5 : isReceiver ? 18 : KITCHEN + 2.5 // partners wait just outside the kitchen
         const u = side === 'A' ? NET - dist : NET + dist
         const { x, y } = toScreen(u, courtV(side, court))
         chips.push({ key: `${side}${idx}`, side, player, x, y, isServer })
