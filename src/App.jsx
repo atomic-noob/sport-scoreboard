@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react'
+import { Menu } from 'lucide-react'
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
@@ -33,8 +35,19 @@ import BadmintonMatchSimulate from './features/badminton/BadmintonMatchSimulate'
 import BadmintonLineupSetup from './features/badminton/BadmintonLineupSetup'
 import PickleballMatchSimulate from './features/pickleball/PickleballMatchSimulate'
 import PickleballLineupSetup from './features/pickleball/PickleballLineupSetup'
+import AppSidebar from './components/AppSidebar'
 
-function AppHeader() {
+// Pages that show the organizer sidebar: signed-in organizer pages, except the
+// public pages and the live scoring / lineup screens, which need the full width.
+function hasSidebar(pathname, signedIn) {
+  if (!signedIn) return false
+  if (pathname === '/' || pathname === '/login' || pathname === '/terms' || pathname === '/privacy') return false
+  if (pathname.startsWith('/watch') || pathname.startsWith('/live')) return false
+  if (/^\/[^/]+\/[^/]+\/match\//.test(pathname)) return false
+  return true
+}
+
+function AppHeader({ showMenu, onMenu }) {
   const location = useLocation()
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -52,10 +65,17 @@ function AppHeader() {
 
   return (
     <header className="relative z-20 border-b border-line bg-panel">
-      <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link to={user ? '/dashboard' : '/'} className="font-bold text-ink">
-          Sylve
-        </Link>
+      <div className={`mx-auto px-4 h-14 flex items-center justify-between ${showMenu ? 'max-w-4xl lg:max-w-none lg:px-6' : 'max-w-4xl'}`}>
+        <div className="flex items-center gap-2">
+          {showMenu && (
+            <button onClick={onMenu} className="lg:hidden -ml-2 p-2 rounded-lg text-ink-dim hover:text-ink hover:bg-panel-alt" aria-label="Open menu">
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
+          <Link to={user ? '/dashboard' : '/'} className="font-bold text-ink">
+            Sylve
+          </Link>
+        </div>
         <div className="flex items-center gap-4">
           <SyncStatusBadge />
           {user ? (
@@ -96,13 +116,39 @@ function SportLineupSetup() {
   return <LineupSetup />
 }
 
+// Header, optional sidebar and the page itself.
+function Layout({ children }) {
+  const { user } = useAuth()
+  const { pathname } = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const showSidebar = hasSidebar(pathname, !!user)
+
+  // Close the phone drawer whenever the page changes.
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [pathname])
+
+  return (
+    <>
+      <AppHeader showMenu={showSidebar} onMenu={() => setMenuOpen(true)} />
+      {showSidebar ? (
+        <div className="lg:flex">
+          <AppSidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
+          <div className="flex-1 min-w-0">{children}</div>
+        </div>
+      ) : (
+        children
+      )}
+    </>
+  )
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <div className="min-h-screen bg-page">
-          <AppHeader />
-
+          <Layout>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -141,6 +187,7 @@ export default function App() {
             <Route path="/watch/:tournamentId/match/:matchId" element={<WatchMatch />} />
             <Route path="/live/:code" element={<ShareRedirect />} />
           </Routes>
+          </Layout>
           <CookieBanner />
         </div>
       </AuthProvider>
