@@ -214,6 +214,82 @@ export const SPORTS = {
       { key: 'pointDiff', label: 'Game Differential' },
     ],
   },
+  tennis: {
+    key: 'tennis',
+    label: 'Tennis',
+    // matches.team_a_score / team_b_score hold SETS WON for tennis; each set's
+    // games (7-6 for a tiebreak set) go in the match_sets table.
+    standingLabels: { for: 'SW', against: 'SL' },
+    // ITF scoring. setsToWin: 1 = one set, 2 = best of 3, 3 = best of 5.
+    // noAd: 1 = a single deciding point at deuce. matchTiebreak: 1 = the
+    // deciding set is a first-to-10 match tiebreak.
+    defaultRules: {
+      setsToWin: 2,
+      gamesPerSet: 6,
+      noAd: 0,
+      matchTiebreak: 0,
+      matchType: 'singles',
+      maxRosterSize: 8,
+    },
+    ruleFields: [
+      {
+        key: 'setsToWin',
+        label: 'Match format',
+        type: 'select',
+        options: [
+          { value: 2, label: 'Best of 3 sets' },
+          { value: 1, label: 'One set' },
+          { value: 3, label: 'Best of 5 sets' },
+        ],
+      },
+      {
+        key: 'gamesPerSet',
+        label: 'Games per set',
+        type: 'select',
+        options: [
+          { value: 6, label: '6 games (standard)' },
+          { value: 4, label: '4 games (short sets)' },
+        ],
+      },
+      {
+        key: 'noAd',
+        label: 'Deuce rule',
+        type: 'select',
+        options: [
+          { value: 0, label: 'Advantage (standard)' },
+          { value: 1, label: 'No-ad (one deciding point)' },
+        ],
+      },
+      {
+        key: 'matchTiebreak',
+        label: 'Deciding set',
+        type: 'select',
+        options: [
+          { value: 0, label: 'Full set' },
+          { value: 1, label: 'Match tiebreak to 10' },
+        ],
+      },
+      {
+        key: 'matchType',
+        label: 'Match type',
+        type: 'select',
+        options: [
+          { value: 'singles', label: 'Singles (1 v 1)' },
+          { value: 'doubles', label: 'Doubles (2 v 2)' },
+        ],
+      },
+      { key: 'maxRosterSize', label: 'Max roster size' },
+    ],
+    summarizeRules: (r) =>
+      `${Number(r.setsToWin) === 1 ? 'One set' : `Best of ${Number(r.setsToWin) * 2 - 1}`} · ${r.gamesPerSet} games${Number(r.noAd) === 1 ? ' · no-ad' : ''}${Number(r.matchTiebreak) === 1 ? ' · match tiebreak' : ''} · ${r.matchType === 'doubles' ? 'doubles' : 'singles'} · max ${r.maxRosterSize} roster`,
+    playerStats: [],
+    hasPlayerStats: false,
+    teamStats: [
+      { key: 'wins', label: 'Most Wins' },
+      { key: 'avgScore', label: 'Avg Sets Won' },
+      { key: 'pointDiff', label: 'Set Differential' },
+    ],
+  },
 }
 
 /** Every sport the app knows about, as a list (for filters and pickers). */

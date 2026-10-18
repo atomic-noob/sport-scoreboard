@@ -52,7 +52,7 @@ export default function EditTournament() {
   }, [tournamentId])
 
   function updateRule(key, value) {
-    setRules((r) => ({ ...r, [key]: Number(value) }))
+    setRules((r) => ({ ...r, [key]: Number.isNaN(Number(value)) ? value : Number(value) }))
   }
 
   function handlePinSubmit(e) {

@@ -141,7 +141,7 @@ export default function EventAdmin() {
         <div className="mb-4 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">{error}</div>
       )}
 
-      {SPORT_LIST.filter((s) => s.key === 'basketball' || s.key === 'volleyball' || s.key === 'badminton' || s.key === 'pickleball').map((s) => {
+      {SPORT_LIST.filter((s) => s.key === 'basketball' || s.key === 'volleyball' || s.key === 'badminton' || s.key === 'pickleball' || s.key === 'tennis').map((s) => {
         const list = inEvent.filter((t) => t.sport === s.key)
         return (
           <section key={s.key} className="mb-6">

@@ -5,6 +5,7 @@ import BasketballWatchMatch from '../basketball/BasketballWatchMatch'
 import VolleyballWatchMatch from '../volleyball/VolleyballWatchMatch'
 import BadmintonWatchMatch from '../badminton/BadmintonWatchMatch'
 import PickleballWatchMatch from '../pickleball/PickleballWatchMatch'
+import TennisWatchMatch from '../tennis/TennisWatchMatch'
 
 /**
  * Public live/final view of one game. Each sport has its own view (the
@@ -16,6 +17,7 @@ const WATCH_VIEWS = {
   volleyball: VolleyballWatchMatch,
   badminton: BadmintonWatchMatch,
   pickleball: PickleballWatchMatch,
+  tennis: TennisWatchMatch,
 }
 
 export default function WatchMatch() {

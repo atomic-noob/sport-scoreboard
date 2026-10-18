@@ -61,5 +61,16 @@ export default function SportIcon({ sport, className = 'w-4 h-4', strokeWidth = 
     )
   }
 
+  if (sport === 'tennis') {
+    // A racket (oval head, strings, handle) with a ball.
+    return (
+      <svg {...common}>
+        <ellipse cx="9" cy="9" rx="5.5" ry="7" transform="rotate(-40 9 9)" />
+        <path d="M12.7 13.4l6 6M6.5 6.3l5 5.2M8.2 4.5l5.4 5.6" />
+        <circle cx="19" cy="5.5" r="2.5" />
+      </svg>
+    )
+  }
+
   return <Trophy className={className} strokeWidth={strokeWidth} aria-hidden="true" />
 }

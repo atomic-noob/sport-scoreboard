@@ -8,7 +8,8 @@ const SPORTS = [
   { id: 'volleyball', name: 'Volleyball', ready: true, hint: 'Sets, rotations, libero, subs and player stats' },
   { id: 'badminton', name: 'Badminton', ready: true, hint: 'Rally-point games, singles or doubles, live court and results' },
   { id: 'soccer', name: 'Soccer', ready: false },
-  { id: 'tennis', name: 'Tennis', ready: false },
+  
+  { id: 'tennis', name: 'Tennis', ready: true, hint: 'Games, sets and tiebreaks, serve order, singles or doubles, live court' },
   { id: 'pickleball', name: 'Pickleball', ready: true, hint: 'Side-out scoring, server numbers, doubles or singles, live court' },
 ]
 
