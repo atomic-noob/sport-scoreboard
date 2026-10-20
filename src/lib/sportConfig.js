@@ -180,6 +180,7 @@ export const SPORTS = {
       gamesToWin: 2,
       pointsPerGame: 11,
       matchType: 'doubles',
+      entryType: 'players',
       maxRosterSize: 8,
     },
     ruleFields: [
@@ -212,10 +213,19 @@ export const SPORTS = {
           { value: 'singles', label: 'Singles (1 v 1)' },
         ],
       },
-      { key: 'maxRosterSize', label: 'Max roster size' },
+      {
+        key: 'entryType',
+        label: 'Entries are',
+        type: 'select',
+        options: [
+          { value: 'players', label: 'Players / fixed pairs' },
+          { value: 'teams', label: 'Teams with a roster' },
+        ],
+      },
+      { key: 'maxRosterSize', label: 'Max roster size (teams only)' },
     ],
     summarizeRules: (r) =>
-      `${Number(r.gamesToWin) === 1 ? 'Single game' : `Best of ${Number(r.gamesToWin) * 2 - 1}`} to ${r.pointsPerGame} (win by 2) · ${r.matchType === 'singles' ? 'singles' : 'doubles'} · max ${r.maxRosterSize} roster`,
+      `${Number(r.gamesToWin) === 1 ? 'Single game' : `Best of ${Number(r.gamesToWin) * 2 - 1}`} to ${r.pointsPerGame} (win by 2) · ${r.matchType === 'singles' ? (r.entryType === 'players' ? 'singles players' : 'singles') : r.entryType === 'players' ? 'fixed pairs' : 'doubles'}${r.entryType === 'players' ? '' : ` · max ${r.maxRosterSize} roster`}`,
     playerStats: [],
     hasPlayerStats: false,
     teamStats: [

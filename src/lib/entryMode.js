@@ -7,7 +7,9 @@
  */
 export function getEntryMode(tournament) {
   const rules = tournament?.rules ?? {}
-  const perSide = rules.matchType === 'doubles' ? 2 : 1
+  // Pickleball defaults to doubles, badminton and tennis to singles, when the rule was never saved.
+  const fallback = tournament?.sport === 'pickleball' ? 2 : 1
+  const perSide = rules.matchType === 'doubles' ? 2 : rules.matchType === 'singles' ? 1 : fallback
   const players = rules.entryType === 'players'
   return {
     players,
