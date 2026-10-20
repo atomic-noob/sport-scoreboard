@@ -172,7 +172,7 @@ export default function TournamentAdmin() {
         </Link>
       </div>
       <p className="text-ink-dim text-sm mb-4">
-        {sportConfig.summarizeRules({ ...sportConfig.defaultRules, ...tournament.rules })}
+        {sportConfig.summarizeRules({ ...sportConfig.defaultRules, entryType: "teams", ...tournament.rules })}
       </p>
 
       <div className="flex gap-3 mb-6">
