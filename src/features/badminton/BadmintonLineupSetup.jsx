@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getTournament, getTeamsForTournament, getRosterForTeam } from '../../lib/adminData'
 import { getMatch, markMatchLive } from '../../lib/matchesData'
+import { sortByEntryName } from '../../lib/entryMode'
 
 function lineupKey(matchId) {
   return `badminton-lineup:${matchId}`
@@ -47,6 +48,25 @@ export default function BadmintonLineupSetup() {
         ])
         setRosterA(rA)
         setRosterB(rB)
+
+        // Players / fixed pairs: the entries ARE the players, so there is nothing to choose.
+        const per = t.rules?.matchType === 'doubles' ? 2 : 1
+        if (t.rules?.entryType === 'players' && tA && tB && rA.length === per && rB.length === per) {
+          const idsOfA = sortByEntryName(rA, tA.name).map((p) => p.id)
+          const idsOfB = sortByEntryName(rB, tB.name).map((p) => p.id)
+          try {
+            sessionStorage.setItem(lineupKey(matchId), JSON.stringify({ idsA: idsOfA, idsB: idsOfB }))
+          } catch {
+            // scoring still works without it
+          }
+          try {
+            await markMatchLive(matchId)
+          } catch (err) {
+            console.error('Could not mark match as live:', err)
+          }
+          navigate(`/badminton/${tournamentId}/match/${matchId}`, { replace: true })
+          return
+        }
         try {
           const saved = sessionStorage.getItem(lineupKey(matchId))
           if (saved) {

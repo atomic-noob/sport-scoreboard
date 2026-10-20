@@ -176,6 +176,20 @@ export async function createTeam(tournamentId, name) {
   return team
 }
 
+export async function renameTeam(teamId, name) {
+  const { data, error } = await supabase
+    .from('teams')
+    .update({ name })
+    .eq('id', teamId)
+    .select()
+    .single()
+
+  if (error) throw error
+  const team = teamFromRow(data)
+  await db.teams.put(team)
+  return team
+}
+
 export async function getTeamsForTournament(tournamentId) {
   const { data, error } = await supabase
     .from('teams')
