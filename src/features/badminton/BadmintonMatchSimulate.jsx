@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getTournament, getTeamsForTournament, getRosterForTeam } from '../../lib/adminData'
-import { getMatch, completeMatch } from '../../lib/matchesData'
+import { getMatch, completeMatch, setMatchMvp } from '../../lib/matchesData'
+import WinnerBoard from '../tournament/WinnerBoard'
 import { pushCloudMatchState, clearMatchState } from '../../lib/liveMatchState'
 import { saveMatchSet } from '../../lib/volleyballData'
 import { newGameState, applyPoint, isGameOver, gamePointFor, gameCap, reachedInterval, whoIsWho } from '../../lib/badmintonRules'
@@ -67,6 +68,8 @@ export default function BadmintonMatchSimulate() {
   const [busy, setBusy] = useState(false)
   const [matchComplete, setMatchComplete] = useState(false)
   const [matchWinner, setMatchWinner] = useState(null)
+  const [mvpId, setMvpId] = useState(null)
+  const [savingMvp, setSavingMvp] = useState(false)
   const [lineupSig, setLineupSig] = useState('')
 
   useEffect(() => {
@@ -267,27 +270,39 @@ export default function BadmintonMatchSimulate() {
   }
 
   if (matchComplete) {
+    const winnerName = (matchWinner === 'A' ? teamA?.name : teamB?.name) ?? ''
+    async function pickMvp(playerId) {
+      const previous = mvpId
+      setMvpId(playerId)
+      setSavingMvp(true)
+      try {
+        await setMatchMvp(matchId, playerId)
+        setError('')
+      } catch (err) {
+        console.error('Failed to save MVP:', err)
+        setMvpId(previous)
+        setError(`Could not save the MVP: ${err.message ?? 'unknown error'}`)
+      }
+      setSavingMvp(false)
+    }
     return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 text-center">
-        <p className="text-xs font-semibold text-accent uppercase mb-2">Match Complete</p>
-        <h1 className="text-2xl font-display font-bold tracking-wide text-ink mb-1">
-          {matchWinner === 'A' ? teamA?.name : teamB?.name} wins
-        </h1>
-        <p className="text-ink-dim mb-3">{gamesWonA} - {gamesWonB} in games</p>
-        <div className="space-y-1 mb-6">
-          {history.map((g) => (
-            <p key={g.gameNumber} className="text-sm text-ink-dim">
-              Game {g.gameNumber}: {g.scoreA} - {g.scoreB}
-            </p>
-          ))}
-        </div>
-        {error && (
-          <div className="mb-4 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">{error}</div>
-        )}
-        <button onClick={handleDone} className="rounded-lg bg-accent hover:bg-accent-strong text-on-accent font-medium px-6 py-3 transition">
-          Back to schedule
-        </button>
-      </div>
+      <WinnerBoard
+        sportLabel="Badminton"
+        winnerName={winnerName}
+        winnerSide={matchWinner}
+        nameA={teamA?.name ?? 'Side A'}
+        nameB={teamB?.name ?? 'Side B'}
+        gamesA={gamesWonA}
+        gamesB={gamesWonB}
+        history={history}
+        playersA={playersA}
+        playersB={playersB}
+        mvpId={mvpId}
+        onPickMvp={pickMvp}
+        savingMvp={savingMvp}
+        error={error}
+        onDone={handleDone}
+      />
     )
   }
 
