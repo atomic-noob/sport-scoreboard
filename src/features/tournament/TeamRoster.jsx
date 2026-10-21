@@ -1,8 +1,9 @@
-﻿import { useEffect, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
   getTournament,
   getRosterForTeam,
+  getTeamsForTournament,
   searchPlayers,
   createPlayer,
   addPlayerToRoster,
@@ -10,7 +11,9 @@ import {
   updateJerseyNumber,
   findPlayerTeamInTournament,
   transferPlayerToTeam,
+  renameTeam,
 } from '../../lib/adminData'
+import { getEntryMode, entryNameFromPlayers } from '../../lib/entryMode'
 
 export default function TeamRoster() {
   const { tournamentId, teamId, sport: sportParam } = useParams()
@@ -22,10 +25,22 @@ export default function TeamRoster() {
   const [searching, setSearching] = useState(false)
   const [pendingTransfer, setPendingTransfer] = useState(null) // { player, rosterEntryId, fromTeamName }
   const [error, setError] = useState('')
+  const nameSync = useRef(null) // players mode: { name } = the entry's current name, kept equal to its players
 
   async function refreshRoster() {
     try {
-      setRoster(await getRosterForTeam(teamId))
+      const list = await getRosterForTeam(teamId)
+      setRoster(list)
+      if (nameSync.current?.name && list.length > 0) {
+        // Keep the existing order (the first player serves first); new players go last.
+        const have = nameSync.current.name.split(' / ')
+        const now = list.map((p) => p.name)
+        const next = entryNameFromPlayers([...have.filter((n) => now.includes(n)), ...now.filter((n) => !have.includes(n))])
+        if (next !== nameSync.current.name) {
+          nameSync.current.name = next
+          renameTeam(teamId, next).catch((err) => console.error('Could not rename entry:', err))
+        }
+      }
     } catch (err) {
       console.error('Failed to load roster:', err)
       setError('Could not load the roster. Check your connection and try refreshing.')
@@ -33,7 +48,16 @@ export default function TeamRoster() {
   }
 
   useEffect(() => {
-    getTournament(tournamentId).then(setTournament).catch((err) => {
+    getTournament(tournamentId).then((t) => {
+      setTournament(t)
+      nameSync.current = null
+      if (t.rules?.entryType === 'players') {
+        getTeamsForTournament(tournamentId).then((teams) => {
+          const tm = teams.find((x) => x.id === teamId)
+          nameSync.current = tm ? { name: tm.name } : null
+        })
+      }
+    }).catch((err) => {
       console.error('Failed to load tournament:', err)
       setError('Could not load this tournament. Check your connection.')
     })
@@ -63,7 +87,9 @@ export default function TeamRoster() {
   }, [query, roster])
 
   const sport = tournament?.sport ?? sportParam
-  const rosterFull = tournament && roster.length >= tournament.rules.maxRosterSize
+  const mode = getEntryMode(tournament)
+  const maxRoster = mode.players ? mode.perSide : tournament?.rules?.maxRosterSize
+  const rosterFull = tournament && roster.length >= maxRoster
   const rosterIds = new Set(roster.map((p) => p.id))
 
   async function handleAddExisting(player) {
@@ -156,12 +182,12 @@ export default function TeamRoster() {
   return (
     <div className="max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-6 py-10">
       <Link to={`/${sport}/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
-        ← Back to teams
+        ← Back to {mode.nounPlural}
       </Link>
       <h1 className="text-2xl font-display font-bold tracking-wide text-ink mt-1 mb-1">Roster</h1>
       {tournament && (
         <p className="text-ink-dim text-sm mb-6">
-          {roster.length} / {tournament.rules.maxRosterSize} players
+          {roster.length} / {maxRoster} players
         </p>
       )}
 

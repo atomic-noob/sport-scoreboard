@@ -182,7 +182,8 @@ export default function BadmintonMatchSimulate() {
     setNotice('')
   }
 
-  function scorePoint(side) {
+  // faultBy: the side that committed a fault; the point goes to `side`, the other team.
+  function scorePoint(side, faultBy = null) {
     if (!gs || gameOver || busy) return
     const next = applyPoint(gs, side)
     setUndoStack((s) => [...s, { gs, midSwapped }])
@@ -197,7 +198,7 @@ export default function BadmintonMatchSimulate() {
         setNotice('Interval: 60 seconds')
       }
     } else {
-      setNotice('')
+      setNotice(faultBy ? `Fault by ${nameOf(faultBy)}: point to ${nameOf(side)}` : '')
     }
   }
 
@@ -401,7 +402,8 @@ export default function BadmintonMatchSimulate() {
       {/* Point buttons */}
       {gs && (
         <>
-          <div className="grid grid-cols-2 gap-3 mb-3">
+          <p className="text-xs font-semibold text-ink-faint uppercase mb-1.5">Score a point</p>
+          <div className="grid grid-cols-2 gap-3 mb-4">
             {['A', 'B'].map((side) => (
               <button
                 key={side}
@@ -412,6 +414,23 @@ export default function BadmintonMatchSimulate() {
                 <span className="block text-xs text-ink-faint">Rally won by</span>
                 <span className="block font-display font-bold text-lg text-ink truncate">{nameOf(side)}</span>
                 <span className="block text-accent font-bold text-xl">+1</span>
+              </button>
+            ))}
+          </div>
+
+          <p className="text-xs font-semibold text-live uppercase mb-0.5">Fault (violation)</p>
+          <p className="text-[11px] text-ink-faint mb-1.5">Service fault, net touch, double hit and so on. The point goes to the other team.</p>
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            {['A', 'B'].map((side) => (
+              <button
+                key={side}
+                onClick={() => scorePoint(side === 'A' ? 'B' : 'A', side)}
+                disabled={gameOver || busy}
+                className="rounded-xl border-2 border-live bg-live-soft hover:brightness-125 active:scale-[0.98] transition px-3 py-3 disabled:opacity-40"
+              >
+                <span className="block text-xs text-live">Fault by</span>
+                <span className="block font-display font-bold text-lg text-ink truncate">{nameOf(side)}</span>
+                <span className="block text-ink-dim text-sm">point to {nameOf(side === 'A' ? 'B' : 'A')}</span>
               </button>
             ))}
           </div>
