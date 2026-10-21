@@ -38,6 +38,8 @@ import PickleballLineupSetup from './features/pickleball/PickleballLineupSetup'
 import TennisMatchSimulate from './features/tennis/TennisMatchSimulate'
 import TennisLineupSetup from './features/tennis/TennisLineupSetup'
 import AppSidebar from './components/AppSidebar'
+import Basketball3x3MatchSimulate from './features/basketball3x3/Basketball3x3MatchSimulate'
+import Basketball3x3LineupSetup from './features/basketball3x3/Basketball3x3LineupSetup'
 
 // Pages that show the organizer sidebar: signed-in organizer pages, except the
 // public pages and the live scoring / lineup screens, which need the full width.
@@ -108,6 +110,7 @@ function SportMatchSimulate() {
   if (sport === 'badminton') return <BadmintonMatchSimulate />
   if (sport === 'pickleball') return <PickleballMatchSimulate />
   if (sport === 'tennis') return <TennisMatchSimulate />
+  if (sport === 'basketball3x3') return <Basketball3x3MatchSimulate />
   return <MatchSimulate />
 }
 
@@ -117,6 +120,7 @@ function SportLineupSetup() {
   if (sport === 'badminton') return <BadmintonLineupSetup />
   if (sport === 'pickleball') return <PickleballLineupSetup />
   if (sport === 'tennis') return <TennisLineupSetup />
+  if (sport === 'basketball3x3') return <Basketball3x3LineupSetup />
   return <LineupSetup />
 }
 
