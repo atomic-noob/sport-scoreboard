@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getTournament, getTeamsForTournament, getRosterForTeam } from '../../lib/adminData'
-import { getMatch, completeMatch } from '../../lib/matchesData'
+import { getMatch, completeMatch, setMatchMvp } from '../../lib/matchesData'
+import WinnerBoard from '../tournament/WinnerBoard'
 import { pushCloudMatchState, clearMatchState } from '../../lib/liveMatchState'
 import { saveMatchSet } from '../../lib/volleyballData'
 import { newMatch, applyPoint, pointLabels, situation, setAndMatchPoint, currentServer, serveCourt, serverIdx, setNumber } from '../../lib/tennisRules'
@@ -63,6 +64,8 @@ export default function TennisMatchSimulate() {
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const [matchComplete, setMatchComplete] = useState(false)
+  const [mvpId, setMvpId] = useState(null)
+  const [savingMvp, setSavingMvp] = useState(false)
   const [lineupSig, setLineupSig] = useState('')
 
   useEffect(() => {
@@ -238,19 +241,47 @@ export default function TennisMatchSimulate() {
   }
 
   if (matchComplete && m) {
+    async function pickMvp(playerId) {
+      const previous = mvpId
+      setMvpId(playerId)
+      setSavingMvp(true)
+      try {
+        await setMatchMvp(matchId, playerId)
+        setError('')
+      } catch (err) {
+        console.error('Failed to save MVP:', err)
+        setMvpId(previous)
+        setError(`Could not save the MVP: ${err.message ?? 'unknown error'}`)
+      }
+      setSavingMvp(false)
+    }
+    // A match tiebreak (played instead of a final set) shows its own points.
+    const setRows = m.sets.map((st, i) => {
+      const a = st.tb?.match ? st.tb.a : st.a
+      const b = st.tb?.match ? st.tb.b : st.b
+      return { gameNumber: i + 1, scoreA: a, scoreB: b, winner: a > b ? 'A' : 'B' }
+    })
     return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 text-center">
-        <p className="text-xs font-semibold text-accent uppercase mb-2">Match Complete</p>
-        <h1 className="text-2xl font-display font-bold tracking-wide text-ink mb-1">{nameOf(m.winner)} wins</h1>
-        <p className="text-ink-dim mb-3">{m.winsA} - {m.winsB} in sets</p>
-        <p className="text-sm text-ink-dim mb-6">{m.sets.map(setText).join('  ·  ')}</p>
-        {error && (
-          <div className="mb-4 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">{error}</div>
-        )}
-        <button onClick={handleDone} className="rounded-lg bg-accent hover:bg-accent-strong text-on-accent font-medium px-6 py-3 transition">
-          Back to schedule
-        </button>
-      </div>
+      <WinnerBoard
+        sport="tennis"
+        sportLabel="Tennis"
+        unit="Set"
+        tournamentName={tournament?.name}
+        winnerName={nameOf(m.winner)}
+        winnerSide={m.winner}
+        nameA={nameOf('A')}
+        nameB={nameOf('B')}
+        gamesA={m.winsA}
+        gamesB={m.winsB}
+        history={setRows}
+        playersA={playersA}
+        playersB={playersB}
+        mvpId={mvpId}
+        onPickMvp={pickMvp}
+        savingMvp={savingMvp}
+        error={error}
+        onDone={handleDone}
+      />
     )
   }
 
