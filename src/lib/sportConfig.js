@@ -249,6 +249,7 @@ export const SPORTS = {
       noAd: 0,
       matchTiebreak: 0,
       matchType: 'singles',
+      entryType: 'players',
       maxRosterSize: 8,
     },
     ruleFields: [
@@ -298,10 +299,19 @@ export const SPORTS = {
           { value: 'doubles', label: 'Doubles (2 v 2)' },
         ],
       },
-      { key: 'maxRosterSize', label: 'Max roster size' },
+      {
+        key: 'entryType',
+        label: 'Entries are',
+        type: 'select',
+        options: [
+          { value: 'players', label: 'Players / fixed pairs' },
+          { value: 'teams', label: 'Teams with a roster' },
+        ],
+      },
+      { key: 'maxRosterSize', label: 'Max roster size (teams only)' },
     ],
     summarizeRules: (r) =>
-      `${Number(r.setsToWin) === 1 ? 'One set' : `Best of ${Number(r.setsToWin) * 2 - 1}`} · ${r.gamesPerSet} games${Number(r.noAd) === 1 ? ' · no-ad' : ''}${Number(r.matchTiebreak) === 1 ? ' · match tiebreak' : ''} · ${r.matchType === 'doubles' ? 'doubles' : 'singles'} · max ${r.maxRosterSize} roster`,
+      `${Number(r.setsToWin) === 1 ? 'One set' : `Best of ${Number(r.setsToWin) * 2 - 1}`} · ${r.gamesPerSet} games${Number(r.noAd) === 1 ? ' · no-ad' : ''}${Number(r.matchTiebreak) === 1 ? ' · match tiebreak' : ''} · ${r.matchType === 'doubles' ? (r.entryType === 'players' ? 'fixed pairs' : 'doubles') : r.entryType === 'players' ? 'singles players' : 'singles'}${r.entryType === 'players' ? '' : ` · max ${r.maxRosterSize} roster`}`,
     playerStats: [],
     hasPlayerStats: false,
     teamStats: [
