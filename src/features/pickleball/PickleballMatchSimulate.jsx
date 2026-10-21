@@ -287,7 +287,9 @@ export default function PickleballMatchSimulate() {
     }
     return (
       <WinnerBoard
+        sport="pickleball"
         sportLabel="Pickleball"
+        tournamentName={tournament?.name}
         winnerName={winnerName}
         winnerSide={matchWinner}
         nameA={teamA?.name ?? 'Side A'}

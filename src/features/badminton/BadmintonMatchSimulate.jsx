@@ -287,7 +287,9 @@ export default function BadmintonMatchSimulate() {
     }
     return (
       <WinnerBoard
+        sport="badminton"
         sportLabel="Badminton"
+        tournamentName={tournament?.name}
         winnerName={winnerName}
         winnerSide={matchWinner}
         nameA={teamA?.name ?? 'Side A'}
