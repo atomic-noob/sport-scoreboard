@@ -20,9 +20,45 @@ function ManOutline({ className = '' }) {
   )
 }
 
+function PairOutline({ className = '' }) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="34" cy="36" r="12" />
+      <path d="M10 86 C10 68 20 60 34 60 C48 60 58 68 58 86" />
+      <circle cx="68" cy="36" r="12" />
+      <path d="M50 62 C55 60 61 60 68 60 C82 60 92 68 92 86" />
+    </svg>
+  )
+}
+
+function TeamOutline({ className = '' }) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="50" cy="30" r="11" />
+      <path d="M28 84 C28 66 37 58 50 58 C63 58 72 66 72 84" />
+      <circle cx="19" cy="42" r="8" opacity=".75" />
+      <path d="M4 82 C4 68 10 62 19 62 C23 62 26 63 29 65" opacity=".75" />
+      <circle cx="81" cy="42" r="8" opacity=".75" />
+      <path d="M96 82 C96 68 90 62 81 62 C77 62 74 63 71 65" opacity=".75" />
+    </svg>
+  )
+}
+
+/** One man for a solo entry, two for a fixed pair, a small group for a team. */
+function KindIcon({ kind, className }) {
+  if (kind === 'pair') return <PairOutline className={className} />
+  if (kind === 'team') return <TeamOutline className={className} />
+  return <ManOutline className={className} />
+}
+
 export default function WinnerBoard({
   sport,
   sportLabel,
+  kind = 'solo',
+  children,
+  hidePicker = false,
+  doneLabel = 'Back to schedule',
+  doneDisabled = false,
   unit = 'Game',
   tournamentName,
   winnerName,
@@ -101,7 +137,7 @@ export default function WinnerBoard({
             <span className="absolute -bottom-3 rounded-full bg-accent px-3 py-0.5 text-xs font-bold tracking-widest text-on-accent">MVP</span>
           </div>
           <h1 className="mt-7 text-3xl sm:text-4xl font-display font-bold tracking-wide text-ink">
-            {mvp ? mvp.name : <span className="text-ink-faint">Choose the MVP</span>}
+            {mvp ? mvp.name : <span className="text-ink-faint">{hidePicker ? 'No MVP chosen' : 'Choose the MVP'}</span>}
           </h1>
           {mvpTeam && <p className="text-sm text-ink-dim mt-1">{mvpTeam}</p>}
           {tournamentName && <p className="mt-3 text-sm font-medium uppercase tracking-wider text-accent">{tournamentName}</p>}
@@ -109,6 +145,9 @@ export default function WinnerBoard({
 
         {/* Score */}
         <div className="mt-6 rounded-2xl border border-line bg-panel/70 backdrop-blur px-5 py-5">
+          <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full border border-accent/50 text-accent">
+            <KindIcon kind={kind} className="h-9 w-9" />
+          </div>
           <p className="text-xs text-ink-faint uppercase tracking-wider mb-1">Winner</p>
           <p className="text-xl font-display font-bold text-ink">{winnerName}</p>
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 mt-3">
@@ -133,6 +172,7 @@ export default function WinnerBoard({
         </div>
 
         {/* Pick */}
+        {!hidePicker && (
         <div className="mt-4 rounded-2xl border border-line bg-panel/70 backdrop-blur px-5 py-4">
           <div className="flex items-baseline justify-between mb-3">
             <p className="text-sm font-semibold text-ink">{mvp ? 'Change the MVP' : 'Who was the MVP?'}</p>
@@ -141,15 +181,19 @@ export default function WinnerBoard({
           <Group title={nameA} players={playersA} />
           <Group title={nameB} players={playersB} />
         </div>
+        )}
+
+        {children}
 
         {error && (
           <div className="mt-4 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">{error}</div>
         )}
         <button
           onClick={onDone}
-          className="mt-6 w-full rounded-lg bg-accent hover:bg-accent-strong text-on-accent font-medium px-6 py-3 transition"
+          disabled={doneDisabled}
+          className="mt-6 w-full rounded-lg bg-accent hover:bg-accent-strong text-on-accent font-medium px-6 py-3 transition disabled:opacity-50"
         >
-          Back to schedule
+          {doneLabel}
         </button>
       </div>
     </div>

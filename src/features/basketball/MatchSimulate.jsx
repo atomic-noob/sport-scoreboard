@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getTournament, getTeamsForTournament, getRosterForTeam } from '../../lib/adminData'
 import { getMatch, completeMatch, saveActionLog } from '../../lib/matchesData'
+import WinnerBoard from '../tournament/WinnerBoard'
 import {
   saveLocalMatchState,
   getLocalMatchState,
@@ -469,6 +470,7 @@ export default function MatchSimulate() {
 
   const [showPotgStep, setShowPotgStep] = useState(false)
   const [potgPlayerId, setPotgPlayerId] = useState(null)
+  const [finished, setFinished] = useState(false)
 
   function handleComplete() {
     if (scoreA === scoreB) {
@@ -496,7 +498,9 @@ export default function MatchSimulate() {
       await completeMatch(matchId, scoreA, scoreB, { playerStats: playerStatsPayload, potgPlayerId })
       await saveActionLog(matchId, actionLog)
       await clearMatchState(matchId)
-      navigate(`/basketball/${tournamentId}/schedule`)
+      setShowPotgStep(false)
+      setSaving(false)
+      setFinished(true)
     } catch (err) {
       console.error('Failed to complete match:', err)
       setError(`Could not save the result: ${err.message ?? 'unknown error'}`)
@@ -515,6 +519,33 @@ export default function MatchSimulate() {
           'Loading...'
         )}
       </div>
+    )
+  }
+
+  if (finished) {
+    const winnerSide = scoreA > scoreB ? 'A' : 'B'
+    return (
+      <WinnerBoard
+        sport="basketball"
+        kind="team"
+        sportLabel="Basketball"
+        tournamentName={tournament?.name}
+        winnerName={(winnerSide === 'A' ? teamA?.name : teamB?.name) ?? ''}
+        winnerSide={winnerSide}
+        nameA={teamA?.name ?? 'Team A'}
+        nameB={teamB?.name ?? 'Team B'}
+        gamesA={scoreA}
+        gamesB={scoreB}
+        history={[]}
+        playersA={allPlayersWithTeam().filter((x) => x.teamId === teamA?.id).map((x) => x.player)}
+        playersB={allPlayersWithTeam().filter((x) => x.teamId === teamB?.id).map((x) => x.player)}
+        mvpId={potgPlayerId}
+        onPickMvp={() => {}}
+        hidePicker
+        savingMvp={false}
+        error=""
+        onDone={() => navigate(`/basketball/${tournamentId}/schedule`)}
+      />
     )
   }
 
