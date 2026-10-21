@@ -107,7 +107,7 @@ export default function Login() {
               Run your league. <span className="text-emerald-400">Live.</span>
             </h2>
             <p className="text-white/60 mt-4 text-lg">
-              Basketball, volleyball, badminton, pickleball and tennis scoring for barangay leagues, school intramurals and everyone in between.
+              Basketball, volleyball, badminton, pickleball, tennis and table tennis scoring for barangay leagues, school intramurals and everyone in between.
             </p>
 
             <ul className="mt-8 space-y-4">

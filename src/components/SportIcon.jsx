@@ -61,6 +61,17 @@ export default function SportIcon({ sport, className = 'w-4 h-4', strokeWidth = 
     )
   }
 
+  if (sport === 'tabletennis') {
+    // A paddle (round blade, short handle) with a ball.
+    return (
+      <svg {...common}>
+        <circle cx="9.5" cy="9.5" r="6" />
+        <path d="M13.8 13.8l5.2 5.2" />
+        <circle cx="19" cy="5" r="2" />
+      </svg>
+    )
+  }
+
   if (sport === 'tennis') {
     // A racket (oval head, strings, handle) with a ball.
     return (

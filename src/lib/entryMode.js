@@ -1,5 +1,5 @@
 /**
- * Singles/doubles sports (badminton, pickleball, tennis) can run in two entry
+ * Singles/doubles sports (badminton, pickleball, tennis, table tennis) can run in two entry
  * modes. In "players" mode each entry in the tournament IS the player (singles)
  * or the fixed pair (doubles), named after them, with no separate team name and
  * no lineup step. In "teams" mode (and for every tournament made before this

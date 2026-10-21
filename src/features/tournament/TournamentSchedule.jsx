@@ -114,8 +114,8 @@ export default function TournamentSchedule() {
 
   const sport = tournament.sport ?? sportParam
   // Set-based sports store sets/games won in team_a_score / team_b_score.
-  const isVolleyball = sport === 'volleyball' || sport === 'badminton' || sport === 'pickleball' || sport === 'tennis'
-  const wonLost = sport === 'badminton' || sport === 'pickleball' ? ['GW', 'GL'] : ['SW', 'SL']
+  const isVolleyball = sport === 'volleyball' || sport === 'badminton' || sport === 'pickleball' || sport === 'tennis' || sport === 'tabletennis'
+  const wonLost = sport === 'badminton' || sport === 'pickleball' || sport === 'tabletennis' ? ['GW', 'GL'] : ['SW', 'SL']
   // For volleyball, matches.team_a_score/team_b_score hold SETS won/lost.
   const forLabel = isVolleyball ? wonLost[0] : 'PF'
   const againstLabel = isVolleyball ? wonLost[1] : 'PA'
@@ -379,7 +379,7 @@ function MatchRow({ match, teamName, sport, tournamentId, onForfeit }) {
         {isPlayable && <span className="text-accent font-medium">Play →</span>}
         {isViewable && (
           <span className="text-ink-faint font-medium">
-            {sport === 'volleyball' || sport === 'badminton' || sport === 'pickleball' || sport === 'tennis' ? 'Results →' : 'Box score →'}
+            {sport === 'volleyball' || sport === 'badminton' || sport === 'pickleball' || sport === 'tennis' || sport === 'tabletennis' ? 'Results →' : 'Box score →'}
           </span>
         )}
       </div>

@@ -21,6 +21,10 @@ function shortRules(sport, rules) {
     const g = Number(rules.gamesToWin ?? 2)
     return `${g === 1 ? 'Single game' : `Best of ${g * 2 - 1}`} · to ${rules.pointsPerGame ?? 11} · ${rules.matchType === 'singles' ? 'singles' : 'doubles'}`
   }
+  if (sport === 'tabletennis') {
+    const g = Number(rules.gamesToWin ?? 3)
+    return `${g === 1 ? 'Single game' : `Best of ${g * 2 - 1}`} · to 11 · ${rules.matchType === 'doubles' ? 'doubles' : 'singles'}`
+  }
   if (sport === 'tennis') {
     const s = Number(rules.setsToWin ?? 2)
     return `${s === 1 ? 'One set' : `Best of ${s * 2 - 1}`} · ${rules.gamesPerSet ?? 6} games${Number(rules.noAd) === 1 ? ' · no-ad' : ''} · ${rules.matchType === 'doubles' ? 'doubles' : 'singles'}`

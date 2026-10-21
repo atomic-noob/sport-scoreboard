@@ -320,6 +320,64 @@ export const SPORTS = {
       { key: 'pointDiff', label: 'Set Differential' },
     ],
   },
+  tabletennis: {
+    key: 'tabletennis',
+    label: 'Table Tennis',
+    // matches.team_a_score / team_b_score hold GAMES WON for table tennis
+    // (same set-based storage as badminton: the match_sets table).
+    standingLabels: { for: 'GW', against: 'GL' },
+    // ITTF Laws of Table Tennis: games to 11, win by 2, service changes every
+    // 2 points (every point from 10-10). gamesToWin: 2 = best of 3, 3 = best of
+    // 5, 4 = best of 7, 1 = a single game.
+    defaultRules: {
+      gamesToWin: 3,
+      pointsPerGame: 11,
+      matchType: 'singles',
+      entryType: 'players',
+      maxRosterSize: 6,
+    },
+    ruleFields: [
+      {
+        key: 'gamesToWin',
+        label: 'Match format',
+        type: 'select',
+        options: [
+          { value: 3, label: 'Best of 5 games' },
+          { value: 2, label: 'Best of 3 games' },
+          { value: 4, label: 'Best of 7 games' },
+          { value: 1, label: 'Single game' },
+        ],
+      },
+      {
+        key: 'matchType',
+        label: 'Match type',
+        type: 'select',
+        options: [
+          { value: 'singles', label: 'Singles (1 v 1)' },
+          { value: 'doubles', label: 'Doubles (2 v 2)' },
+        ],
+      },
+      {
+        key: 'entryType',
+        label: 'Entries are',
+        type: 'select',
+        options: [
+          { value: 'players', label: 'Players / fixed pairs' },
+          { value: 'teams', label: 'Teams with a roster' },
+        ],
+      },
+      { key: 'maxRosterSize', label: 'Max roster size (teams only)' },
+    ],
+    summarizeRules: (r) =>
+      `${Number(r.gamesToWin) === 1 ? 'Single game' : `Best of ${Number(r.gamesToWin) * 2 - 1}`} to 11 (win by 2) · ${r.matchType === 'doubles' ? (r.entryType === 'players' ? 'fixed pairs' : 'doubles') : r.entryType === 'players' ? 'singles players' : 'singles'}${r.entryType === 'players' ? '' : ` · max ${r.maxRosterSize} roster`}`,
+    playerStats: [],
+    hasPlayerStats: false,
+    teamStats: [
+      { key: 'wins', label: 'Most Wins' },
+      { key: 'avgScore', label: 'Avg Games Won' },
+      { key: 'pointDiff', label: 'Game Differential' },
+    ],
+  },
 }
 
 /** Every sport the app knows about, as a list (for filters and pickers). */

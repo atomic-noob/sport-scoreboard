@@ -7,8 +7,7 @@ const SPORTS = [
   { id: 'basketball', name: 'Basketball', ready: true, hint: 'Tournaments, live scoring, brackets and leaderboards' },
   { id: 'volleyball', name: 'Volleyball', ready: true, hint: 'Sets, rotations, libero, subs and player stats' },
   { id: 'badminton', name: 'Badminton', ready: true, hint: 'Rally-point games, singles or doubles, live court and results' },
-  { id: 'soccer', name: 'Soccer', ready: false },
-  
+  { id: 'tabletennis', name: 'Table Tennis', ready: true, hint: 'Games to 11, serve changes every 2 points, singles or doubles, live table' },
   { id: 'tennis', name: 'Tennis', ready: true, hint: 'Games, sets and tiebreaks, serve order, singles or doubles, live court' },
   { id: 'pickleball', name: 'Pickleball', ready: true, hint: 'Side-out scoring, server numbers, doubles or singles, live court' },
 ]
@@ -51,7 +50,7 @@ export default function Dashboard() {
           <span className="w-11 h-11 rounded-xl border border-emerald-400/30 bg-emerald-400/10 text-emerald-300 flex items-center justify-center shrink-0"><Layers className="w-5 h-5" /></span>
           <span className="flex-1 min-w-0">
             <span className="block font-medium">Events</span>
-            <span className="block text-sm text-white/60">Group basketball, volleyball, badminton, pickleball and tennis tournaments under one event and one public link</span>
+            <span className="block text-sm text-white/60">Group basketball, volleyball, badminton, pickleball, tennis and table tennis tournaments under one event and one public link</span>
           </span>
           <ArrowRight className="w-5 h-5 text-emerald-400 transition group-hover:translate-x-1" />
         </Link>

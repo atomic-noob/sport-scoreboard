@@ -37,6 +37,8 @@ import PickleballMatchSimulate from './features/pickleball/PickleballMatchSimula
 import PickleballLineupSetup from './features/pickleball/PickleballLineupSetup'
 import TennisMatchSimulate from './features/tennis/TennisMatchSimulate'
 import TennisLineupSetup from './features/tennis/TennisLineupSetup'
+import TableTennisMatchSimulate from './features/tabletennis/TableTennisMatchSimulate'
+import TableTennisLineupSetup from './features/tabletennis/TableTennisLineupSetup'
 import AppSidebar from './components/AppSidebar'
 
 // Pages that show the organizer sidebar: signed-in organizer pages, except the
@@ -108,6 +110,7 @@ function SportMatchSimulate() {
   if (sport === 'badminton') return <BadmintonMatchSimulate />
   if (sport === 'pickleball') return <PickleballMatchSimulate />
   if (sport === 'tennis') return <TennisMatchSimulate />
+  if (sport === 'tabletennis') return <TableTennisMatchSimulate />
   return <MatchSimulate />
 }
 
@@ -117,6 +120,7 @@ function SportLineupSetup() {
   if (sport === 'badminton') return <BadmintonLineupSetup />
   if (sport === 'pickleball') return <PickleballLineupSetup />
   if (sport === 'tennis') return <TennisLineupSetup />
+  if (sport === 'tabletennis') return <TableTennisLineupSetup />
   return <LineupSetup />
 }
 
