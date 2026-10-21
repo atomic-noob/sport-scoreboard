@@ -10,7 +10,7 @@ import { OPEN_COOKIE_SETTINGS } from '../lib/cookieConsent'
 // Optional real photos. Leave '' to use the drawn court and net.
 // When you add one (e.g. '/photos/basketball.webp' in the public folder), it is shown
 // behind the drawing with an emerald tint. Only use photos you have the licence for.
-const PHOTOS = { basketball: '', volleyball: '', badminton: '', pickleball: '' }
+const PHOTOS = { basketball: '', volleyball: '', badminton: '', pickleball: '', tennis: '' }
 
 const SPORTS = {
   basketball: {
@@ -40,12 +40,19 @@ SPORTS.pickleball = {
   sample: { a: 'Dinkers', b: 'Bangers', sa: 9, sb: 7, tag: 'GAME 2 · 1–0', stats: [['CALL', '9-7-2'], ['GAMES', '1 · 0'], ['TO WIN', '11, by 2']] },
 }
 
+SPORTS.tennis = {
+  label: 'Tennis',
+  word: 'Ace',
+  line: 'Games, sets and tiebreaks, deuce or no-ad, with the serve and change of ends tracked for you.',
+  sample: { a: 'Aces', b: 'Baseliners', sa: 40, sb: 30, tag: 'SET 2 · 1–0', stats: [['SETS', '1 · 0'], ['SERVE', 'Right court'], ['TIEBREAK', 'At 6–6']] },
+}
+
 const BENTO = [
   { Icon: Zap, title: 'Score from your phone', text: 'One screen. Court, scoreboard and actions, no scrolling. A refresh never loses the match.', span: 'lg:col-span-2' },
   { Icon: Tv, title: 'Anyone can watch', text: 'Share a link. No account, no download.' },
   { Icon: Trophy, title: 'Brackets & standings', text: 'Round-robin or elimination, automatic or by hand.' },
   { Icon: BarChart3, title: 'Leaders & box scores', text: 'Points, rebounds, kills, aces, hitting %. Per tournament.' },
-  { Icon: Layers, title: 'One event, every sport', text: 'Group basketball, volleyball, badminton and pickleball tournaments under a single link.', span: 'lg:col-span-3' },
+  { Icon: Layers, title: 'One event, every sport', text: 'Group basketball, volleyball, badminton, pickleball and tennis tournaments under a single link.', span: 'lg:col-span-3' },
 ]
 
 const STEPS = [
@@ -123,6 +130,35 @@ function PickleballArt() {
       <circle cx="200" cy="276" r="5" className="text-emerald-300" fill="currentColor" />
       <circle cx="80" cy="95" r="14" className="text-emerald-400" strokeWidth="3" />
       <circle cx="320" cy="205" r="14" className="text-emerald-400" strokeWidth="3" />
+    </svg>
+  )
+}
+
+function TennisArt() {
+  // Court from above: net across the middle, singles sidelines, service lines and the centre service line.
+  return (
+    <svg viewBox="0 0 400 300" className="w-full h-full" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <rect x="20" y="30" width="360" height="240" rx="4" opacity=".5" />
+      <path d="M20 58 H380 M20 242 H380" opacity=".45" />
+      <path d="M110 58 V242 M290 58 V242" opacity=".45" />
+      <path d="M110 150 H290" opacity=".45" />
+      <path d="M200 14 V286" strokeWidth="3" className="text-emerald-300" />
+      <circle cx="200" cy="14" r="5" className="text-emerald-300" fill="currentColor" />
+      <circle cx="200" cy="286" r="5" className="text-emerald-300" fill="currentColor" />
+      <circle cx="60" cy="100" r="14" className="text-emerald-400" strokeWidth="3" />
+      <circle cx="340" cy="200" r="14" className="text-emerald-400" strokeWidth="3" />
+    </svg>
+  )
+}
+
+function RacketArt({ className = '' }) {
+  return (
+    <svg viewBox="0 0 120 150" className={className} fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+      <ellipse cx="48" cy="48" rx="30" ry="38" opacity=".8" />
+      <path d="M28 30 L68 66 M68 30 L28 66 M20 48 H76 M48 12 V84" opacity=".35" strokeWidth="1.5" />
+      <path d="M48 86 V132" strokeWidth="9" opacity=".7" />
+      <circle cx="96" cy="108" r="14" className="text-emerald-300" strokeWidth="3.5" />
+      <path d="M84 100 q12 8 24 0 M84 116 q12 -8 24 0" className="text-emerald-300" strokeWidth="2" opacity=".8" />
     </svg>
   )
 }
@@ -307,7 +343,7 @@ export default function Landing() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
                   </>
                 )}
-                <div className="absolute inset-0 p-3">{sport === 'basketball' ? <BasketballArt /> : sport === 'volleyball' ? <VolleyballArt /> : sport === 'badminton' ? <BadmintonArt /> : <PickleballArt />}</div>
+                <div className="absolute inset-0 p-3">{sport === 'basketball' ? <BasketballArt /> : sport === 'volleyball' ? <VolleyballArt /> : sport === 'badminton' ? <BadmintonArt /> : sport === 'tennis' ? <TennisArt /> : <PickleballArt />}</div>
 
                 <div className="absolute left-3 right-3 bottom-3 rounded-xl border border-white/10 bg-black/70 backdrop-blur p-3 text-white sylve-float">
                   <div className="flex items-center justify-between text-[10px] mb-1.5">
@@ -366,22 +402,23 @@ export default function Landing() {
           </div>
         )}
 
-        {/* Four sports, one platform */}
+        {/* Five sports, one platform */}
         <section className="max-w-7xl mx-auto px-5 sm:px-8 py-20">
-          <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">Four sports. One platform.</p>
+          <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">Five sports. One platform.</p>
           <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-10 max-w-3xl">
             Built for the way each game is actually scored
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-5">
             {[
               { key: 'basketball', Art: HoopArt, title: 'Basketball', points: ['Quarters, fouls and timeouts', 'Player of the Game and leaderboards', 'Live court with every substitution'] },
               { key: 'volleyball', Art: NetArt, title: 'Volleyball', points: ['Sets, rotations and a libero', 'Kills, aces, blocks and hitting %', 'Reopen a set, resume after a refresh'] },
               { key: 'badminton', Art: ShuttleArt, title: 'Badminton', points: ['Rally-point games, singles or doubles', 'Serve court and change of ends tracked for you', 'Live court on the watch page'] },
               { key: 'pickleball', Art: PaddleArt, title: 'Pickleball', points: ['Side-out scoring and the score call', 'Server 1 and 2 tracked, with the kitchen on court', 'Singles or doubles, best of 1, 3 or 5'] },
-            ].map(({ key, Art, title, points }) => (
+              { key: 'tennis', Art: RacketArt, title: 'Tennis', points: ['Games, sets and tiebreaks, deuce or no-ad', 'Serve, court side and change of ends tracked for you', 'Singles or doubles, with an optional match tiebreak'] },
+            ].map(({ key, Art, title, points }, i) => (
               <div
                 key={key}
-                className={`${glass} group relative overflow-hidden p-7 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/40 hover:bg-emerald-400/5`}
+                className={`${i < 3 ? 'lg:col-span-2' : 'lg:col-span-3'} ${glass} group relative overflow-hidden p-7 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/40 hover:bg-emerald-400/5`}
               >
                 <Art className="absolute right-4 top-4 w-36 h-36 text-white/20 transition duration-500 group-hover:text-emerald-300/60 group-hover:scale-110" />
                 <div className="w-12 h-12 rounded-xl border border-emerald-400/30 bg-emerald-400/10 text-emerald-300 flex items-center justify-center mb-4"><SportIcon sport={key} className="w-7 h-7" /></div>
@@ -402,7 +439,7 @@ export default function Landing() {
             {[
               [tournaments.length || '—', 'Tournaments'],
               [liveCount, 'Live right now'],
-              ['4', 'Sports ready'],
+              ['5', 'Sports ready'],
             ].map(([v, l]) => (
               <div key={l} className="px-4 py-6 text-center">
                 <p className="text-3xl sm:text-5xl font-display font-bold text-emerald-400 sylve-nums">{v}</p>

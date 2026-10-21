@@ -51,7 +51,7 @@ export default function Dashboard() {
           <span className="w-11 h-11 rounded-xl border border-emerald-400/30 bg-emerald-400/10 text-emerald-300 flex items-center justify-center shrink-0"><Layers className="w-5 h-5" /></span>
           <span className="flex-1 min-w-0">
             <span className="block font-medium">Events</span>
-            <span className="block text-sm text-white/60">Group basketball, volleyball, badminton and pickleball tournaments under one event and one public link</span>
+            <span className="block text-sm text-white/60">Group basketball, volleyball, badminton, pickleball and tennis tournaments under one event and one public link</span>
           </span>
           <ArrowRight className="w-5 h-5 text-emerald-400 transition group-hover:translate-x-1" />
         </Link>
