@@ -181,6 +181,14 @@ export default function PickleballWatchMatch() {
 
           <div className="border-t border-line mt-3 pt-3 text-center">
             {isCompleted && <p className="text-sm text-ink-dim font-medium">Final</p>}
+            {isCompleted && match.potgPlayerId && (() => {
+              const mvp = [...rosterA, ...rosterB].find((p) => p.id === match.potgPlayerId)
+              return mvp ? (
+                <p className="text-xs text-ink-dim mt-1">
+                  MVP: <span className="font-semibold text-accent">{mvp.name}</span>
+                </p>
+              ) : null
+            })()}
             {isForfeit && (
               <p className="text-sm text-live font-medium">
                 Forfeit -- {match.forfeitTeamId === match.teamAId ? teamA?.name : teamB?.name}

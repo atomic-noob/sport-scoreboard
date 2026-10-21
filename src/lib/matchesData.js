@@ -718,3 +718,15 @@ export async function getMatchBoxScore(matchId) {
     fgAttempted: row.fg_attempted,
   }))
 }
+
+/**
+ * Sets (or clears, with null) the most valuable player of a finished match.
+ * Stored in the same column basketball uses for player of the game.
+ */
+export async function setMatchMvp(matchId, playerId) {
+  const { error } = await supabase
+    .from('matches')
+    .update({ potg_player_id: playerId ?? null })
+    .eq('id', matchId)
+  if (error) throw error
+}
