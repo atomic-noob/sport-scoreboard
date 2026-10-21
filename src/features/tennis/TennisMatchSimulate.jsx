@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getTournament, getTeamsForTournament, getRosterForTeam } from '../../lib/adminData'
 import { getMatch, completeMatch, setMatchMvp } from '../../lib/matchesData'
 import WinnerBoard from '../tournament/WinnerBoard'
+import { entryKind } from '../../lib/entryMode'
 import { pushCloudMatchState, clearMatchState } from '../../lib/liveMatchState'
 import { saveMatchSet } from '../../lib/volleyballData'
 import { newMatch, applyPoint, pointLabels, situation, setAndMatchPoint, currentServer, serveCourt, serverIdx, setNumber } from '../../lib/tennisRules'
@@ -264,6 +265,7 @@ export default function TennisMatchSimulate() {
     return (
       <WinnerBoard
         sport="tennis"
+        kind={entryKind(tournament)}
         sportLabel="Tennis"
         unit="Set"
         tournamentName={tournament?.name}
