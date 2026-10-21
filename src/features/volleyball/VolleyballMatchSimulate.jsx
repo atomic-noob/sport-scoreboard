@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getTournament, getTeamsForTournament, getRosterForTeam } from '../../lib/adminData'
-import { getMatch, completeMatch } from '../../lib/matchesData'
+import { getMatch, completeMatch, setMatchMvp } from '../../lib/matchesData'
+import WinnerBoard from '../tournament/WinnerBoard'
 import { pushCloudMatchState, clearMatchState } from '../../lib/liveMatchState'
 import { TEAM_CLASS } from '../../lib/teamColors'
 import usePortrait from '../../hooks/usePortrait'
@@ -120,6 +121,8 @@ export default function VolleyballMatchSimulate() {
   const [lineupSig, setLineupSig] = useState('')
 
   const [matchComplete, setMatchComplete] = useState(false)
+  const [mvpId, setMvpId] = useState(null)
+  const [savingMvp, setSavingMvp] = useState(false)
   const [matchWinner, setMatchWinner] = useState(null)
   const [saving, setSaving] = useState(false)
 
@@ -625,32 +628,51 @@ export default function VolleyballMatchSimulate() {
   }
 
   if (matchComplete) {
+    async function pickMvp(playerId) {
+      const previous = mvpId
+      setMvpId(playerId)
+      setSavingMvp(true)
+      try {
+        await setMatchMvp(matchId, playerId)
+        setError('')
+      } catch (err) {
+        console.error('Failed to save MVP:', err)
+        setMvpId(previous)
+        setError(`Could not save the MVP: ${err.message ?? 'unknown error'}`)
+      }
+      setSavingMvp(false)
+    }
+    const whoPlayed = (roster, played) => {
+      const rows = roster.filter((p) => played.includes(p.id))
+      return rows.length > 0 ? rows : roster
+    }
     return (
-      <div className="max-w-3xl lg:max-w-5xl mx-auto px-4 sm:px-6 py-10">
-        <div className="text-center mb-6">
-          <p className="text-xs font-semibold text-accent uppercase mb-2">Match Complete</p>
-          <h1 className="text-2xl font-display font-bold tracking-wide text-ink mb-1">
-            {matchWinner === 'A' ? teamA?.name : teamB?.name} wins
-          </h1>
-          <p className="text-ink-dim mb-3">{setsWonA} - {setsWonB} in sets</p>
-          <div className="space-y-1">
-            {setHistory.map((s) => (
-              <p key={s.setNumber} className="text-sm text-ink-dim">
-                Set {s.setNumber}: {s.scoreA} - {s.scoreB}
-              </p>
-            ))}
-          </div>
-        </div>
-
-        {error && (
-          <div className="mb-4 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">{error}</div>
-        )}
-
+      <WinnerBoard
+        sport="volleyball"
+        kind="team"
+        sportLabel="Volleyball"
+        unit="Set"
+        tournamentName={tournament?.name}
+        winnerName={(matchWinner === 'A' ? teamA?.name : teamB?.name) ?? ''}
+        winnerSide={matchWinner}
+        nameA={teamA?.name ?? 'Team A'}
+        nameB={teamB?.name ?? 'Team B'}
+        gamesA={setsWonA}
+        gamesB={setsWonB}
+        history={setHistory.map((st) => ({ gameNumber: st.setNumber, scoreA: st.scoreA, scoreB: st.scoreB, winner: st.scoreA > st.scoreB ? 'A' : 'B' }))}
+        playersA={whoPlayed(rosterA, playedA)}
+        playersB={whoPlayed(rosterB, playedB)}
+        mvpId={mvpId}
+        onPickMvp={pickMvp}
+        savingMvp={savingMvp}
+        error={error}
+        onDone={handleDone}
+        doneLabel={saving ? 'Saving...' : 'Done'}
+        doneDisabled={saving}
+      >
         {unsavedEvents.length > 0 && (
-          <div className="mb-4 rounded-lg border border-warn bg-warn-soft p-3 text-center">
-            <p className="text-sm text-warn mb-2">
-              Player stats for this match haven't been saved yet.
-            </p>
+          <div className="mt-4 rounded-lg border border-warn bg-warn-soft p-3 text-center">
+            <p className="text-sm text-warn mb-2">Player stats for this match haven't been saved yet.</p>
             <button
               onClick={retrySaveStats}
               disabled={saving}
@@ -660,28 +682,17 @@ export default function VolleyballMatchSimulate() {
             </button>
           </div>
         )}
-
-        <div className="space-y-4 mb-8">
+        <div className="mt-6 space-y-4 text-left">
           <BoxScore team={teamA} roster={rosterA} lineup={playedA} events={matchEvents} liberoId={liberoA} />
           <BoxScore team={teamB} roster={rosterB} lineup={playedB} events={matchEvents} liberoId={liberoB} />
         </div>
-
-        <div className="text-center flex items-center justify-center gap-3 print:hidden">
-          <button
-            onClick={() => window.print()}
-            className="rounded-lg border border-line-strong text-ink-dim hover:bg-panel-alt font-medium px-6 py-3 transition"
-          >
-            Print summary
-          </button>
-          <button
-            onClick={handleDone}
-            disabled={saving}
-            className="rounded-lg bg-accent hover:bg-accent-strong text-on-accent font-medium px-6 py-3 transition disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Done'}
-          </button>
-        </div>
-      </div>
+        <button
+          onClick={() => window.print()}
+          className="mt-4 w-full rounded-lg border border-line-strong text-ink-dim hover:bg-panel-alt font-medium px-6 py-3 transition print:hidden"
+        >
+          Print summary
+        </button>
+      </WinnerBoard>
     )
   }
 

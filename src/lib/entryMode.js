@@ -33,3 +33,10 @@ export function sortByEntryName(roster, entryName) {
 export function entryNameFromPlayers(names) {
   return names.filter(Boolean).join(' / ')
 }
+
+/** Which icon a finished match shows for its winner: one man (solo), two (fixed pair) or a group (team). */
+export function entryKind(tournament) {
+  const mode = getEntryMode(tournament)
+  if (!mode.players) return 'team'
+  return mode.perSide === 2 ? 'pair' : 'solo'
+}
