@@ -324,17 +324,16 @@ export default function Landing() {
             {s.word}
           </div>
 
-          <div className="relative grid lg:grid-cols-[1.05fr_1fr] gap-10 items-center">
-            <div>
-              {/* Sport toggle */}
-              <div className="inline-flex flex-wrap max-w-full rounded-3xl border border-white/15 bg-white/5 p-1 mb-6" role="tablist" aria-label="Sport">
+          <div className="relative mb-8">
+          {/* Sport toggle: one row across the top of the hero */}
+              <div className="flex w-max max-w-full gap-0.5 overflow-x-auto rounded-full border border-white/15 bg-white/5 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Sport">
                 {Object.entries(SPORTS).map(([key, v]) => (
                   <button
                     key={key}
                     role="tab"
                     aria-selected={sport === key}
                     onClick={() => setSport(key)}
-                    className={`rounded-full px-3 sm:px-4 py-1.5 text-sm font-medium transition ${
+                    className={`shrink-0 whitespace-nowrap rounded-full px-3 sm:px-4 py-1.5 text-sm font-medium transition ${
                       sport === key ? 'bg-emerald-500 text-black' : 'text-white/70 hover:text-white'
                     }`}
                   >
@@ -342,7 +341,10 @@ export default function Landing() {
                   </button>
                 ))}
               </div>
+          </div>
 
+          <div className="relative grid lg:grid-cols-[1.05fr_1fr] gap-10 items-center">
+            <div>
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold tracking-wide leading-[1.02] mb-5">
                 Every point.
                 <br />
