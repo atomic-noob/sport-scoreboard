@@ -59,7 +59,7 @@ const BENTO = [
   { Icon: Tv, title: 'Anyone can watch', text: 'Share a link. No account, no download.' },
   { Icon: Trophy, title: 'Brackets & standings', text: 'Round-robin or elimination, automatic or by hand.' },
   { Icon: BarChart3, title: 'Leaders & box scores', text: 'Points, rebounds, kills, aces, hitting %. Per tournament.' },
-  { Icon: Layers, title: 'One event, every sport', text: 'Group basketball, volleyball, badminton, pickleball, tennis and table tennis tournaments under a single link.', span: 'lg:col-span-3' },
+  { Icon: Layers, title: 'One event, every sport', text: 'Group basketball, 3x3, volleyball, badminton, pickleball, tennis and table tennis tournaments under a single link.', span: 'lg:col-span-3' },
 ]
 
 const STEPS = [

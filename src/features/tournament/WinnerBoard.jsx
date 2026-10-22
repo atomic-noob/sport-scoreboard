@@ -6,7 +6,7 @@
  * tournament title and the score underneath. The scorer picks the MVP from the
  * players who played; the pick saves right away and can be changed or cleared.
  */
-const WORDS = { basketball: 'Hoops', volleyball: 'Spikes', badminton: 'Smash', pickleball: 'Dink', tennis: 'Ace', tabletennis: 'Spin' }
+const WORDS = { basketball: 'Hoops', basketball3x3: 'Three', volleyball: 'Spikes', badminton: 'Smash', pickleball: 'Dink', tennis: 'Ace', tabletennis: 'Spin' }
 const outline = { WebkitTextStroke: '1.5px rgba(52,211,153,0.35)', color: 'transparent' }
 
 function ManOutline({ className = '' }) {
