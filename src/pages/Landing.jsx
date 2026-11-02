@@ -436,15 +436,16 @@ export default function Landing() {
           </div>
         )}
 
-        {/* Six sports, one platform */}
+        {/* Seven sports, one platform */}
         <section className="max-w-7xl mx-auto px-5 sm:px-8 py-20">
-          <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">Six sports. One platform.</p>
+          <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">Seven sports. One platform.</p>
           <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-10 max-w-3xl">
             Built for the way each game is actually scored
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-5">
+          <div className="grid md:grid-cols-2 lg:grid-cols-12 gap-5">
             {[
               { key: 'basketball', Art: HoopArt, title: 'Basketball', points: ['Quarters, fouls and timeouts', 'Player of the Game and leaderboards', 'Live court with every substitution'] },
+              { key: 'basketball3x3', Art: HoopArt, title: '3x3 Basketball', points: ['10 minutes or first to 21, shots worth 1 or 2', 'Game clock and 12-second shot clock', 'Team fouls with free throws, overtime to 2'] },
               { key: 'volleyball', Art: NetArt, title: 'Volleyball', points: ['Sets, rotations and a libero', 'Kills, aces, blocks and hitting %', 'Reopen a set, resume after a refresh'] },
               { key: 'badminton', Art: ShuttleArt, title: 'Badminton', points: ['Rally-point games, singles or doubles', 'Serve court and change of ends tracked for you', 'Live court on the watch page'] },
               { key: 'pickleball', Art: PaddleArt, title: 'Pickleball', points: ['Side-out scoring and the score call', 'Server 1 and 2 tracked, with the kitchen on court', 'Singles or doubles, best of 1, 3 or 5'] },
@@ -453,7 +454,7 @@ export default function Landing() {
             ].map(({ key, Art, title, points }, i) => (
               <div
                 key={key}
-                className={`lg:col-span-2 ${glass} group relative overflow-hidden p-7 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/40 hover:bg-emerald-400/5`}
+                className={`${i < 4 ? 'lg:col-span-3' : 'lg:col-span-4'} ${glass} group relative overflow-hidden p-7 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/40 hover:bg-emerald-400/5`}
               >
                 <Art className="absolute right-4 top-4 w-36 h-36 text-white/20 transition duration-500 group-hover:text-emerald-300/60 group-hover:scale-110" />
                 <div className="w-12 h-12 rounded-xl border border-emerald-400/30 bg-emerald-400/10 text-emerald-300 flex items-center justify-center mb-4"><SportIcon sport={key} className="w-7 h-7" /></div>
@@ -474,7 +475,7 @@ export default function Landing() {
             {[
               [tournaments.length || '—', 'Tournaments'],
               [liveCount, 'Live right now'],
-              ['6', 'Sports ready'],
+              ['7', 'Sports ready'],
             ].map(([v, l]) => (
               <div key={l} className="px-4 py-6 text-center">
                 <p className="text-3xl sm:text-5xl font-display font-bold text-emerald-400 sylve-nums">{v}</p>
