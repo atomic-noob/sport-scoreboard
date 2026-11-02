@@ -4,6 +4,8 @@ import { getTournament, getTeamsForTournament, getEvent } from '../../lib/adminD
 import { getMatchesForTournament, computeStandings } from '../../lib/matchesData'
 import { getSportConfig } from '../../lib/sportConfig'
 import SportIcon from '../../components/SportIcon'
+import { getEntryMode, entryKind } from '../../lib/entryMode'
+import LeaderboardStandings from '../tournament/LeaderboardStandings'
 import { PlayerLeaderboards, TeamLeaderboards } from '../tournament/LeaderboardPanels'
 
 export default function WatchTournament() {
@@ -169,6 +171,8 @@ export default function WatchTournament() {
           <div className="overflow-x-auto">
             {standings.length === 0 ? (
               <EmptyState text="No teams yet." />
+            ) : getEntryMode(tournament).players ? (
+              <LeaderboardStandings standings={standings} kind={entryKind(tournament)} labels={sportConfig.standingLabels} />
             ) : (
               <table className="w-full text-sm">
                 <thead>

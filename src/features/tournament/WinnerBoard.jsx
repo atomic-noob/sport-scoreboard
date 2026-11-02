@@ -45,7 +45,7 @@ function TeamOutline({ className = '' }) {
 }
 
 /** One man for a solo entry, two for a fixed pair, a small group for a team. */
-function KindIcon({ kind, className }) {
+export function KindIcon({ kind, className }) {
   if (kind === 'pair') return <PairOutline className={className} />
   if (kind === 'team') return <TeamOutline className={className} />
   return <ManOutline className={className} />
