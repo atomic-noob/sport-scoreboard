@@ -8,6 +8,8 @@ import {
   generateEliminationBracket,
   forfeitMatch,
 } from '../../lib/matchesData'
+import { getEntryMode, entryKind } from '../../lib/entryMode'
+import LeaderboardStandings from './LeaderboardStandings'
 
 export default function TournamentSchedule() {
   const { tournamentId, sport: sportParam } = useParams()
@@ -166,6 +168,12 @@ export default function TournamentSchedule() {
         <div>
           {standings.length === 0 ? (
             <EmptyState text="No teams yet." />
+          ) : getEntryMode(tournament).players ? (
+            <LeaderboardStandings
+              standings={standings}
+              kind={entryKind(tournament)}
+              labels={{ for: forLabel, against: againstLabel }}
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
