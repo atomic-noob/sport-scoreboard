@@ -5,6 +5,7 @@ import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import SyncStatusBadge from './components/SyncStatusBadge'
+import SaveQueueBanner from './components/SaveQueueBanner'
 import ProtectedRoute from './components/ProtectedRoute'
 import CookieBanner from './components/CookieBanner'
 import Terms from './pages/Terms'
@@ -200,6 +201,7 @@ export default function App() {
             <Route path="/live/:code" element={<ShareRedirect />} />
           </Routes>
           </Layout>
+          <SaveQueueBanner />
           <CookieBanner />
         </div>
       </AuthProvider>

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getTournament, getTeamsForTournament, getRosterForTeam } from '../../lib/adminData'
-import { getMatch, completeMatch, setMatchMvp } from '../../lib/matchesData'
+import { getMatch, setMatchMvp } from '../../lib/matchesData'
+import { saveSetSafe, completeMatchSafe } from '../../lib/saveQueue'
 import WinnerBoard from '../tournament/WinnerBoard'
 import { entryKind } from '../../lib/entryMode'
-import { pushCloudMatchState, clearMatchState } from '../../lib/liveMatchState'
-import { saveMatchSet } from '../../lib/volleyballData'
+import { pushCloudMatchState } from '../../lib/liveMatchState'
 import { newGameState, applyServerPoint, applyFault, isGameOver, gamePointFor, reachedMidpoint, whoIsWho, scoreCall } from '../../lib/pickleballRules'
 import { TEAM_CLASS } from '../../lib/teamColors'
 import usePortrait from '../../hooks/usePortrait'
@@ -221,11 +221,7 @@ export default function PickleballMatchSimulate() {
     const winner = scoreA > scoreB ? 'A' : 'B'
     const winnerTeamId = winner === 'A' ? teamA?.id : teamB?.id
     setHistory((prev) => [...prev, { gameNumber: currentGame, scoreA, scoreB, winner }])
-    try {
-      await saveMatchSet(matchId, currentGame, scoreA, scoreB, winnerTeamId)
-    } catch (err) {
-      console.error('Could not save game result (will still continue locally):', err)
-    }
+    await saveSetSafe(matchId, currentGame, scoreA, scoreB, winnerTeamId) // keeps the result and retries by itself if the connection is down
 
     const newA = winner === 'A' ? gamesWonA + 1 : gamesWonA
     const newB = winner === 'B' ? gamesWonB + 1 : gamesWonB
@@ -236,9 +232,8 @@ export default function PickleballMatchSimulate() {
       setMatchComplete(true)
       setMatchWinner(newA > newB ? 'A' : 'B')
       try {
-        await completeMatch(matchId, newA, newB)
-        await clearMatchState(matchId) // spectators now read the saved result
-        dropLive(matchId)
+        const res = await completeMatchSafe(matchId, newA, newB) // queued and retried if offline
+        if (!res.queued) dropLive(matchId)
       } catch (err) {
         console.error('Failed to save final match result:', err)
         setError(`Could not save the final result: ${err.message ?? 'unknown error'}`)
