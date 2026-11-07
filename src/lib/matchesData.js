@@ -558,6 +558,8 @@ export async function completeMatch(matchId, teamAScore, teamBScore, options = {
   const match = await getMatch(matchId)
   const winnerTeamId = teamAScore > teamBScore ? match.teamAId : match.teamBId
 
+  // Only touch the MVP when one is given: this call can be repeated after a lost
+  // connection, and it must not wipe an MVP the organizer picked in between.
   const { error } = await supabase
     .from('matches')
     .update({
@@ -565,12 +567,14 @@ export async function completeMatch(matchId, teamAScore, teamBScore, options = {
       team_b_score: teamBScore,
       winner_team_id: winnerTeamId,
       status: 'completed',
-      potg_player_id: potgPlayerId,
+      ...(potgPlayerId ? { potg_player_id: potgPlayerId } : {}),
     })
     .eq('id', matchId)
   if (error) throw error
 
   if (playerStats.length > 0) {
+    // A repeated call replaces the stats instead of adding them twice.
+    await supabase.from('match_player_stats').delete().eq('match_id', matchId)
     const rows = playerStats.map((p) => ({
       match_id: matchId,
       player_id: p.playerId,

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getTournament, getTeamsForTournament, getRosterForTeam } from '../../lib/adminData'
-import { getMatch, completeMatch, setMatchMvp } from '../../lib/matchesData'
+import { getMatch, setMatchMvp } from '../../lib/matchesData'
+import { completeMatchSafe } from '../../lib/saveQueue'
 import WinnerBoard from '../tournament/WinnerBoard'
-import { pushCloudMatchState, clearMatchState } from '../../lib/liveMatchState'
+import { pushCloudMatchState } from '../../lib/liveMatchState'
 import { SHOT_CLOCK_MS, POINTS, OT_TARGET, foulPenalty, formatClock, formatShot, gameStatus, suggestMvp } from '../../lib/basketball3x3Rules'
 import { TEAM_CLASS } from '../../lib/teamColors'
 
@@ -363,10 +364,9 @@ export default function Basketball3x3MatchSimulate() {
     })
     try {
       const mvp = suggestMvp(stats, played)
-      await completeMatch(matchId, scoreA, scoreB, { playerStats, potgPlayerId: mvp })
+      const res = await completeMatchSafe(matchId, scoreA, scoreB, { playerStats, potgPlayerId: mvp })
       setMvpId(mvp)
-      await clearMatchState(matchId)
-      dropLive(matchId)
+      if (!res.queued) dropLive(matchId)
       setMatchComplete(true)
     } catch (err) {
       console.error('Failed to save final result:', err)

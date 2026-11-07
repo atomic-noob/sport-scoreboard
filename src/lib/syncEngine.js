@@ -1,5 +1,6 @@
 import { db } from './db'
 import { supabase } from './supabaseClient'
+import { flushSaveQueue } from './saveQueue'
 
 let syncing = false
 let listenersAttached = false
@@ -21,7 +22,9 @@ export function initSyncEngine() {
 
 /** Ask the sync engine to attempt a push. Safe to call often -- it's a no-op if already syncing or offline. */
 export function requestSync() {
-  if (!navigator.onLine || syncing) return
+  if (!navigator.onLine) return
+  flushSaveQueue() // finished sets and results that were waiting for a connection
+  if (syncing) return
   syncPendingEvents()
 }
 

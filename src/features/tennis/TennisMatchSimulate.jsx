@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getTournament, getTeamsForTournament, getRosterForTeam } from '../../lib/adminData'
-import { getMatch, completeMatch, setMatchMvp } from '../../lib/matchesData'
+import { getMatch, setMatchMvp } from '../../lib/matchesData'
+import { saveSetSafe, completeMatchSafe } from '../../lib/saveQueue'
 import WinnerBoard from '../tournament/WinnerBoard'
 import { entryKind } from '../../lib/entryMode'
-import { pushCloudMatchState, clearMatchState } from '../../lib/liveMatchState'
-import { saveMatchSet } from '../../lib/volleyballData'
+import { pushCloudMatchState } from '../../lib/liveMatchState'
 import { newMatch, applyPoint, pointLabels, situation, setAndMatchPoint, currentServer, serveCourt, serverIdx, setNumber } from '../../lib/tennisRules'
 import { TEAM_CLASS } from '../../lib/teamColors'
 import usePortrait from '../../hooks/usePortrait'
@@ -202,11 +202,7 @@ export default function TennisMatchSimulate() {
     const set = m.sets[m.sets.length - 1]
     const number = m.sets.length
     const winnerTeamId = set.a > set.b ? teamA?.id : teamB?.id
-    try {
-      await saveMatchSet(matchId, number, set.a, set.b, winnerTeamId)
-    } catch (err) {
-      console.error('Could not save set result (will still continue locally):', err)
-    }
+    await saveSetSafe(matchId, number, set.a, set.b, winnerTeamId) // keeps the result and retries by itself if the connection is down
     setSavedSets(number)
     setPendingSet(false)
     setUndoStack([])
@@ -214,9 +210,8 @@ export default function TennisMatchSimulate() {
     if (m.over) {
       setMatchComplete(true)
       try {
-        await completeMatch(matchId, m.winsA, m.winsB)
-        await clearMatchState(matchId) // spectators now read the saved result
-        dropLive(matchId)
+        const res = await completeMatchSafe(matchId, m.winsA, m.winsB) // queued and retried if offline
+        if (!res.queued) dropLive(matchId)
       } catch (err) {
         console.error('Failed to save final match result:', err)
         setError(`Could not save the final result: ${err.message ?? 'unknown error'}`)

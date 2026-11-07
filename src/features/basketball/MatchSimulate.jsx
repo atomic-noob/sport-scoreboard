@@ -1,14 +1,14 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getTournament, getTeamsForTournament, getRosterForTeam } from '../../lib/adminData'
-import { getMatch, completeMatch, saveActionLog } from '../../lib/matchesData'
+import { getMatch } from '../../lib/matchesData'
+import { completeMatchSafe, saveActionLogSafe } from '../../lib/saveQueue'
 import WinnerBoard from '../tournament/WinnerBoard'
 import {
   saveLocalMatchState,
   getLocalMatchState,
   pushCloudMatchState,
   getCloudMatchState,
-  clearMatchState,
 } from '../../lib/liveMatchState'
 import { TEAM_CLASS } from '../../lib/teamColors'
 import usePortrait from '../../hooks/usePortrait'
@@ -495,9 +495,9 @@ export default function MatchSimulate() {
           technicalFouls: s.technicalFouls, fgMade: s.fgMade, fgAttempted: s.fgAttempted,
         }
       })
-      await completeMatch(matchId, scoreA, scoreB, { playerStats: playerStatsPayload, potgPlayerId })
-      await saveActionLog(matchId, actionLog)
-      await clearMatchState(matchId)
+      // If the connection is down these are kept on this phone and sent automatically later.
+      await completeMatchSafe(matchId, scoreA, scoreB, { playerStats: playerStatsPayload, potgPlayerId })
+      await saveActionLogSafe(matchId, actionLog)
       setShowPotgStep(false)
       setSaving(false)
       setFinished(true)
