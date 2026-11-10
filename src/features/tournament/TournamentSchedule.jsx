@@ -11,7 +11,7 @@ import {
 import { getEntryMode, entryKind } from '../../lib/entryMode'
 import LeaderboardStandings from './LeaderboardStandings'
 
-export default function TournamentSchedule() {
+export default function TournamentSchedule({ embedded = false }) {
   const { tournamentId, sport: sportParam } = useParams()
   const [tournament, setTournament] = useState(null)
   const [teams, setTeams] = useState([])
@@ -125,19 +125,23 @@ export default function TournamentSchedule() {
   const canBuildManually = true
 
   return (
-    <div className="max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 sm:px-6 py-10">
-      <Link to={`/${sport}/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
-        ← Back to teams
-      </Link>
-      <div className="flex items-center justify-between mt-1 mb-4">
-        <h1 className="text-2xl font-display font-bold tracking-wide text-ink">{tournament.name}</h1>
-        <Link
-          to={`/${sport}/${tournamentId}/leaderboard`}
-          className="text-sm font-medium text-ink-faint hover:text-accent"
-        >
-          <span className="inline-flex items-center gap-1.5"><Trophy className="w-4 h-4" /> Leaderboard</span>
-        </Link>
-      </div>
+    <div className={embedded ? '' : 'max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 sm:px-6 py-10'}>
+      {!embedded && (
+        <>
+          <Link to={`/${sport}/${tournamentId}`} className="text-sm text-ink-faint hover:text-ink-dim">
+            ← Back to teams
+          </Link>
+          <div className="flex items-center justify-between mt-1 mb-4">
+            <h1 className="text-2xl font-display font-bold tracking-wide text-ink">{tournament.name}</h1>
+            <Link
+              to={`/${sport}/${tournamentId}/leaderboard`}
+              className="text-sm font-medium text-ink-faint hover:text-accent"
+            >
+              <span className="inline-flex items-center gap-1.5"><Trophy className="w-4 h-4" /> Leaderboard</span>
+            </Link>
+          </div>
+        </>
+      )}
 
       {error && (
         <div className="mb-4 rounded-lg border border-live bg-live-soft px-3 py-2 text-sm text-live">
