@@ -12,6 +12,7 @@ import {
   findPlayerTeamInTournament,
   transferPlayerToTeam,
   renameTeam,
+  uploadPlayerPhoto,
 } from '../../lib/adminData'
 import { getEntryMode, entryNameFromPlayers } from '../../lib/entryMode'
 
@@ -169,6 +170,18 @@ export default function TeamRoster() {
     }
   }
 
+  async function handlePhoto(player, file) {
+    if (!file) return
+    setError('')
+    try {
+      await uploadPlayerPhoto(player.id, file)
+      await refreshRoster()
+    } catch (err) {
+      console.error('Failed to upload photo:', err)
+      setError('Could not upload the photo. Check your connection, and that the player-photos storage bucket is set up.')
+    }
+  }
+
   async function handleJerseyEdit(rosterEntryId, value) {
     try {
       await updateJerseyNumber(rosterEntryId, value)
@@ -310,6 +323,10 @@ export default function TeamRoster() {
                   placeholder="#"
                   className="w-10 rounded-md border border-line-strong px-1 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-accent"
                 />
+                <label className="relative h-9 w-9 shrink-0 cursor-pointer overflow-hidden rounded-full border border-line-strong bg-panel-alt text-ink-faint flex items-center justify-center text-[10px] hover:border-accent" title="Add or change photo">
+                  {player.photoUrl ? <img src={player.photoUrl} alt="" className="h-full w-full object-cover" /> : 'Photo'}
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => { handlePhoto(player, e.target.files?.[0]); e.target.value = '' }} />
+                </label>
                 <span className="font-medium text-ink">
                   {player.name}
                   {player.playerCode && (

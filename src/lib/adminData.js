@@ -291,6 +291,32 @@ export async function getRosterForTeam(teamId) {
   }))
 }
 
+// Shrinks a picked image to at most 400px on its long side (JPEG) so photos stay small.
+async function shrinkImage(file, max = 400) {
+  const bitmap = await createImageBitmap(file)
+  const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height))
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.round(bitmap.width * scale)
+  canvas.height = Math.round(bitmap.height * scale)
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not read that image'))), 'image/jpeg', 0.85)
+  )
+}
+
+/** Uploads a player's photo to the public 'player-photos' bucket and saves its link on the player. */
+export async function uploadPlayerPhoto(playerId, file) {
+  const blob = await shrinkImage(file)
+  const path = `${playerId}.jpg`
+  const { error: upErr } = await supabase.storage.from('player-photos').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
+  if (upErr) throw upErr
+  const { data } = supabase.storage.from('player-photos').getPublicUrl(path)
+  const url = `${data.publicUrl}?v=${Date.now()}`
+  const { error } = await supabase.from('players').update({ photo_url: url }).eq('id', playerId)
+  if (error) throw error
+  return url
+}
+
 export async function removeFromRoster(rosterEntryId) {
   const { error } = await supabase.from('team_rosters').delete().eq('id', rosterEntryId)
   if (error) throw error

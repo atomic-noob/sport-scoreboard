@@ -133,7 +133,11 @@ export default function WinnerBoard({
             }`}
             style={{ boxShadow: mvp ? '0 0 40px rgba(52,211,153,0.25)' : 'none' }}
           >
-            <ManOutline className="h-28 w-28 sm:h-32 sm:w-32" />
+            {mvp?.photoUrl ? (
+              <img src={mvp.photoUrl} alt={mvp.name} className="h-full w-full rounded-full object-cover" />
+            ) : (
+              <ManOutline className="h-28 w-28 sm:h-32 sm:w-32" />
+            )}
             <span className="absolute -bottom-3 rounded-full bg-accent px-3 py-0.5 text-xs font-bold tracking-widest text-on-accent">MVP</span>
           </div>
           <h1 className="mt-7 text-3xl sm:text-4xl font-display font-bold tracking-wide text-ink">
