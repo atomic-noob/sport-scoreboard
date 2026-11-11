@@ -524,6 +524,25 @@ export default function MatchSimulate() {
 
   if (finished) {
     const winnerSide = scoreA > scoreB ? 'A' : 'B'
+    // Points per quarter (and overtime), from each player's byQuarter tally.
+    const idsA = new Set([...lineupA, ...benchA].map((p) => p.id))
+    const quarterPoints = {}
+    for (const [pid, st] of Object.entries(playerStats)) {
+      for (const [q, pts] of Object.entries(st?.byQuarter ?? {})) {
+        quarterPoints[q] ??= { a: 0, b: 0 }
+        quarterPoints[q][idsA.has(pid) || idsA.has(Number(pid)) ? 'a' : 'b'] += pts
+      }
+    }
+    const quarterHistory = Object.keys(quarterPoints)
+      .map(Number)
+      .sort((x, y) => x - y)
+      .map((q) => ({
+        gameNumber: q,
+        label: quarterLabel(q),
+        scoreA: quarterPoints[q].a,
+        scoreB: quarterPoints[q].b,
+        winner: quarterPoints[q].a === quarterPoints[q].b ? null : quarterPoints[q].a > quarterPoints[q].b ? 'A' : 'B',
+      }))
     return (
       <WinnerBoard
         sport="basketball"
@@ -536,7 +555,7 @@ export default function MatchSimulate() {
         nameB={teamB?.name ?? 'Team B'}
         gamesA={scoreA}
         gamesB={scoreB}
-        history={[]}
+        history={quarterHistory}
         playersA={allPlayersWithTeam().filter((x) => x.teamId === teamA?.id).map((x) => x.player)}
         playersB={allPlayersWithTeam().filter((x) => x.teamId === teamB?.id).map((x) => x.player)}
         mvpId={potgPlayerId}

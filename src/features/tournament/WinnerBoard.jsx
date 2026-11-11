@@ -161,7 +161,7 @@ export default function WinnerBoard({
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               {history.map((g) => (
                 <span key={g.gameNumber} className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink-dim tabular-nums">
-                  <span className="text-ink-faint mr-1.5">{unit} {g.gameNumber}</span>
+                  <span className="text-ink-faint mr-1.5">{g.label ?? `${unit} ${g.gameNumber}`}</span>
                   <span className={g.winner === 'A' ? 'font-bold text-ink' : ''}>{g.scoreA}</span>
                   <span className="mx-1 text-ink-faint">-</span>
                   <span className={g.winner === 'B' ? 'font-bold text-ink' : ''}>{g.scoreB}</span>

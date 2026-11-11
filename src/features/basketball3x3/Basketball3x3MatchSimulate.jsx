@@ -61,6 +61,7 @@ export default function Basketball3x3MatchSimulate() {
   const [foulsB, setFoulsB] = useState(0)
   const [timeoutsA, setTimeoutsA] = useState(1)
   const [timeoutsB, setTimeoutsB] = useState(1)
+  const [ftOwed, setFtOwed] = useState(null) // { side, n }: free throws the shooting side still has to take
   const [stats, setStats] = useState({}) // playerId -> { points, ones, twos, fts, fouls }
   const [onCourtA, setOnCourtA] = useState([])
   const [onCourtB, setOnCourtB] = useState([])
@@ -125,6 +126,7 @@ export default function Basketball3x3MatchSimulate() {
           setFoulsB(live.foulsB)
           setTimeoutsA(live.timeoutsA)
           setTimeoutsB(live.timeoutsB)
+          setFtOwed(live.ftOwed ?? null)
           setStats(live.stats ?? {})
           setOnCourtA(live.onCourtA ?? [])
           setOnCourtB(live.onCourtB ?? [])
@@ -193,10 +195,10 @@ export default function Basketball3x3MatchSimulate() {
   useEffect(() => {
     if (!hydrated || !match || matchComplete) return
     writeLive(matchId, {
-      sig: lineupSig, scoreA, scoreB, foulsA, foulsB, timeoutsA, timeoutsB, stats, onCourtA, onCourtB, played,
+      sig: lineupSig, scoreA, scoreB, foulsA, foulsB, timeoutsA, timeoutsB, ftOwed, stats, onCourtA, onCourtB, played,
       inOT, otStartA, otStartB, lastPlay, undoStack, clockMs, shotMs, startedAt,
     })
-  }, [hydrated, match, matchComplete, matchId, lineupSig, scoreA, scoreB, foulsA, foulsB, timeoutsA, timeoutsB, stats, onCourtA, onCourtB, played, inOT, otStartA, otStartB, lastPlay, undoStack, clockMs, shotMs, startedAt])
+  }, [hydrated, match, matchComplete, matchId, lineupSig, scoreA, scoreB, foulsA, foulsB, timeoutsA, timeoutsB, ftOwed, stats, onCourtA, onCourtB, played, inOT, otStartA, otStartB, lastPlay, undoStack, clockMs, shotMs, startedAt])
 
   // ---------- Live updates for the public watch page ----------
   function pushSnapshot() {
@@ -270,7 +272,7 @@ export default function Basketball3x3MatchSimulate() {
   function pushUndo() {
     setUndoStack((s) => [
       ...s.slice(-30),
-      { scoreA, scoreB, foulsA, foulsB, timeoutsA, timeoutsB, stats, onCourtA, onCourtB, played, inOT, otStartA, otStartB, lastPlay },
+      { scoreA, scoreB, foulsA, foulsB, timeoutsA, timeoutsB, ftOwed, stats, onCourtA, onCourtB, played, inOT, otStartA, otStartB, lastPlay },
     ])
   }
   function undo() {
@@ -278,7 +280,7 @@ export default function Basketball3x3MatchSimulate() {
     const p = undoStack[undoStack.length - 1]
     setUndoStack((s) => s.slice(0, -1))
     setScoreA(p.scoreA); setScoreB(p.scoreB); setFoulsA(p.foulsA); setFoulsB(p.foulsB)
-    setTimeoutsA(p.timeoutsA); setTimeoutsB(p.timeoutsB); setStats(p.stats)
+    setTimeoutsA(p.timeoutsA); setTimeoutsB(p.timeoutsB); setFtOwed(p.ftOwed ?? null); setStats(p.stats)
     setOnCourtA(p.onCourtA); setOnCourtB(p.onCourtB); setPlayed(p.played)
     setInOT(p.inOT); setOtStartA(p.otStartA); setOtStartB(p.otStartB); setLastPlay(p.lastPlay)
     setSelected(null)
@@ -309,18 +311,30 @@ export default function Basketball3x3MatchSimulate() {
     })
     const label = kind === 'two' ? '2-point basket' : kind === 'ft' ? 'free throw' : '1-point basket'
     setLastPlay(`${byId.get(playerId)?.name ?? 'Player'} ${label}`)
+    if (kind === 'ft' && ftOwed && ftOwed.side === side) {
+      setFtOwed(ftOwed.n > 1 ? { side, n: ftOwed.n - 1 } : null)
+    }
     if (kind !== 'ft') resetShot()
     setSelected(null)
   }
 
-  function addFoul() {
+  // shooting: 0 = ordinary foul, 1 = fouled while shooting inside (1 free throw),
+  // 2 = fouled while shooting from the arc (2 free throws). Shooting fouls always
+  // give free throws. An ordinary foul gives 2 once the team has 7 or more fouls.
+  function addFoul(shooting = 0) {
     if (!selected || ended || busy) return
     const { side, playerId } = selected
     pushUndo()
+    const teamFouls = (side === 'A' ? foulsA : foulsB) + 1
     if (side === 'A') setFoulsA((v) => v + 1)
     else setFoulsB((v) => v + 1)
     bump(playerId, { fouls: 1 })
-    setLastPlay(`Foul on ${byId.get(playerId)?.name ?? 'player'}`)
+    const shooter = side === 'A' ? 'B' : 'A'
+    const owed = shooting > 0 ? shooting : teamFouls >= 7 ? 2 : 0
+    setFtOwed(owed > 0 ? { side: shooter, n: owed } : null)
+    const who = byId.get(playerId)?.name ?? 'player'
+    const extra = owed > 0 ? ` (${owed} free throw${owed > 1 ? 's' : ''} for ${nameOf(shooter)}${shooting === 0 && teamFouls >= 10 ? ' + ball' : ''})` : ''
+    setLastPlay(`${shooting > 0 ? 'Shooting foul' : 'Foul'} on ${who}${extra}`)
     stopClock()
     setSelected(null)
   }
@@ -613,8 +627,21 @@ export default function Basketball3x3MatchSimulate() {
         <button onClick={() => addPoints('one')} disabled={!selected || ended || needsOT} className="rounded-lg bg-accent text-on-accent font-bold py-3 disabled:opacity-40">+1<span className="block text-[10px] font-medium">inside</span></button>
         <button onClick={() => addPoints('two')} disabled={!selected || ended || needsOT} className="rounded-lg bg-accent text-on-accent font-bold py-3 disabled:opacity-40">+2<span className="block text-[10px] font-medium">arc</span></button>
         <button onClick={() => addPoints('ft')} disabled={!selected || ended || needsOT} className="rounded-lg border-2 border-accent text-accent font-bold py-3 disabled:opacity-40">FT<span className="block text-[10px] font-medium">+1</span></button>
-        <button onClick={addFoul} disabled={!selected || ended} className="rounded-lg border-2 border-live text-live font-bold py-3 disabled:opacity-40">Foul</button>
+        <button onClick={() => addFoul(0)} disabled={!selected || ended} className="rounded-lg border-2 border-live text-live font-bold py-3 disabled:opacity-40">Foul</button>
       </div>
+      <p className="text-[11px] text-ink-faint text-center mb-1.5">Foul on the shooter (select the player who fouled)</p>
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <button onClick={() => addFoul(1)} disabled={!selected || ended} className="rounded-lg border border-live text-live text-sm font-medium py-2.5 disabled:opacity-40">Shooting foul inside<span className="block text-[10px]">1 free throw</span></button>
+        <button onClick={() => addFoul(2)} disabled={!selected || ended} className="rounded-lg border border-live text-live text-sm font-medium py-2.5 disabled:opacity-40">Shooting foul from arc<span className="block text-[10px]">2 free throws</span></button>
+      </div>
+      {ftOwed && !ended && (
+        <div className="mb-3 flex items-center justify-between gap-3 rounded-lg border border-accent bg-accent/10 px-3 py-2">
+          <p className="text-sm text-ink">
+            <span className="font-semibold text-accent">{nameOf(ftOwed.side)}</span> to shoot {ftOwed.n} free throw{ftOwed.n > 1 ? 's' : ''}. Select the shooter, then tap FT.
+          </p>
+          <button onClick={() => setFtOwed(null)} className="text-xs text-ink-faint hover:text-ink shrink-0">Clear</button>
+        </div>
+      )}
 
       <div className="flex gap-3">
         <button onClick={undo} disabled={undoStack.length === 0 || busy} className="flex-1 rounded-lg border border-line-strong text-ink-dim hover:bg-panel-alt py-3 font-medium disabled:opacity-40">
