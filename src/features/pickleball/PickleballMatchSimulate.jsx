@@ -6,7 +6,7 @@ import { saveSetSafe, completeMatchSafe } from '../../lib/saveQueue'
 import WinnerBoard from '../tournament/WinnerBoard'
 import { entryKind } from '../../lib/entryMode'
 import { pushCloudMatchState } from '../../lib/liveMatchState'
-import { newGameState, applyServerPoint, applyFault, isGameOver, gamePointFor, reachedMidpoint, whoIsWho, scoreCall } from '../../lib/pickleballRules'
+import { newGameState, applyServerPoint, applyFault, applyRallyWinner, isGameOver, gamePointFor, reachedMidpoint, whoIsWho, scoreCall } from '../../lib/pickleballRules'
 import { TEAM_CLASS } from '../../lib/teamColors'
 import usePortrait from '../../hooks/usePortrait'
 import PickleballCourt from './PickleballCourt'
@@ -130,6 +130,7 @@ export default function PickleballMatchSimulate() {
 
   const gamesToWin = Number(tournament?.rules?.gamesToWin ?? 2)
   const target = Number(tournament?.rules?.pointsPerGame ?? 11)
+  const scoring = tournament?.rules?.scoring === 'rally' ? 'rally' : 'sideout'
   const matchType = tournament?.rules?.matchType === 'singles' ? 'singles' : 'doubles'
   const perSide = matchType === 'doubles' ? 2 : 1
   const isDecider = gamesToWin > 1 && currentGame === gamesToWin * 2 - 1
@@ -172,6 +173,7 @@ export default function PickleballMatchSimulate() {
         court: gs.court,
         rightA: gs.rightA,
         rightB: gs.rightB,
+        scoring,
         gameOver,
         flipped,
         idsA: lineup?.idsA ?? [],
@@ -184,7 +186,7 @@ export default function PickleballMatchSimulate() {
 
   // ---------- Scoring ----------
   function startGame(side) {
-    setGs(newGameState(side, perSide))
+    setGs(newGameState(side, perSide, scoring))
     setNotice('')
   }
 
@@ -203,6 +205,22 @@ export default function PickleballMatchSimulate() {
       setNotice(next.serving !== gs.serving ? 'Side out' : 'Second server')
     } else {
       setNotice('')
+    }
+  }
+
+  // Rally scoring: whoever wins the rally scores, and the serve goes to the winner.
+  function rallyWon(side) {
+    if (!gs || gameOver || busy) return
+    const next = applyRallyWinner(gs, side, perSide)
+    setUndoStack((s) => [...s, { gs, midSwapped }])
+    setGs(next)
+    if (isGameOver(next.scoreA, next.scoreB, target)) {
+      setNotice('')
+    } else if (isDecider && !midSwapped && reachedMidpoint(gs, next, target)) {
+      setMidSwapped(true)
+      setNotice('Change ends (deciding game)')
+    } else {
+      setNotice(next.serving !== gs.serving ? 'Side out' : '')
     }
   }
 
@@ -244,7 +262,7 @@ export default function PickleballMatchSimulate() {
 
     // Next game: the winner of the last game serves first.
     setCurrentGame((g) => g + 1)
-    setGs(newGameState(winner, perSide))
+    setGs(newGameState(winner, perSide, scoring))
     setUndoStack([])
     setMidSwapped(false)
     setNotice('')
@@ -415,6 +433,26 @@ export default function PickleballMatchSimulate() {
       {/* Point buttons */}
       {gs && (
         <>
+          {scoring === 'rally' ? (
+            <>
+              <p className="text-[11px] text-ink-faint text-center mb-1.5">Rally scoring: whoever wins the rally scores</p>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                {['A', 'B'].map((side) => (
+                  <button
+                    key={side}
+                    onClick={() => rallyWon(side)}
+                    disabled={gameOver || busy}
+                    className={`rounded-xl border-2 ${TEAM_CLASS[side].border} bg-panel hover:bg-panel-alt active:scale-[0.98] transition px-3 py-5 disabled:opacity-40`}
+                  >
+                    <span className="block text-xs text-ink-faint">{gs.serving === side ? 'Server wins the rally' : 'Receiver wins the rally'}</span>
+                    <span className="block font-display font-bold text-lg text-ink truncate">{nameOf(side)}</span>
+                    <span className="block text-accent font-bold text-xl">+1 point</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
           <p className="text-[11px] text-ink-faint text-center mb-1.5">Only the serving side scores</p>
           <div className="grid grid-cols-2 gap-3 mb-3">
             <button
@@ -436,6 +474,9 @@ export default function PickleballMatchSimulate() {
               <span className="block text-ink-dim font-bold text-xl">{perSide === 2 && gs.serverNum === 1 ? 'Server 2 serves' : 'Side out'}</span>
             </button>
           </div>
+
+            </>
+          )}
 
           <div className="flex gap-3">
             <button

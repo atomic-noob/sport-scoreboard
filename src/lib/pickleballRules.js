@@ -25,6 +25,13 @@ export function isGameOver(scoreA, scoreB, target) {
 /** Only the serving side can be on game point: one more point wins the game for them. */
 export function gamePointFor(state, target) {
   if (!state || isGameOver(state.scoreA, state.scoreB, target)) return { A: false, B: false }
+  if (state.scoring === 'rally') {
+    // Rally scoring: either side can score on any rally, so either side can be on game point.
+    return {
+      A: isGameOver(state.scoreA + 1, state.scoreB, target),
+      B: isGameOver(state.scoreA, state.scoreB + 1, target),
+    }
+  }
   const mine = state.serving === 'A' ? state.scoreA : state.scoreB
   const theirs = state.serving === 'A' ? state.scoreB : state.scoreA
   const wins = isGameOver(mine + 1, theirs, target)
@@ -38,8 +45,25 @@ const parityCourt = (score) => (score % 2 === 0 ? 'right' : 'left')
  * rightA / rightB: index (0 or 1) of the player standing in that side's RIGHT court.
  * serverNum: 1 or 2 (doubles). court: where the current server stands.
  */
-export function newGameState(serving, perSide) {
-  return { scoreA: 0, scoreB: 0, serving, serverNum: perSide === 2 ? 2 : 1, court: 'right', rightA: 0, rightB: 0 }
+export function newGameState(serving, perSide, scoring = 'sideout') {
+  const rally = scoring === 'rally'
+  return { scoreA: 0, scoreB: 0, serving, serverNum: perSide === 2 && !rally ? 2 : 1, court: 'right', rightA: 0, rightB: 0, scoring: rally ? 'rally' : 'sideout' }
+}
+
+/**
+ * Rally scoring: whoever wins the rally scores. If the server's side wins, they
+ * score and (doubles) swap courts, as usual. If the receiving side wins, they
+ * score and take the serve (a side-out): the server is the player standing in the
+ * court that matches their new score (even = right, odd = left). There is no
+ * second server in rally scoring.
+ */
+export function applyRallyWinner(state, winner, perSide) {
+  if (winner === state.serving) return applyServerPoint(state, perSide)
+  const next = { ...state, serving: winner, serverNum: 1 }
+  if (winner === 'A') next.scoreA += 1
+  else next.scoreB += 1
+  next.court = parityCourt(winner === 'A' ? next.scoreA : next.scoreB)
+  return next
 }
 
 /** The serving side wins the rally: it scores, and (doubles) its players swap courts. */
@@ -93,7 +117,7 @@ export function whoIsWho(state, perSide) {
 export function scoreCall(state, perSide) {
   const mine = state.serving === 'A' ? state.scoreA : state.scoreB
   const theirs = state.serving === 'A' ? state.scoreB : state.scoreA
-  return perSide === 2 ? `${mine}-${theirs}-${state.serverNum}` : `${mine}-${theirs}`
+  return perSide === 2 && state.scoring !== 'rally' ? `${mine}-${theirs}-${state.serverNum}` : `${mine}-${theirs}`
 }
 
 /** Middle of a game: ends are changed here in a deciding game (6 of 11, 8 of 15, 11 of 21). */

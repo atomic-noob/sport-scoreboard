@@ -131,7 +131,7 @@ export default function PickleballWatchMatch() {
   const playersA = (snap?.idsA ?? []).map((id) => byId.get(id)).filter(Boolean)
   const playersB = (snap?.idsB ?? []).map((id) => byId.get(id)).filter(Boolean)
   const perSide = snap?.matchType === 'singles' ? 1 : 2
-  const gs = snap ? { scoreA: snap.scoreA, scoreB: snap.scoreB, serving: snap.serving, serverNum: snap.serverNum ?? 1, court: snap.court ?? 'right', rightA: snap.rightA, rightB: snap.rightB } : null
+  const gs = snap ? { scoreA: snap.scoreA, scoreB: snap.scoreB, serving: snap.serving, serverNum: snap.serverNum ?? 1, court: snap.court ?? 'right', rightA: snap.rightA, rightB: snap.rightB, scoring: snap.scoring } : null
   const who = gs && playersA.length >= perSide && playersB.length >= perSide ? whoIsWho(gs, perSide) : null
   const server = who ? (who.server.side === 'A' ? playersA : playersB)[who.server.playerIdx] : null
 

@@ -179,11 +179,21 @@ export const SPORTS = {
     defaultRules: {
       gamesToWin: 2,
       pointsPerGame: 11,
+      scoring: 'sideout',
       matchType: 'doubles',
       entryType: 'players',
       maxRosterSize: 8,
     },
     ruleFields: [
+      {
+        key: 'scoring',
+        label: 'Scoring system',
+        type: 'select',
+        options: [
+          { value: 'sideout', label: 'Side-out (only the server scores)' },
+          { value: 'rally', label: 'Rally scoring (every rally scores)' },
+        ],
+      },
       {
         key: 'gamesToWin',
         label: 'Match format',
@@ -225,7 +235,7 @@ export const SPORTS = {
       { key: 'maxRosterSize', label: 'Max roster size (teams only)' },
     ],
     summarizeRules: (r) =>
-      `${Number(r.gamesToWin) === 1 ? 'Single game' : `Best of ${Number(r.gamesToWin) * 2 - 1}`} to ${r.pointsPerGame} (win by 2) · ${r.matchType === 'singles' ? (r.entryType === 'players' ? 'singles players' : 'singles') : r.entryType === 'players' ? 'fixed pairs' : 'doubles'}${r.entryType === 'players' ? '' : ` · max ${r.maxRosterSize} roster`}`,
+      `${Number(r.gamesToWin) === 1 ? 'Single game' : `Best of ${Number(r.gamesToWin) * 2 - 1}`} to ${r.pointsPerGame} (win by 2)${r.scoring === 'rally' ? ' · rally scoring' : ''} · ${r.matchType === 'singles' ? (r.entryType === 'players' ? 'singles players' : 'singles') : r.entryType === 'players' ? 'fixed pairs' : 'doubles'}${r.entryType === 'players' ? '' : ` · max ${r.maxRosterSize} roster`}`,
     playerStats: [],
     hasPlayerStats: false,
     teamStats: [
