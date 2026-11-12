@@ -27,7 +27,7 @@ export default function CookieBanner() {
       <div className="rounded-2xl border border-white/10 bg-black/85 backdrop-blur p-4 text-white shadow-2xl">
         <p className="flex items-center gap-2 text-sm font-medium mb-1"><Cookie className="w-4 h-4 text-emerald-400" /> Cookies &amp; local storage</p>
         <p className="text-xs text-white/60 mb-3">
-          We use essential storage to keep you signed in, remember your cookie choice and save a match in progress.
+          We use essential storage to keep you signed in, remember your cookie choice, save a match in progress and keep results until they upload, and let the app open offline.
           No ads, no tracking. Read our{' '}
           <Link to="/privacy#cookies" className="text-emerald-400 hover:text-emerald-300 underline">Privacy &amp; Cookies</Link>{' '}
           and{' '}

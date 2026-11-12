@@ -3,8 +3,10 @@ import { SITE_NAME, CONTACT_EMAIL } from '../lib/legal'
 
 const STORAGE = [
   ['Sign-in session', 'Keeps you logged in as an organizer.', 'Essential'],
-  ['Offline cache (browser database)', 'Keeps tournaments and rosters available when your connection drops.', 'Essential'],
+  ['Offline cache (browser database)', 'Keeps tournaments and rosters available when your connection drops. Cleared when you sign out.', 'Essential'],
+  ['App files and recent pages (service worker)', 'Saves the app’s own files and the last tournament pages you opened on your device so Sylve can open without a connection. Cleared when you sign out.', 'Essential'],
   ['Match in progress', 'Saves the live score, rotation and stats on the scorer’s device so a refresh does not lose the match. Removed when the match ends.', 'Essential'],
+  ['Results waiting to upload', 'If the connection drops, finished sets and final results are kept on the scorer’s device and uploaded automatically when the connection returns. Removed once they are saved.', 'Essential'],
   ['Cookie choice', 'Remembers whether you accepted or chose essential only.', 'Essential'],
 ]
 
@@ -23,7 +25,9 @@ export default function Privacy() {
         </p>
         <p>
           <span className="text-white">Tournament data you enter:</span> tournament, team and player names, jersey
-          numbers, optional player photos, and match results and statistics.
+          numbers, optional player photos, and match results and statistics. Player photos are shrunk on your device
+          before upload and stored with our storage provider (Supabase). Like other player information, a photo
+          can be seen on the public watch pages, for example on the winner board when a player is chosen as MVP.
         </p>
         <p>
           <span className="text-white">Spectators:</span> watching public pages needs no account, and we do not ask
@@ -57,7 +61,7 @@ export default function Privacy() {
         </div>
         <p>
           You can clear this storage at any time in your browser settings, but you will be signed out and unsaved
-          matches on that device may be lost. You can change your cookie choice with “Cookie settings” below. If we
+          matches and results that have not been uploaded yet on that device may be lost. You can change your cookie choice with “Cookie settings” below. If we
           ever add optional tools such as analytics, they will stay off unless you accept them.
         </p>
       </Section>
@@ -79,8 +83,9 @@ export default function Privacy() {
       <Section title="Players and minors">
         <p>
           Organizers decide which player details to add. If you list people, especially anyone under 18, you must
-          have permission to do so. If you are a player or parent and want information corrected or removed, contact
-          the organizer or us.
+          have permission to do so, and that includes adding their photo. If you are a player or parent and want information corrected or removed, contact
+          the organizer or us. A player photo can be replaced by the organizer at any time, and we will remove one on
+          request.
         </p>
       </Section>
 
