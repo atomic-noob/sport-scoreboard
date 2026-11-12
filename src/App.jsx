@@ -10,6 +10,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import CookieBanner from './components/CookieBanner'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
+import NotFound from './pages/NotFound'
+import { SPORTS } from './lib/sportConfig'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { signOut } from './lib/auth'
 import TournamentHome from './features/tournament/TournamentHome'
@@ -103,6 +105,14 @@ function AppHeader({ showMenu, onMenu }) {
   )
 }
 
+// Only real sports are valid in the address; anything else (/foo) shows the not-found page
+// instead of quietly opening the basketball screens.
+function SportGuard({ children }) {
+  const { sport } = useParams()
+  if (!Object.prototype.hasOwnProperty.call(SPORTS, sport)) return <NotFound />
+  return children
+}
+
 // Picks the right live-scoring engine for the sport. Each sport's rules
 // are different enough (basketball's quarters/fouls vs volleyball's
 // sets/rotation) that these stay as separate components rather than one
@@ -178,19 +188,19 @@ export default function App() {
             <Route path="/events" element={<ProtectedRoute><EventsHome /></ProtectedRoute>} />
             <Route path="/events/:eventId" element={<ProtectedRoute><EventAdmin /></ProtectedRoute>} />
 
-            <Route path="/:sport" element={<ProtectedRoute><TournamentHome /></ProtectedRoute>} />
-            <Route path="/:sport/new" element={<ProtectedRoute><NewTournament /></ProtectedRoute>} />
-            <Route path="/:sport/leaderboard" element={<ProtectedRoute><TournamentLeaderboard /></ProtectedRoute>} />
-            <Route path="/:sport/:tournamentId" element={<ProtectedRoute><TournamentAdmin /></ProtectedRoute>} />
-            <Route path="/:sport/:tournamentId/edit" element={<ProtectedRoute><EditTournament /></ProtectedRoute>} />
-            <Route path="/:sport/:tournamentId/format" element={<ProtectedRoute><TournamentFormat /></ProtectedRoute>} />
-            <Route path="/:sport/:tournamentId/schedule" element={<ProtectedRoute><TournamentSchedule /></ProtectedRoute>} />
-            <Route path="/:sport/:tournamentId/leaderboard" element={<ProtectedRoute><TournamentLeaderboard /></ProtectedRoute>} />
-            <Route path="/:sport/:tournamentId/match/:matchId/lineup" element={<ProtectedRoute><SportLineupSetup /></ProtectedRoute>} />
-            <Route path="/:sport/:tournamentId/match/:matchId" element={<ProtectedRoute><SportMatchSimulate /></ProtectedRoute>} />
-            <Route path="/:sport/:tournamentId/team/:teamId" element={<ProtectedRoute><TeamRoster /></ProtectedRoute>} />
+            <Route path="/:sport" element={<ProtectedRoute><SportGuard><TournamentHome /></SportGuard></ProtectedRoute>} />
+            <Route path="/:sport/new" element={<ProtectedRoute><SportGuard><NewTournament /></SportGuard></ProtectedRoute>} />
+            <Route path="/:sport/leaderboard" element={<ProtectedRoute><SportGuard><TournamentLeaderboard /></SportGuard></ProtectedRoute>} />
+            <Route path="/:sport/:tournamentId" element={<ProtectedRoute><SportGuard><TournamentAdmin /></SportGuard></ProtectedRoute>} />
+            <Route path="/:sport/:tournamentId/edit" element={<ProtectedRoute><SportGuard><EditTournament /></SportGuard></ProtectedRoute>} />
+            <Route path="/:sport/:tournamentId/format" element={<ProtectedRoute><SportGuard><TournamentFormat /></SportGuard></ProtectedRoute>} />
+            <Route path="/:sport/:tournamentId/schedule" element={<ProtectedRoute><SportGuard><TournamentSchedule /></SportGuard></ProtectedRoute>} />
+            <Route path="/:sport/:tournamentId/leaderboard" element={<ProtectedRoute><SportGuard><TournamentLeaderboard /></SportGuard></ProtectedRoute>} />
+            <Route path="/:sport/:tournamentId/match/:matchId/lineup" element={<ProtectedRoute><SportGuard><SportLineupSetup /></SportGuard></ProtectedRoute>} />
+            <Route path="/:sport/:tournamentId/match/:matchId" element={<ProtectedRoute><SportGuard><SportMatchSimulate /></SportGuard></ProtectedRoute>} />
+            <Route path="/:sport/:tournamentId/team/:teamId" element={<ProtectedRoute><SportGuard><TeamRoster /></SportGuard></ProtectedRoute>} />
 
-            <Route path="/:sport/:tournamentId/bracket-builder" element={<ProtectedRoute><ManualBracketBuilder /></ProtectedRoute>} />
+            <Route path="/:sport/:tournamentId/bracket-builder" element={<ProtectedRoute><SportGuard><ManualBracketBuilder /></SportGuard></ProtectedRoute>} />
 
             {/* Public spectator routes -- no login, opened in a new tab.
                 Sport-agnostic: browses/watches across every sport. */}
@@ -199,6 +209,7 @@ export default function App() {
             <Route path="/watch/:tournamentId" element={<WatchTournament />} />
             <Route path="/watch/:tournamentId/match/:matchId" element={<WatchMatch />} />
             <Route path="/live/:code" element={<ShareRedirect />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
           </Layout>
           <SaveQueueBanner />
