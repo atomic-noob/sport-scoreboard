@@ -3,14 +3,14 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getTournaments } from '../lib/adminData'
 import { supabase } from '../lib/supabaseClient'
-import { Tv, Trophy, BarChart3, Layers, Zap, Check } from 'lucide-react'
+import { Tv, Trophy, BarChart3, Layers, Zap, Check, WifiOff, Medal, Users, ChevronDown } from 'lucide-react'
 import SportIcon from '../components/SportIcon'
 import { OPEN_COOKIE_SETTINGS } from '../lib/cookieConsent'
 
 // Optional real photos. Leave '' to use the drawn court and net.
 // When you add one (e.g. '/photos/basketball.webp' in the public folder), it is shown
 // behind the drawing with an emerald tint. Only use photos you have the licence for.
-const PHOTOS = { basketball: '', volleyball: '', badminton: '', pickleball: '', tennis: '', tabletennis: '' }
+const PHOTOS = { basketball: '', basketball3x3: '', volleyball: '', badminton: '', pickleball: '', tennis: '', tabletennis: '' }
 
 const SPORTS = {
   basketball: {
@@ -18,6 +18,12 @@ const SPORTS = {
     word: 'Hoops',
     line: 'Fouls, timeouts, quarters and a box score for every player.',
     sample: { a: 'Hawks', b: 'Lions', sa: 68, sb: 64, tag: 'Q4 · 2:41', stats: [['PTS', '24 · 19'], ['REB', '31 · 28'], ['AST', '14 · 11']] },
+  },
+  basketball3x3: {
+    label: '3x3',
+    word: 'Streetball',
+    line: 'Game clock, 12-second shot clock, team fouls and free throws, first to 21.',
+    sample: { a: 'Rim Riders', b: 'Pickups', sa: 15, sb: 13, tag: '6:12 · SHOT 8', stats: [['FOULS', '4 · 5'], ['CLOCK', '6:12'], ['TO WIN', '21, or 10 min']] },
   },
   volleyball: {
     label: 'Volleyball',
@@ -58,12 +64,24 @@ const BENTO = [
   { Icon: Zap, title: 'Score from your phone', text: 'One screen. Court, scoreboard and actions, no scrolling. A refresh never loses the match.', span: 'lg:col-span-2' },
   { Icon: Tv, title: 'Anyone can watch', text: 'Share a link. No account, no download.' },
   { Icon: Trophy, title: 'Brackets & standings', text: 'Round-robin or elimination, automatic or by hand.' },
+  { Icon: WifiOff, title: 'Weak signal? Keep scoring', text: 'Results are kept on the phone and upload by themselves when the connection returns.' },
+  { Icon: Medal, title: 'MVP winner board', text: 'Score, quarter or set breakdown and the MVP, with their photo, ready to share.' },
+  { Icon: Users, title: 'Singles and pairs', text: 'Add players or pairs directly, no team names, with a live leaderboard.' },
   { Icon: BarChart3, title: 'Leaders & box scores', text: 'Points, rebounds, kills, aces, hitting %. Per tournament.' },
-  { Icon: Layers, title: 'One event, every sport', text: 'Group basketball, 3x3, volleyball, badminton, pickleball, tennis and table tennis tournaments under a single link.', span: 'lg:col-span-3' },
+  { Icon: Layers, title: 'One event, every sport', text: 'Group basketball, 3x3, volleyball, badminton, pickleball, tennis and table tennis tournaments under a single link.', span: 'lg:col-span-4' },
+]
+
+const FAQ = [
+  ['Do I need to install an app or pay?', 'No. Sylve runs in the browser on a phone, tablet or laptop, and it is free while we are in testing.'],
+  ['What if the signal drops during a game?', 'Keep scoring. Finished sets and final results are kept on the scorer’s phone and upload automatically when the connection returns. A small notice shows what has not been saved yet.'],
+  ['Can people watch without an account?', 'Yes. Share one link and anyone can follow the live score, standings and the MVP on their phone.'],
+  ['Which sports does it support?', 'Basketball, 3x3 basketball, volleyball, badminton, pickleball, tennis and table tennis, each with its own rules.'],
+  ['Can I run one event with several sports?', 'Yes. An event has one public page that lists every tournament in it, grouped by sport.'],
+  ['How do I try it for my league?', 'Open the app and create a tournament, or message us at atomicgladiator324@gmail.com to be a tester.'],
 ]
 
 const STEPS = [
-  { n: '01', title: 'Create', text: 'Set up a tournament or a multi-sport event. Add teams and rosters.' },
+  { n: '01', title: 'Create', text: 'Set up a tournament or a multi-sport event. Add teams, players or pairs.' },
   { n: '02', title: 'Score', text: 'Run each game from your phone. Every action is saved as it happens.' },
   { n: '03', title: 'Share', text: 'Send one link. Spectators follow scores, standings and leaders live.' },
 ]
@@ -364,6 +382,7 @@ export default function Landing() {
                   <span className="inline-flex items-center gap-2"><Tv className="w-4 h-4" /> Watch live</span>
                 </Link>
               </div>
+              <p className="mt-5 text-xs text-white/50">Free while we are in testing &nbsp;·&nbsp; No install &nbsp;·&nbsp; Works on a weak signal</p>
             </div>
 
             {/* Court + sample scoreboard */}
@@ -377,7 +396,7 @@ export default function Landing() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
                   </>
                 )}
-                <div className="absolute inset-0 p-3">{sport === 'basketball' ? <BasketballArt /> : sport === 'volleyball' ? <VolleyballArt /> : sport === 'badminton' ? <BadmintonArt /> : sport === 'tennis' ? <TennisArt /> : sport === 'tabletennis' ? <TableArt /> : <PickleballArt />}</div>
+                <div className="absolute inset-0 p-3">{(sport === 'basketball' || sport === 'basketball3x3') ? <BasketballArt /> : sport === 'volleyball' ? <VolleyballArt /> : sport === 'badminton' ? <BadmintonArt /> : sport === 'tennis' ? <TennisArt /> : sport === 'tabletennis' ? <TableArt /> : <PickleballArt />}</div>
 
                 <div className="absolute left-3 right-3 bottom-3 rounded-xl border border-white/10 bg-black/70 backdrop-blur p-3 text-white sylve-float">
                   <div className="flex items-center justify-between text-[10px] mb-1.5">
@@ -444,11 +463,11 @@ export default function Landing() {
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-12 gap-5">
             {[
-              { key: 'basketball', Art: HoopArt, title: 'Basketball', points: ['Quarters, fouls and timeouts', 'Player of the Game and leaderboards', 'Live court with every substitution'] },
-              { key: 'basketball3x3', Art: HoopArt, title: '3x3 Basketball', points: ['10 minutes or first to 21, shots worth 1 or 2', 'Game clock and 12-second shot clock', 'Team fouls with free throws, overtime to 2'] },
+              { key: 'basketball', Art: HoopArt, title: 'Basketball', points: ['Quarters, fouls and timeouts', 'Winner board with the MVP, quarter by quarter', 'Live court with every substitution'] },
+              { key: 'basketball3x3', Art: HoopArt, title: '3x3 Basketball', points: ['10 minutes or first to 21, shots worth 1 or 2', 'Game clock and 12-second shot clock', 'Shooting-foul free throws, and two from the 7th team foul'] },
               { key: 'volleyball', Art: NetArt, title: 'Volleyball', points: ['Sets, rotations and a libero', 'Kills, aces, blocks and hitting %', 'Reopen a set, resume after a refresh'] },
               { key: 'badminton', Art: ShuttleArt, title: 'Badminton', points: ['Rally-point games, singles or doubles', 'Serve court and change of ends tracked for you', 'Live court on the watch page'] },
-              { key: 'pickleball', Art: PaddleArt, title: 'Pickleball', points: ['Side-out scoring and the score call', 'Server 1 and 2 tracked, with the kitchen on court', 'Singles or doubles, best of 1, 3 or 5'] },
+              { key: 'pickleball', Art: PaddleArt, title: 'Pickleball', points: ['Side-out or rally scoring, and the score call', 'Server 1 and 2 tracked, with the kitchen on court', 'Singles or doubles, best of 1, 3 or 5'] },
               { key: 'tennis', Art: RacketArt, title: 'Tennis', points: ['Games, sets and tiebreaks, deuce or no-ad', 'Serve, court side and change of ends tracked for you', 'Singles or doubles, with an optional match tiebreak'] },
               { key: 'tabletennis', Art: BatArt, title: 'Table Tennis', points: ['Games to 11, win by 2', 'Serve changes every two points, every point from 10-10', 'Singles or doubles, with the doubles serving order tracked'] },
             ].map(({ key, Art, title, points }, i) => (
@@ -516,13 +535,30 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* FAQ */}
+        <section className="max-w-3xl mx-auto px-5 sm:px-8 pb-20">
+          <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-8">Questions people ask</h2>
+          <div className="space-y-3">
+            {FAQ.map(([q, a]) => (
+              <details key={q} className={`${glass} group px-5 py-4`}>
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">
+                  {q}
+                  <ChevronDown className="w-4 h-4 shrink-0 text-emerald-300 transition group-open:rotate-180" />
+                </summary>
+                <p className="mt-3 text-sm text-white/65">{a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
         {/* Closing */}
         <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-16">
           <div className="relative overflow-hidden rounded-3xl border border-emerald-400/20 bg-emerald-400/5 px-6 py-16 text-center">
             <NetArt className="absolute -left-6 -bottom-4 w-52 h-40 text-emerald-300/10" />
             <HoopArt className="absolute -right-4 -top-2 w-40 h-48 text-emerald-300/10" />
             <h2 className="relative text-3xl sm:text-5xl font-display font-bold tracking-wide mb-3">Ready for the first whistle?</h2>
-            <p className="relative text-white/60 mb-7">Set up in minutes. Share one link.</p>
+            <p className="relative text-white/60 mb-2">Set up in minutes. Share one link.</p>
+            <p className="relative text-white/40 text-sm mb-7">Free while we are in testing. Want to be a tester? <a href="mailto:atomicgladiator324@gmail.com" className="text-emerald-300 hover:text-emerald-200 underline">atomicgladiator324@gmail.com</a></p>
             <Link to={cta} className="relative rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-medium px-8 py-3.5 transition inline-block">
               Get started
             </Link>
