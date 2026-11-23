@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getTournaments } from '../lib/adminData'
 import { supabase } from '../lib/supabaseClient'
-import { Tv, Trophy, BarChart3, Layers, Zap, Check, WifiOff, Medal, Users, ChevronDown } from 'lucide-react'
+import { Tv, Trophy, BarChart3, Layers, Zap, Check, WifiOff, Medal, Users, ChevronDown, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import SportIcon from '../components/SportIcon'
 import { OPEN_COOKIE_SETTINGS } from '../lib/cookieConsent'
 
@@ -266,6 +266,300 @@ function NetArt({ className = '' }) {
   )
 }
 
+const SPORT_CARDS = [
+  { key: 'basketball', Art: HoopArt, title: 'Basketball', points: ['Quarters, fouls and timeouts', 'Winner board with the MVP, quarter by quarter', 'Live court with every substitution'] },
+  { key: 'basketball3x3', Art: HoopArt, title: '3x3 Basketball', points: ['10 minutes or first to 21, shots worth 1 or 2', 'Game clock and 12-second shot clock', 'Shooting-foul free throws, and two from the 7th team foul'] },
+  { key: 'volleyball', Art: NetArt, title: 'Volleyball', points: ['Sets, rotations and a libero', 'Kills, aces, blocks and hitting %', 'Reopen a set, resume after a refresh'] },
+  { key: 'badminton', Art: ShuttleArt, title: 'Badminton', points: ['Rally-point games, singles or doubles', 'Serve court and change of ends tracked for you', 'Live court on the watch page'] },
+  { key: 'pickleball', Art: PaddleArt, title: 'Pickleball', points: ['Side-out or rally scoring, and the score call', 'Server 1 and 2 tracked, with the kitchen on court', 'Singles or doubles, best of 1, 3 or 5'] },
+  { key: 'tennis', Art: RacketArt, title: 'Tennis', points: ['Games, sets and tiebreaks, deuce or no-ad', 'Serve, court side and change of ends tracked for you', 'Singles or doubles, with an optional match tiebreak'] },
+  { key: 'tabletennis', Art: BatArt, title: 'Table Tennis', points: ['Games to 11, win by 2', 'Serve changes every two points, every point from 10-10', 'Singles or doubles, with the doubles serving order tracked'] },
+]
+
+/* ---------- Sports carousel ---------- */
+
+function SportsCarousel({ cta }) {
+  const [i, setI] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const touchX = useRef(null)
+  const reduce = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  const n = SPORT_CARDS.length
+
+  useEffect(() => {
+    if (paused || reduce) return undefined
+    const id = setInterval(() => setI((v) => (v + 1) % n), 6000)
+    return () => clearInterval(id)
+  }, [paused, reduce, i, n])
+
+  const card = SPORT_CARDS[i]
+  const sample = SPORTS[card.key].sample
+  const go = (d) => setI((v) => (v + d + n) % n)
+  const glass = 'rounded-2xl border border-white/10 bg-white/5 backdrop-blur'
+
+  return (
+    <section
+      className="max-w-7xl mx-auto px-5 sm:px-8 py-20"
+      aria-roledescription="carousel"
+      aria-label="Sports on Sylve"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
+      <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">Seven sports. One platform.</p>
+      <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-8 max-w-3xl">
+        Built for the way each game is actually scored
+      </h2>
+
+      <div role="tablist" aria-label="Choose a sport" className="flex gap-2 overflow-x-auto pb-3 mb-4 [scrollbar-width:none]">
+        {SPORT_CARDS.map((c, idx) => (
+          <button
+            key={c.key}
+            role="tab"
+            aria-selected={i === idx}
+            onClick={() => setI(idx)}
+            className={`relative shrink-0 overflow-hidden rounded-xl border px-4 py-2.5 text-sm font-medium transition ${
+              i === idx ? 'border-emerald-400/50 bg-emerald-400/10 text-white' : 'border-white/10 text-white/60 hover:text-white hover:border-white/25'
+            }`}
+          >
+            <span className="inline-flex items-center gap-2 whitespace-nowrap">
+              <SportIcon sport={c.key} className="w-5 h-5 text-emerald-300" /> {c.title}
+            </span>
+            {i === idx && !reduce && (
+              <span
+                key={`bar-${i}`}
+                className="absolute left-0 bottom-0 h-0.5 bg-emerald-400 sylve-progress"
+                style={{ animationPlayState: paused ? 'paused' : 'running' }}
+              />
+            )}
+          </button>
+        ))}
+      </div>
+
+      <div
+        key={card.key}
+        className={`${glass} sylve-slide relative overflow-hidden p-6 sm:p-10 grid md:grid-cols-[1fr_1fr] gap-8 items-center`}
+        role="tabpanel"
+        aria-live={paused ? 'polite' : 'off'}
+        onTouchStart={(e) => { touchX.current = e.touches[0].clientX }}
+        onTouchEnd={(e) => {
+          if (touchX.current == null) return
+          const dx = e.changedTouches[0].clientX - touchX.current
+          touchX.current = null
+          if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1)
+        }}
+      >
+        <div>
+          <div className="flex items-center gap-4 mb-5">
+            <span className="w-14 h-14 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 text-emerald-300 flex items-center justify-center">
+              <SportIcon sport={card.key} className="w-8 h-8" />
+            </span>
+            <div>
+              <h3 className="font-display font-bold tracking-wide text-3xl sm:text-4xl leading-none">{card.title}</h3>
+              <p className="text-xs uppercase tracking-widest text-emerald-300/80 mt-1">{SPORTS[card.key].word}</p>
+            </div>
+          </div>
+          <p className="text-white/70 mb-5">{SPORTS[card.key].line}</p>
+          <ul className="space-y-2 text-sm text-white/75 mb-7">
+            {card.points.map((pt) => (
+              <li key={pt} className="flex gap-2"><Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />{pt}</li>
+            ))}
+          </ul>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link to={cta} className="rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-medium px-5 py-2.5 text-sm transition">
+              Run a {card.title} tournament
+            </Link>
+            <Link to="/watch" className="rounded-lg border border-white/20 text-white/80 hover:bg-white/10 font-medium px-5 py-2.5 text-sm transition">
+              Watch live
+            </Link>
+          </div>
+        </div>
+
+        <div className="relative aspect-[4/3] rounded-xl border border-white/10 bg-black/40 overflow-hidden">
+          <card.Art className="absolute inset-0 m-auto w-3/4 h-3/4 text-emerald-300/50" />
+          <div className="absolute left-3 right-3 bottom-3 rounded-xl border border-white/10 bg-black/70 backdrop-blur p-3 text-white">
+            <div className="flex items-center justify-between text-[10px] mb-1.5">
+              <span className="uppercase font-semibold text-white/40">Sample match</span>
+              <span className="flex items-center gap-1.5 text-red-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" /> LIVE · {sample.tag}
+              </span>
+            </div>
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sylve-nums">
+              <div>
+                <p className="text-xs text-white/60">{sample.a}</p>
+                <p className="text-3xl font-display font-bold text-emerald-400 leading-none">{sample.sa}</p>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5 text-center">
+                {sample.stats.map(([k, v]) => (
+                  <div key={k} className="rounded bg-white/5 px-1.5 py-1">
+                    <p className="text-[8px] text-white/40">{k}</p>
+                    <p className="text-[11px] font-medium">{v}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-white/60">{sample.b}</p>
+                <p className="text-3xl font-display font-bold leading-none">{sample.sb}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {SPORT_CARDS.map((c, idx) => (
+            <button
+              key={c.key}
+              onClick={() => setI(idx)}
+              aria-label={`Show ${c.title}`}
+              className={`h-2 rounded-full transition-all ${i === idx ? 'w-6 bg-emerald-400' : 'w-2 bg-white/25 hover:bg-white/50'}`}
+            />
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => go(-1)} aria-label="Previous sport" className="rounded-full border border-white/15 p-2 text-white/70 hover:text-white hover:border-white/40 transition"><ChevronLeft className="w-4 h-4" /></button>
+          <button onClick={() => go(1)} aria-label="Next sport" className="rounded-full border border-white/15 p-2 text-white/70 hover:text-white hover:border-white/40 transition"><ChevronRight className="w-4 h-4" /></button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ---------- Upcoming calendar ---------- */
+
+const WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+function UpcomingCalendar({ tournaments }) {
+  const today = new Date()
+  const [month, setMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
+  const [sel, setSel] = useState(ymd(today))
+  const [games, setGames] = useState([])
+  const glass = 'rounded-2xl border border-white/10 bg-white/5 backdrop-blur'
+
+  useEffect(() => {
+    async function load() {
+      const from = new Date()
+      from.setHours(0, 0, 0, 0)
+      const { data: rows, error } = await supabase
+        .from('matches')
+        .select('id, tournament_id, team_a_id, team_b_id, scheduled_at, status')
+        .not('scheduled_at', 'is', null)
+        .gte('scheduled_at', from.toISOString())
+        .in('status', ['scheduled', 'live'])
+        .order('scheduled_at', { ascending: true })
+        .limit(40)
+      if (error || !rows?.length) return
+      const ids = [...new Set(rows.flatMap((r) => [r.team_a_id, r.team_b_id]).filter(Boolean))]
+      const { data: teams } = ids.length ? await supabase.from('teams').select('id, name').in('id', ids) : { data: [] }
+      const nameOf = new Map((teams ?? []).map((t) => [t.id, t.name]))
+      setGames(rows.map((r) => ({ ...r, nameA: nameOf.get(r.team_a_id) ?? 'TBD', nameB: nameOf.get(r.team_b_id) ?? 'TBD' })))
+    }
+    load().catch((err) => console.warn('Could not load schedule for landing page:', err.message))
+  }, [])
+
+  const tById = new Map(tournaments.map((t) => [t.id, t]))
+  const byDay = {}
+  const add = (key, item) => { (byDay[key] ??= []).push(item) }
+  tournaments.filter((t) => t.startDate).forEach((t) => add(t.startDate.slice(0, 10), { type: 'start', t }))
+  games.forEach((g) => add(ymd(new Date(g.scheduled_at)), { type: 'game', g, t: tById.get(g.tournament_id) }))
+
+  const first = new Date(month.getFullYear(), month.getMonth(), 1)
+  const daysIn = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()
+  const cells = [...Array(first.getDay()).fill(null), ...Array.from({ length: daysIn }, (_, k) => k + 1)]
+  const keyOf = (day) => ymd(new Date(month.getFullYear(), month.getMonth(), day))
+  const items = byDay[sel] ?? []
+  const selDate = new Date(`${sel}T00:00:00`)
+  const monthCount = Object.keys(byDay).filter((k) => k.startsWith(ymd(first).slice(0, 7))).length
+
+  return (
+    <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-20">
+      <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">What is coming up</p>
+      <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-8 max-w-3xl">See which sports are playing, and when</h2>
+
+      <div className="grid lg:grid-cols-[1.25fr_1fr] gap-5">
+        <div className={`${glass} p-4 sm:p-6`}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display font-bold tracking-wide text-xl inline-flex items-center gap-2">
+              <CalendarDays className="w-5 h-5 text-emerald-300" />
+              {month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+            </h3>
+            <div className="flex gap-2">
+              <button onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} aria-label="Previous month" className="rounded-full border border-white/15 p-2 text-white/70 hover:text-white transition"><ChevronLeft className="w-4 h-4" /></button>
+              <button onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))} aria-label="Next month" className="rounded-full border border-white/15 p-2 text-white/70 hover:text-white transition"><ChevronRight className="w-4 h-4" /></button>
+            </div>
+          </div>
+          <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-white/40 mb-1">
+            {WEEK.map((w) => <span key={w}>{w}</span>)}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {cells.map((day, idx) => {
+              if (!day) return <span key={`b${idx}`} />
+              const k = keyOf(day)
+              const list = byDay[k] ?? []
+              const sports = [...new Set(list.map((x) => x.t?.sport).filter(Boolean))].slice(0, 3)
+              const isToday = k === ymd(today)
+              return (
+                <button
+                  key={k}
+                  onClick={() => setSel(k)}
+                  aria-label={`${k}, ${list.length} scheduled`}
+                  className={`aspect-square rounded-lg border text-sm flex flex-col items-center justify-center gap-0.5 transition ${
+                    sel === k ? 'border-emerald-400 bg-emerald-400/15 text-white' : isToday ? 'border-emerald-400/40 text-white' : 'border-white/5 text-white/70 hover:border-white/25'
+                  }`}
+                >
+                  <span className="sylve-nums">{day}</span>
+                  <span className="flex h-3.5 items-center gap-0.5 text-emerald-300">
+                    {sports.map((sp) => <SportIcon key={sp} sport={sp} className="w-3 h-3" />)}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className={`${glass} p-5 sm:p-6`}>
+          <h3 className="font-display font-bold tracking-wide text-xl mb-1">
+            {selDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+          </h3>
+          <p className="text-xs text-white/40 mb-4">{items.length === 0 ? 'Nothing scheduled' : `${items.length} scheduled`}</p>
+          {items.length === 0 ? (
+            <p className="text-sm text-white/55">
+              {monthCount === 0
+                ? 'No games are scheduled this month yet. Organizers: add a start date to your tournament, or a time to a match, and it shows up here.'
+                : 'Pick another day, or use the arrows to see other months.'}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {items.map((it, idx) => (
+                <Link
+                  key={idx}
+                  to={it.type === 'game' ? `/watch/${it.g.tournament_id}/match/${it.g.id}` : `/watch/${it.t.id}`}
+                  className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-4 py-3 hover:border-emerald-400/40 transition"
+                >
+                  <SportIcon sport={it.t?.sport} className="w-5 h-5 text-emerald-300 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">
+                      {it.type === 'game' ? `${it.g.nameA} vs ${it.g.nameB}` : `${it.t.name} starts`}
+                    </p>
+                    <p className="text-xs text-white/45 truncate">
+                      {it.type === 'game'
+                        ? `${new Date(it.g.scheduled_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })} · ${it.t?.name ?? 'Match'}`
+                        : 'Tournament'}
+                    </p>
+                  </div>
+                  {it.type === 'game' && it.g.status === 'live' && <span className="text-[10px] font-semibold text-red-400">LIVE</span>}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function Landing() {
   const { user } = useAuth()
   const [sport, setSport] = useState('basketball')
@@ -312,6 +606,11 @@ export default function Landing() {
         .sylve-float { animation: sylve-float 6s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) { .sylve-marquee, .sylve-float { animation: none } }
         .sylve-nums { font-variant-numeric: tabular-nums; }
+        @keyframes sylve-slide { from { opacity: 0; transform: translateX(24px) } to { opacity: 1; transform: none } }
+        @keyframes sylve-progress { from { width: 0 } to { width: 100% } }
+        .sylve-slide { animation: sylve-slide .45s ease both; }
+        .sylve-progress { animation: sylve-progress 6s linear both; }
+        @media (prefers-reduced-motion: reduce) { .sylve-slide, .sylve-progress { animation: none } }
       `}</style>
 
       <div
@@ -455,38 +754,9 @@ export default function Landing() {
           </div>
         )}
 
-        {/* Seven sports, one platform */}
-        <section className="max-w-7xl mx-auto px-5 sm:px-8 py-20">
-          <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">Seven sports. One platform.</p>
-          <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-10 max-w-3xl">
-            Built for the way each game is actually scored
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-12 gap-5">
-            {[
-              { key: 'basketball', Art: HoopArt, title: 'Basketball', points: ['Quarters, fouls and timeouts', 'Winner board with the MVP, quarter by quarter', 'Live court with every substitution'] },
-              { key: 'basketball3x3', Art: HoopArt, title: '3x3 Basketball', points: ['10 minutes or first to 21, shots worth 1 or 2', 'Game clock and 12-second shot clock', 'Shooting-foul free throws, and two from the 7th team foul'] },
-              { key: 'volleyball', Art: NetArt, title: 'Volleyball', points: ['Sets, rotations and a libero', 'Kills, aces, blocks and hitting %', 'Reopen a set, resume after a refresh'] },
-              { key: 'badminton', Art: ShuttleArt, title: 'Badminton', points: ['Rally-point games, singles or doubles', 'Serve court and change of ends tracked for you', 'Live court on the watch page'] },
-              { key: 'pickleball', Art: PaddleArt, title: 'Pickleball', points: ['Side-out or rally scoring, and the score call', 'Server 1 and 2 tracked, with the kitchen on court', 'Singles or doubles, best of 1, 3 or 5'] },
-              { key: 'tennis', Art: RacketArt, title: 'Tennis', points: ['Games, sets and tiebreaks, deuce or no-ad', 'Serve, court side and change of ends tracked for you', 'Singles or doubles, with an optional match tiebreak'] },
-              { key: 'tabletennis', Art: BatArt, title: 'Table Tennis', points: ['Games to 11, win by 2', 'Serve changes every two points, every point from 10-10', 'Singles or doubles, with the doubles serving order tracked'] },
-            ].map(({ key, Art, title, points }, i) => (
-              <div
-                key={key}
-                className={`${i < 4 ? 'lg:col-span-3' : 'lg:col-span-4'} ${glass} group relative overflow-hidden p-7 transition duration-300 hover:-translate-y-1 hover:border-emerald-400/40 hover:bg-emerald-400/5`}
-              >
-                <Art className="absolute right-4 top-4 w-36 h-36 text-white/20 transition duration-500 group-hover:text-emerald-300/60 group-hover:scale-110" />
-                <div className="w-12 h-12 rounded-xl border border-emerald-400/30 bg-emerald-400/10 text-emerald-300 flex items-center justify-center mb-4"><SportIcon sport={key} className="w-7 h-7" /></div>
-                <h3 className="font-display font-bold tracking-wide text-2xl mb-3">{title}</h3>
-                <ul className="space-y-1.5 text-sm text-white/65">
-                  {points.map((p) => (
-                    <li key={p} className="flex gap-2"><Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />{p}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </section>
+        <SportsCarousel cta={cta} />
+
+        <UpcomingCalendar tournaments={tournaments} />
 
         {/* Numbers from real data */}
         <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-20">
