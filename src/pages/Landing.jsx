@@ -426,31 +426,45 @@ function SportsCarousel({ cta }) {
   )
 }
 
-/* ---------- Real screens in phone frames ---------- */
+/* ---------- Real screens on a laptop, a tablet and a phone ---------- */
 
-const SCREENS = [
-  { src: '/landing/tournament.webp', title: 'Run the whole tournament', text: 'Schedule and standings first, with the games live right now.' },
-  { src: '/landing/live.webp', title: 'Everyone can watch live', text: 'The score, who serves, and the court. No account needed.' },
-  { src: '/landing/winner.webp', title: 'A winner board to share', text: 'The final score, quarter by quarter, and the MVP with a photo.' },
-]
-
-function PhoneShowcase() {
+function DeviceShowcase() {
+  const cap = (title, text) => (
+    <figcaption className="mt-4 text-center">
+      <p className="font-medium">{title}</p>
+      <p className="text-sm text-white/55 mt-1">{text}</p>
+    </figcaption>
+  )
   return (
     <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-20">
       <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">See it in action</p>
-      <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-10 max-w-3xl">Real screens, straight from the app</h2>
-      <div className="flex gap-6 sm:gap-10 overflow-x-auto snap-x snap-mandatory pt-3 pb-4 lg:justify-center [scrollbar-width:none]">
-        {SCREENS.map((sc, idx) => (
-          <figure key={sc.src} className={`snap-center shrink-0 w-[250px] sm:w-[270px] group`}>
-            <div className="relative rounded-[2.4rem] border-[7px] border-white/15 bg-black shadow-[0_20px_60px_-20px_rgba(16,185,129,0.35)] overflow-hidden transition group-hover:-translate-y-1 group-hover:border-emerald-400/40">
-              <img src={sc.src} alt={sc.title} loading="lazy" className="block w-full aspect-[390/844] object-cover object-top" />
-            </div>
-            <figcaption className="mt-4 text-center">
-              <p className="font-medium">{sc.title}</p>
-              <p className="text-sm text-white/55 mt-1">{sc.text}</p>
-            </figcaption>
-          </figure>
-        ))}
+      <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-10 max-w-3xl">Real screens, on any device</h2>
+
+      <div className="flex gap-8 overflow-x-auto snap-x snap-mandatory pt-3 pb-4 lg:items-end lg:justify-center lg:overflow-visible [scrollbar-width:none]">
+        {/* Laptop */}
+        <figure className="snap-center shrink-0 w-[88vw] max-w-[620px] group">
+          <div className="rounded-t-2xl border-[7px] border-b-0 border-white/15 bg-black overflow-hidden transition group-hover:border-emerald-400/40">
+            <img src="/landing/laptop.webp" alt="Tournament page with schedule and standings on a laptop" loading="lazy" className="block w-full aspect-[16/10] object-cover object-top" />
+          </div>
+          <div className="mx-auto h-3 w-[104%] -ml-[2%] rounded-b-2xl bg-gradient-to-b from-white/25 to-white/10" />
+          {cap('Run the whole tournament', 'Schedule and standings first, with the games live right now.')}
+        </figure>
+
+        {/* Tablet */}
+        <figure className="snap-center shrink-0 w-[62vw] max-w-[290px] group">
+          <div className="rounded-[1.6rem] border-[9px] border-white/15 bg-black overflow-hidden shadow-[0_20px_60px_-20px_rgba(16,185,129,0.35)] transition group-hover:border-emerald-400/40">
+            <img src="/landing/tablet.webp" alt="Live pickleball score and court on a tablet" loading="lazy" className="block w-full aspect-[820/1000] object-cover object-top" />
+          </div>
+          {cap('Everyone can watch live', 'The score, who serves, and the court. No account needed.')}
+        </figure>
+
+        {/* Phone */}
+        <figure className="snap-center shrink-0 w-[52vw] max-w-[220px] group">
+          <div className="rounded-[2.2rem] border-[7px] border-white/15 bg-black overflow-hidden shadow-[0_20px_60px_-20px_rgba(16,185,129,0.35)] transition group-hover:border-emerald-400/40">
+            <img src="/landing/winner.webp" alt="Winner board with the MVP and quarter scores on a phone" loading="lazy" className="block w-full aspect-[390/844] object-cover object-top" />
+          </div>
+          {cap('A winner board to share', 'The final score, quarter by quarter, and the MVP with a photo.')}
+        </figure>
       </div>
       <p className="mt-4 text-center text-xs text-white/35">Screens show sample data.</p>
     </section>
@@ -806,7 +820,7 @@ export default function Landing() {
 
         <SportsCarousel cta={cta} />
 
-        <PhoneShowcase />
+        <DeviceShowcase />
 
         <UpcomingCalendar tournaments={tournaments} />
 
