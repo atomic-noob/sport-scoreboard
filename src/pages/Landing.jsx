@@ -426,6 +426,37 @@ function SportsCarousel({ cta }) {
   )
 }
 
+/* ---------- Real screens in phone frames ---------- */
+
+const SCREENS = [
+  { src: '/landing/tournament.webp', title: 'Run the whole tournament', text: 'Schedule and standings first, with the games live right now.' },
+  { src: '/landing/live.webp', title: 'Everyone can watch live', text: 'The score, who serves, and the court. No account needed.' },
+  { src: '/landing/winner.webp', title: 'A winner board to share', text: 'The final score, quarter by quarter, and the MVP with a photo.' },
+]
+
+function PhoneShowcase() {
+  return (
+    <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-20">
+      <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">See it in action</p>
+      <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-10 max-w-3xl">Real screens, straight from the app</h2>
+      <div className="flex gap-6 sm:gap-10 overflow-x-auto snap-x snap-mandatory pb-4 lg:justify-center [scrollbar-width:none]">
+        {SCREENS.map((sc, idx) => (
+          <figure key={sc.src} className={`snap-center shrink-0 w-[250px] sm:w-[270px] group ${idx === 1 ? 'lg:-translate-y-4' : ''}`}>
+            <div className="relative rounded-[2.4rem] border-[7px] border-white/15 bg-black shadow-[0_20px_60px_-20px_rgba(16,185,129,0.35)] overflow-hidden transition group-hover:-translate-y-1 group-hover:border-emerald-400/40">
+              <img src={sc.src} alt={sc.title} loading="lazy" className="block w-full aspect-[390/844] object-cover object-top" />
+            </div>
+            <figcaption className="mt-4 text-center">
+              <p className="font-medium">{sc.title}</p>
+              <p className="text-sm text-white/55 mt-1">{sc.text}</p>
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+      <p className="mt-4 text-center text-xs text-white/35">Screens show sample data.</p>
+    </section>
+  )
+}
+
 /* ---------- Upcoming calendar ---------- */
 
 const WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -436,6 +467,7 @@ function UpcomingCalendar({ tournaments }) {
   const [month, setMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
   const [sel, setSel] = useState(ymd(today))
   const [games, setGames] = useState([])
+  const [filter, setFilter] = useState('all')
   const glass = 'rounded-2xl border border-white/10 bg-white/5 backdrop-blur'
 
   useEffect(() => {
@@ -462,8 +494,9 @@ function UpcomingCalendar({ tournaments }) {
   const tById = new Map(tournaments.map((t) => [t.id, t]))
   const byDay = {}
   const add = (key, item) => { (byDay[key] ??= []).push(item) }
-  tournaments.filter((t) => t.startDate).forEach((t) => add(t.startDate.slice(0, 10), { type: 'start', t }))
-  games.forEach((g) => add(ymd(new Date(g.scheduled_at)), { type: 'game', g, t: tById.get(g.tournament_id) }))
+  const keep = (t) => filter === 'all' || t?.sport === filter
+  tournaments.filter((t) => t.startDate && keep(t)).forEach((t) => add(t.startDate.slice(0, 10), { type: 'start', t }))
+  games.filter((g) => keep(tById.get(g.tournament_id))).forEach((g) => add(ymd(new Date(g.scheduled_at)), { type: 'game', g, t: tById.get(g.tournament_id) }))
 
   const first = new Date(month.getFullYear(), month.getMonth(), 1)
   const daysIn = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()
@@ -477,6 +510,23 @@ function UpcomingCalendar({ tournaments }) {
     <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-20">
       <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">What is coming up</p>
       <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-8 max-w-3xl">See which sports are playing, and when</h2>
+
+      <div className="flex gap-2 overflow-x-auto pb-3 mb-3 [scrollbar-width:none]" role="group" aria-label="Filter by sport">
+        {[{ key: 'all', title: 'All sports' }, ...SPORT_CARDS].map((c) => (
+          <button
+            key={c.key}
+            onClick={() => setFilter(c.key)}
+            aria-pressed={filter === c.key}
+            className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
+              filter === c.key ? 'border-emerald-400/50 bg-emerald-400/10 text-white' : 'border-white/10 text-white/60 hover:text-white hover:border-white/25'
+            }`}
+          >
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+              {c.key !== 'all' && <SportIcon sport={c.key} className="w-3.5 h-3.5 text-emerald-300" />} {c.title}
+            </span>
+          </button>
+        ))}
+      </div>
 
       <div className="grid lg:grid-cols-[1.25fr_1fr] gap-5">
         <div className={`${glass} p-4 sm:p-6`}>
@@ -755,6 +805,8 @@ export default function Landing() {
         )}
 
         <SportsCarousel cta={cta} />
+
+        <PhoneShowcase />
 
         <UpcomingCalendar tournaments={tournaments} />
 

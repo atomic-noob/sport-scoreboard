@@ -211,6 +211,18 @@ export default function TournamentAdmin() {
         {sportConfig.summarizeRules({ ...sportConfig.defaultRules, entryType: "teams", ...tournament.rules })}
       </p>
 
+      {!tournament.startDate && (
+        <Link
+          to={`/${sport}/${tournamentId}/edit`}
+          className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-dashed border-accent/50 bg-accent/5 px-4 py-3 text-sm hover:bg-accent/10 transition"
+        >
+          <span className="text-ink-dim">
+            <span className="font-medium text-accent">Add a start date</span> so this tournament shows on the public calendar on the home page.
+          </span>
+          <span className="shrink-0 text-accent">Set date →</span>
+        </Link>
+      )}
+
       <div className="flex flex-wrap items-center gap-2 mb-5">
         <span className={`rounded-full border px-3 py-1 text-xs font-medium ${statusCls}`}>{statusLabel}</span>
         {started && (
