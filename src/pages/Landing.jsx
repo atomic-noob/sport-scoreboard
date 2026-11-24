@@ -463,7 +463,16 @@ function DeviceShowcase() {
   const [active, setActive] = useState(0)
   const n = DEVICES.length
   const touchX = useRef(null)
+  const [paused, setPaused] = useState(false)
   const go = (d) => setActive((a) => (a + d + n) % n)
+  // Auto-advance every 5 seconds. Restarts after any manual change, pauses while
+  // the pointer is over the stage, and stays off for people who prefer reduced motion.
+  useEffect(() => {
+    if (paused) return
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const id = setInterval(() => setActive((a) => (a + 1) % n), 5000)
+    return () => clearInterval(id)
+  }, [active, paused, n])
   // shortest signed distance from the active slide, so the ring wraps
   const offsetOf = (i) => {
     let o = i - active
@@ -478,6 +487,8 @@ function DeviceShowcase() {
 
       <div
         className="relative h-[330px] sm:h-[470px] overflow-hidden select-none"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
         onTouchStart={(e) => { touchX.current = e.touches[0].clientX }}
         onTouchEnd={(e) => {
           if (touchX.current == null) return
