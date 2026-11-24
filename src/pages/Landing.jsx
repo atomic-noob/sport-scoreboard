@@ -428,43 +428,103 @@ function SportsCarousel({ cta }) {
 
 /* ---------- Real screens on a laptop, a tablet and a phone ---------- */
 
-function DeviceShowcase() {
-  const cap = (title, text) => (
-    <figcaption className="mt-4 text-center">
-      <p className="font-medium">{title}</p>
-      <p className="text-sm text-white/55 mt-1">{text}</p>
-    </figcaption>
+const DEVICES = [
+  { key: 'laptop', title: 'Run the whole tournament', text: 'Schedule and standings first, with the games live right now.' },
+  { key: 'tablet', title: 'Everyone can watch live', text: 'The score, who serves, and the court. No account needed.' },
+  { key: 'phone', title: 'A winner board to share', text: 'The final score, quarter by quarter, and the MVP with a photo.' },
+]
+
+function DeviceFrame({ k }) {
+  if (k === 'laptop') {
+    return (
+      <div className="w-[min(78vw,560px)]">
+        <div className="rounded-t-2xl border-[7px] border-b-0 border-white/15 bg-black overflow-hidden">
+          <img src="/landing/laptop.webp" alt="Tournament page with schedule and standings on a laptop" loading="lazy" draggable="false" className="block w-full aspect-[16/10] object-cover object-top" />
+        </div>
+        <div className="h-3 w-[104%] -ml-[2%] rounded-b-2xl bg-gradient-to-b from-white/25 to-white/10" />
+      </div>
+    )
+  }
+  if (k === 'tablet') {
+    return (
+      <div className="w-[min(60vw,300px)] rounded-[1.6rem] border-[9px] border-white/15 bg-black overflow-hidden">
+        <img src="/landing/tablet.webp" alt="Live pickleball score and court on a tablet" loading="lazy" draggable="false" className="block w-full aspect-[820/1000] object-cover object-top" />
+      </div>
+    )
+  }
+  return (
+    <div className="w-[min(44vw,210px)] rounded-[2.2rem] border-[7px] border-white/15 bg-black overflow-hidden">
+      <img src="/landing/winner.webp" alt="Winner board with the MVP and quarter scores on a phone" loading="lazy" draggable="false" className="block w-full aspect-[390/844] object-cover object-top" />
+    </div>
   )
+}
+
+function DeviceShowcase() {
+  const [active, setActive] = useState(0)
+  const n = DEVICES.length
+  const touchX = useRef(null)
+  const go = (d) => setActive((a) => (a + d + n) % n)
+  // shortest signed distance from the active slide, so the ring wraps
+  const offsetOf = (i) => {
+    let o = i - active
+    if (o > n / 2) o -= n
+    if (o < -n / 2) o += n
+    return o
+  }
   return (
     <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-20">
       <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">See it in action</p>
-      <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-10 max-w-3xl">Real screens, on any device</h2>
+      <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-8 max-w-3xl">Real screens, on any device</h2>
 
-      <div className="flex gap-8 overflow-x-auto snap-x snap-mandatory pt-3 pb-4 lg:items-end lg:justify-center lg:overflow-visible [scrollbar-width:none]">
-        {/* Laptop */}
-        <figure className="snap-center shrink-0 w-[88vw] max-w-[620px] group">
-          <div className="rounded-t-2xl border-[7px] border-b-0 border-white/15 bg-black overflow-hidden transition group-hover:border-emerald-400/40">
-            <img src="/landing/laptop.webp" alt="Tournament page with schedule and standings on a laptop" loading="lazy" className="block w-full aspect-[16/10] object-cover object-top" />
-          </div>
-          <div className="mx-auto h-3 w-[104%] -ml-[2%] rounded-b-2xl bg-gradient-to-b from-white/25 to-white/10" />
-          {cap('Run the whole tournament', 'Schedule and standings first, with the games live right now.')}
-        </figure>
+      <div
+        className="relative h-[330px] sm:h-[470px] overflow-hidden select-none"
+        onTouchStart={(e) => { touchX.current = e.touches[0].clientX }}
+        onTouchEnd={(e) => {
+          if (touchX.current == null) return
+          const dx = e.changedTouches[0].clientX - touchX.current
+          if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1)
+          touchX.current = null
+        }}
+      >
+        {DEVICES.map((d, i) => {
+          const o = offsetOf(i)
+          const here = o === 0
+          return (
+            <button
+              key={d.key}
+              type="button"
+              onClick={() => setActive(i)}
+              aria-label={d.title}
+              aria-current={here}
+              tabIndex={here ? -1 : 0}
+              className="absolute left-1/2 top-1/2 transition-all duration-500 ease-out cursor-pointer"
+              style={{
+                transform: `translate(-50%, -50%) translateX(calc(${o} * clamp(110px, 36vw, 430px))) scale(${here ? 1 : 0.72})`,
+                opacity: here ? 1 : 0.45,
+                filter: here ? 'none' : 'brightness(0.6)',
+                zIndex: here ? 10 : 5,
+                boxShadow: 'none',
+              }}
+            >
+              <DeviceFrame k={d.key} />
+            </button>
+          )
+        })}
+      </div>
 
-        {/* Tablet */}
-        <figure className="snap-center shrink-0 w-[62vw] max-w-[290px] group">
-          <div className="rounded-[1.6rem] border-[9px] border-white/15 bg-black overflow-hidden shadow-[0_20px_60px_-20px_rgba(16,185,129,0.35)] transition group-hover:border-emerald-400/40">
-            <img src="/landing/tablet.webp" alt="Live pickleball score and court on a tablet" loading="lazy" className="block w-full aspect-[820/1000] object-cover object-top" />
-          </div>
-          {cap('Everyone can watch live', 'The score, who serves, and the court. No account needed.')}
-        </figure>
+      <div className="mt-2 text-center min-h-[4.5rem]">
+        <p className="font-medium">{DEVICES[active].title}</p>
+        <p className="text-sm text-white/55 mt-1">{DEVICES[active].text}</p>
+      </div>
 
-        {/* Phone */}
-        <figure className="snap-center shrink-0 w-[52vw] max-w-[220px] group">
-          <div className="rounded-[2.2rem] border-[7px] border-white/15 bg-black overflow-hidden shadow-[0_20px_60px_-20px_rgba(16,185,129,0.35)] transition group-hover:border-emerald-400/40">
-            <img src="/landing/winner.webp" alt="Winner board with the MVP and quarter scores on a phone" loading="lazy" className="block w-full aspect-[390/844] object-cover object-top" />
-          </div>
-          {cap('A winner board to share', 'The final score, quarter by quarter, and the MVP with a photo.')}
-        </figure>
+      <div className="mt-3 flex items-center justify-center gap-3">
+        <button onClick={() => go(-1)} aria-label="Previous screen" className="rounded-full border border-white/15 p-2 text-white/70 hover:text-white hover:border-white/40 transition"><ChevronLeft className="w-4 h-4" /></button>
+        <div className="flex gap-2">
+          {DEVICES.map((d, i) => (
+            <button key={d.key} onClick={() => setActive(i)} aria-label={`Show ${d.title}`} className={`h-2 rounded-full transition-all ${i === active ? 'w-6 bg-emerald-400' : 'w-2 bg-white/25'}`} />
+          ))}
+        </div>
+        <button onClick={() => go(1)} aria-label="Next screen" className="rounded-full border border-white/15 p-2 text-white/70 hover:text-white hover:border-white/40 transition"><ChevronRight className="w-4 h-4" /></button>
       </div>
       <p className="mt-4 text-center text-xs text-white/35">Screens show sample data.</p>
     </section>
