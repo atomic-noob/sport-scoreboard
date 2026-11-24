@@ -439,9 +439,9 @@ function PhoneShowcase() {
     <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-20">
       <p className="text-xs font-semibold uppercase text-emerald-400 mb-2">See it in action</p>
       <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-wide mb-10 max-w-3xl">Real screens, straight from the app</h2>
-      <div className="flex gap-6 sm:gap-10 overflow-x-auto snap-x snap-mandatory pb-4 lg:justify-center [scrollbar-width:none]">
+      <div className="flex gap-6 sm:gap-10 overflow-x-auto snap-x snap-mandatory pt-3 pb-4 lg:justify-center [scrollbar-width:none]">
         {SCREENS.map((sc, idx) => (
-          <figure key={sc.src} className={`snap-center shrink-0 w-[250px] sm:w-[270px] group ${idx === 1 ? 'lg:-translate-y-4' : ''}`}>
+          <figure key={sc.src} className={`snap-center shrink-0 w-[250px] sm:w-[270px] group`}>
             <div className="relative rounded-[2.4rem] border-[7px] border-white/15 bg-black shadow-[0_20px_60px_-20px_rgba(16,185,129,0.35)] overflow-hidden transition group-hover:-translate-y-1 group-hover:border-emerald-400/40">
               <img src={sc.src} alt={sc.title} loading="lazy" className="block w-full aspect-[390/844] object-cover object-top" />
             </div>
