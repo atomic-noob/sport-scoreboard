@@ -6,6 +6,11 @@
  * tournament title and the score underneath. The scorer picks the MVP from the
  * players who played; the pick saves right away and can be changed or cleared.
  */
+import { useRef, useState } from 'react'
+import { Download, Share2 } from 'lucide-react'
+import { toPng } from 'html-to-image'
+
+const BOARD_BG = 'radial-gradient(125% 125% at 50% 10%, #000000 40%, #072607 100%)'
 const WORDS = { basketball: 'Hoops', basketball3x3: 'Three', volleyball: 'Spikes', badminton: 'Smash', pickleball: 'Dink', tennis: 'Ace', tabletennis: 'Spin' }
 const outline = { WebkitTextStroke: '1.5px rgba(52,211,153,0.35)', color: 'transparent' }
 
@@ -76,8 +81,67 @@ export default function WinnerBoard({
   error,
   onDone,
 }) {
+  const cardRef = useRef(null)
+  const [imgBusy, setImgBusy] = useState(false)
+  const [imgError, setImgError] = useState('')
   const mvp = [...playersA, ...playersB].find((p) => p.id === mvpId) ?? null
   const mvpTeam = mvp ? (playersA.some((p) => p.id === mvp.id) ? nameA : nameB) : null
+
+  async function makeBlob() {
+    const dataUrl = await toPng(cardRef.current, {
+      pixelRatio: 2,
+      cacheBust: true,
+      backgroundColor: '#000000',
+      style: { background: BOARD_BG },
+      filter: (node) => !(node.dataset && node.dataset.noCapture),
+    })
+    return (await fetch(dataUrl)).blob()
+  }
+
+  function fileName() {
+    const base = (winnerName || 'winner').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    return `sylve-${base || 'winner'}.png`
+  }
+
+  async function saveImage() {
+    setImgError('')
+    setImgBusy(true)
+    try {
+      const blob = await makeBlob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName()
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 2000)
+    } catch {
+      setImgError('Could not make the image. Please take a screenshot instead.')
+    } finally {
+      setImgBusy(false)
+    }
+  }
+
+  async function shareImage() {
+    setImgError('')
+    setImgBusy(true)
+    try {
+      const blob = await makeBlob()
+      const file = new File([blob], fileName(), { type: 'image/png' })
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: tournamentName || 'Sylve', text: `${winnerName} won. Scored live with Sylve.` })
+      } else {
+        await saveImage()
+      }
+    } catch (e) {
+      if (e && e.name !== 'AbortError') setImgError('Could not share the image. Try Save as image instead.')
+    } finally {
+      setImgBusy(false)
+    }
+  }
+
+  const canShareFiles = typeof navigator !== 'undefined' && typeof navigator.canShare === 'function'
 
   function Group({ title, players }) {
     if (!players.length) return null
@@ -114,16 +178,16 @@ export default function WinnerBoard({
       className="relative overflow-hidden min-h-[calc(100vh-4rem)]"
       style={{ background: 'radial-gradient(125% 125% at 50% 10%, #000000 40%, #072607 100%)' }}
     >
-      <div
-        className="pointer-events-none select-none absolute inset-x-0 top-4 text-center font-display font-bold leading-none text-[30vw] sm:text-[16rem] opacity-80"
-        style={outline}
-        aria-hidden="true"
-      >
-        {WORDS[sport] ?? sportLabel}
-      </div>
-
-      <div className="relative max-w-xl mx-auto px-4 sm:px-6 py-8 text-center">
-        <p className="text-xs font-semibold tracking-widest text-accent uppercase">{sportLabel} &middot; Match complete</p>
+      <div className="relative max-w-xl mx-auto px-4 sm:px-6 pb-8 text-center">
+        <div ref={cardRef} className="relative overflow-hidden px-1 pt-8 pb-6" style={{ background: 'transparent' }}>
+        <div
+          className="pointer-events-none select-none absolute inset-x-0 top-4 text-center font-display font-bold leading-none text-[30vw] sm:text-[16rem] opacity-80"
+          style={outline}
+          aria-hidden="true"
+        >
+          {WORDS[sport] ?? sportLabel}
+        </div>
+        <p className="relative text-xs font-semibold tracking-widest text-accent uppercase">{sportLabel} &middot; Match complete</p>
 
         {/* MVP */}
         <div className="mt-8 flex flex-col items-center">
@@ -174,6 +238,23 @@ export default function WinnerBoard({
             </div>
           )}
         </div>
+
+        <p className="relative mt-4 text-[11px] tracking-widest text-ink-faint uppercase">Scored live with Sylve</p>
+        </div>
+
+        <div className="mt-3 flex justify-center gap-2" data-no-capture="true">
+          <button type="button" onClick={saveImage} disabled={imgBusy} className="inline-flex items-center gap-2 rounded-lg border border-line-strong px-4 py-2 text-sm font-medium text-ink hover:border-accent hover:text-accent transition disabled:opacity-60">
+            <Download className="w-4 h-4" aria-hidden="true" />
+            {imgBusy ? 'Making image...' : 'Save as image'}
+          </button>
+          {canShareFiles && (
+            <button type="button" onClick={shareImage} disabled={imgBusy} className="inline-flex items-center gap-2 rounded-lg border border-line-strong px-4 py-2 text-sm font-medium text-ink hover:border-accent hover:text-accent transition disabled:opacity-60">
+              <Share2 className="w-4 h-4" aria-hidden="true" />
+              Share
+            </button>
+          )}
+        </div>
+        {imgError && <p role="alert" className="mt-2 text-sm text-live">{imgError}</p>}
 
         {/* Pick */}
         {!hidePicker && (
