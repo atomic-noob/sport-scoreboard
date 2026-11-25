@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Link } from 'react-router-dom'
-import { LayoutDashboard, Layers, Tv, X, Inbox } from 'lucide-react'
+import { LayoutDashboard, Layers, Tv, X, Inbox, ShieldCheck, BadgeCheck, Megaphone } from 'lucide-react'
 import { isFeedbackAdmin } from '../lib/feedbackData'
 import SportIcon from './SportIcon'
 import { SPORT_LIST } from '../lib/sportConfig'
@@ -48,11 +48,22 @@ function SidebarBody({ onNavigate }) {
         </div>
       </div>
 
+      {admin && (
+        <div>
+          <p className="px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Admin</p>
+          <div className="space-y-1">
+            <NavItem to="/admin" end icon={<ShieldCheck className="w-[18px] h-[18px]" />} onNavigate={onNavigate}>Overview</NavItem>
+            <NavItem to="/admin/verify" icon={<BadgeCheck className="w-[18px] h-[18px]" />} onNavigate={onNavigate}>Verify organizers</NavItem>
+            <NavItem to="/admin/announcement" icon={<Megaphone className="w-[18px] h-[18px]" />} onNavigate={onNavigate}>Announcement</NavItem>
+            <NavItem to="/admin/feedback" icon={<Inbox className="w-[18px] h-[18px]" />} onNavigate={onNavigate}>Feedback inbox</NavItem>
+          </div>
+        </div>
+      )}
+
       <div>
         <p className="px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">More</p>
         <div className="space-y-1">
           <NavItem to="/events" icon={<Layers className="w-[18px] h-[18px]" />} onNavigate={onNavigate}>Events</NavItem>
-          {admin && <NavItem to="/admin/feedback" icon={<Inbox className="w-[18px] h-[18px]" />} onNavigate={onNavigate}>Feedback inbox</NavItem>}
           <Link
             to="/watch"
             target="_blank"

@@ -44,6 +44,10 @@ import TableTennisMatchSimulate from './features/tabletennis/TableTennisMatchSim
 import TableTennisLineupSetup from './features/tabletennis/TableTennisLineupSetup'
 import AppSidebar from './components/AppSidebar'
 import FeedbackButton from './features/feedback/FeedbackButton'
+import AdminOverview from './features/admin/AdminOverview'
+import AdminVerify from './features/admin/AdminVerify'
+import AdminAnnouncement from './features/admin/AdminAnnouncement'
+import AnnouncementBanner from './components/AnnouncementBanner'
 import FeedbackInbox from './features/feedback/FeedbackInbox'
 import Basketball3x3MatchSimulate from './features/basketball3x3/Basketball3x3MatchSimulate'
 import Basketball3x3LineupSetup from './features/basketball3x3/Basketball3x3LineupSetup'
@@ -173,6 +177,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <div className="min-h-screen bg-page">
+          <AnnouncementBanner />
           <Layout>
           <Routes>
             <Route path="/" element={<Landing />} />
@@ -187,6 +192,9 @@ export default function App() {
                 brackets, leaderboards don't care what sport it is). */}
             {/* Events group tournaments of any sport. These static paths
                 outrank the dynamic /:sport routes below. */}
+            <Route path="/admin" element={<ProtectedRoute><AdminOverview /></ProtectedRoute>} />
+            <Route path="/admin/verify" element={<ProtectedRoute><AdminVerify /></ProtectedRoute>} />
+            <Route path="/admin/announcement" element={<ProtectedRoute><AdminAnnouncement /></ProtectedRoute>} />
             <Route path="/admin/feedback" element={<ProtectedRoute><FeedbackInbox /></ProtectedRoute>} />
             <Route path="/events" element={<ProtectedRoute><EventsHome /></ProtectedRoute>} />
             <Route path="/events/:eventId" element={<ProtectedRoute><EventAdmin /></ProtectedRoute>} />
