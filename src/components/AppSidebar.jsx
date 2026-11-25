@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import { NavLink, Link } from 'react-router-dom'
-import { LayoutDashboard, Layers, Tv, X } from 'lucide-react'
+import { LayoutDashboard, Layers, Tv, X, Inbox } from 'lucide-react'
+import { isFeedbackAdmin } from '../lib/feedbackData'
 import SportIcon from './SportIcon'
 import { SPORT_LIST } from '../lib/sportConfig'
 
@@ -27,6 +29,8 @@ function NavItem({ to, end = false, icon, children, onNavigate }) {
 }
 
 function SidebarBody({ onNavigate }) {
+  const [admin, setAdmin] = useState(false)
+  useEffect(() => { isFeedbackAdmin().then(setAdmin).catch(() => {}) }, [])
   return (
     <nav className="p-3 space-y-5" aria-label="Main">
       <div className="space-y-1">
@@ -48,6 +52,7 @@ function SidebarBody({ onNavigate }) {
         <p className="px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">More</p>
         <div className="space-y-1">
           <NavItem to="/events" icon={<Layers className="w-[18px] h-[18px]" />} onNavigate={onNavigate}>Events</NavItem>
+          {admin && <NavItem to="/admin/feedback" icon={<Inbox className="w-[18px] h-[18px]" />} onNavigate={onNavigate}>Feedback inbox</NavItem>}
           <Link
             to="/watch"
             target="_blank"

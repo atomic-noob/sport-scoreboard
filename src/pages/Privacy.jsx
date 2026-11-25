@@ -30,6 +30,11 @@ export default function Privacy() {
           can be seen on the public watch pages, for example on the winner board when a player is chosen as MVP.
         </p>
         <p>
+          <span className="text-white">Feedback you send:</span> if you use the Feedback button, we save your message,
+          the type you chose, the page you were on and your device type. An email or Facebook name is saved only if you
+          choose to type one. We use it to fix problems and decide what to build, and we read it only to do that.
+        </p>
+        <p>
           <span className="text-white">Spectators:</span> watching public pages needs no account, and we do not ask
           spectators for personal information.
         </p>

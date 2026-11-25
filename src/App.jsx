@@ -43,6 +43,8 @@ import TennisLineupSetup from './features/tennis/TennisLineupSetup'
 import TableTennisMatchSimulate from './features/tabletennis/TableTennisMatchSimulate'
 import TableTennisLineupSetup from './features/tabletennis/TableTennisLineupSetup'
 import AppSidebar from './components/AppSidebar'
+import FeedbackButton from './features/feedback/FeedbackButton'
+import FeedbackInbox from './features/feedback/FeedbackInbox'
 import Basketball3x3MatchSimulate from './features/basketball3x3/Basketball3x3MatchSimulate'
 import Basketball3x3LineupSetup from './features/basketball3x3/Basketball3x3LineupSetup'
 
@@ -185,6 +187,7 @@ export default function App() {
                 brackets, leaderboards don't care what sport it is). */}
             {/* Events group tournaments of any sport. These static paths
                 outrank the dynamic /:sport routes below. */}
+            <Route path="/admin/feedback" element={<ProtectedRoute><FeedbackInbox /></ProtectedRoute>} />
             <Route path="/events" element={<ProtectedRoute><EventsHome /></ProtectedRoute>} />
             <Route path="/events/:eventId" element={<ProtectedRoute><EventAdmin /></ProtectedRoute>} />
 
@@ -214,6 +217,7 @@ export default function App() {
           </Layout>
           <SaveQueueBanner />
           <CookieBanner />
+          <FeedbackButton />
         </div>
       </AuthProvider>
     </BrowserRouter>
