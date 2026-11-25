@@ -1,5 +1,6 @@
-import { Trophy, Lock } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Trophy, Lock, Printer, Download } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { saveNodeAsImage, printNode, fileSlug } from '../../lib/exportNode'
 import { useParams, Link } from 'react-router-dom'
 import { getTournament, getTeamsForTournament } from '../../lib/adminData'
 import {
@@ -19,6 +20,9 @@ export default function TournamentSchedule({ embedded = false }) {
   const [error, setError] = useState('')
   const [generating, setGenerating] = useState(false)
   const [tab, setTab] = useState('standings') // 'standings' | 'schedule' | 'bracket'
+  const exportRef = useRef(null)
+  const [exportBusy, setExportBusy] = useState(false)
+  const [exportMsg, setExportMsg] = useState('')
 
   async function refresh() {
     try {
@@ -100,6 +104,28 @@ export default function TournamentSchedule({ embedded = false }) {
     }
   }
 
+  const TAB_TITLE = { standings: 'Standings', schedule: 'Round-robin schedule', bracket: 'Bracket' }
+
+  function handlePrint() {
+    setExportMsg('')
+    if (!exportRef.current) return
+    const ok = printNode(exportRef.current, `${tournament?.name ?? 'Tournament'} - ${TAB_TITLE[tab]}`)
+    if (!ok) setExportMsg('Your browser blocked the print window. Please allow pop-ups for this site and try again.')
+  }
+
+  async function handleImage() {
+    setExportMsg('')
+    if (!exportRef.current) return
+    setExportBusy(true)
+    try {
+      await saveNodeAsImage(exportRef.current, `sylve-${fileSlug(tournament?.name)}-${tab}.png`)
+    } catch {
+      setExportMsg('Could not make the image. Please take a screenshot instead.')
+    } finally {
+      setExportBusy(false)
+    }
+  }
+
   if (!tournament) {
     return (
       <div className="max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 sm:px-6 py-10 text-ink-dim">
@@ -168,6 +194,22 @@ export default function TournamentSchedule({ embedded = false }) {
         ))}
       </div>
 
+      <div className="flex flex-wrap items-center justify-end gap-2 mb-3" data-no-capture="true">
+        {exportMsg && <p role="alert" className="mr-auto text-xs text-live">{exportMsg}</p>}
+        <button type="button" onClick={handlePrint} className="inline-flex items-center gap-1.5 rounded-lg border border-line-strong px-3 py-1.5 text-xs font-medium text-ink-dim hover:border-accent hover:text-accent transition">
+          <Printer className="w-3.5 h-3.5" aria-hidden="true" /> Print or save PDF
+        </button>
+        <button type="button" onClick={handleImage} disabled={exportBusy} className="inline-flex items-center gap-1.5 rounded-lg border border-line-strong px-3 py-1.5 text-xs font-medium text-ink-dim hover:border-accent hover:text-accent transition disabled:opacity-60">
+          <Download className="w-3.5 h-3.5" aria-hidden="true" /> {exportBusy ? 'Making image...' : 'Save as image'}
+        </button>
+      </div>
+
+      <div ref={exportRef} className="bg-page rounded-xl p-4">
+      <div className="pb-3">
+        <p className="text-lg font-display font-bold tracking-wide text-ink">{tournament.name}</p>
+        <p className="text-xs uppercase tracking-wider text-accent">{TAB_TITLE[tab]} &middot; Sylve</p>
+      </div>
+
       {tab === 'standings' && (
         <div>
           {standings.length === 0 ? (
@@ -211,6 +253,7 @@ export default function TournamentSchedule({ embedded = false }) {
             </div>
           )}
 
+          <div data-no-capture="true">
           {roundRobinMatches.length > 0 && !roundRobinComplete && (
             <div className="mt-6 rounded-lg border border-line bg-page px-3 py-2.5 text-center">
               <p className="text-sm text-ink-dim">
@@ -280,6 +323,7 @@ export default function TournamentSchedule({ embedded = false }) {
               </div>
             </div>
           )}
+          </div>
         </div>
       )}
 
@@ -353,6 +397,7 @@ export default function TournamentSchedule({ embedded = false }) {
           )}
         </div>
       )}
+      </div>
     </div>
   )
 }
@@ -414,6 +459,7 @@ function MatchRow({ match, teamName, sport, tournamentId, onForfeit }) {
 
       {canForfeit && !confirmingForfeit && (
         <button
+          data-no-capture="true"
           onClick={() => setConfirmingForfeit(true)}
           className="text-[11px] text-ink-faint hover:text-live mt-1 ml-1"
         >
@@ -422,7 +468,7 @@ function MatchRow({ match, teamName, sport, tournamentId, onForfeit }) {
       )}
 
       {confirmingForfeit && (
-        <div className="mt-1 rounded-lg border border-live bg-live-soft p-2.5">
+        <div data-no-capture="true" className="mt-1 rounded-lg border border-live bg-live-soft p-2.5">
           <p className="text-xs text-live mb-2">Which team is forfeiting?</p>
           <div className="flex gap-2">
             <button
