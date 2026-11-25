@@ -11,6 +11,15 @@ export default function FeedbackInbox() {
   const [items, setItems] = useState([])
   const [filter, setFilter] = useState('open')
 
+  // Keep this page out of search engines.
+  useEffect(() => {
+    const meta = document.createElement('meta')
+    meta.name = 'robots'
+    meta.content = 'noindex, nofollow'
+    document.head.appendChild(meta)
+    return () => meta.remove()
+  }, [])
+
   useEffect(() => {
     let alive = true
     ;(async () => {
